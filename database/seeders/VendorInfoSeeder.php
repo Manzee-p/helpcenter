@@ -2,59 +2,36 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class VendorInfoSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $vendors = User::where('role', 'vendor')->get();
+        $vendors = User::query()->where('role', 'vendor')->get();
 
-        $companies = [
-            [
-                'name' => 'Tech Solutions Indonesia',
-                'address' => 'Jl. Sudirman No. 123, Jakarta Selatan',
-                'phone' => '021-1234567',
-                'specialization' => 'Sound System, Audio Engineering'
-            ],
-            [
-                'name' => 'Event Pro Services',
-                'address' => 'Jl. Gatot Subroto No. 45, Jakarta',
-                'phone' => '021-9876543',
-                'specialization' => 'Lighting, Stage Setup'
-            ],
-            [
-                'name' => 'Digital Event Management',
-                'address' => 'Jl. Rasuna Said No. 78, Jakarta',
-                'phone' => '021-5551234',
-                'specialization' => 'Technical Support, IT Infrastructure'
-            ],
-            [
-                'name' => 'Premium Audio Visual',
-                'address' => 'Jl. HR Rasuna Said No. 90, Jakarta',
-                'phone' => '021-7778888',
-                'specialization' => 'Audio Visual, Multimedia'
-            ],
-            [
-                'name' => 'Complete Event Solutions',
-                'address' => 'Jl. Thamrin No. 56, Jakarta Pusat',
-                'phone' => '021-3334455',
-                'specialization' => 'Full Event Management, Logistics'
-            ],
+        if ($vendors->isEmpty()) {
+            $this->command?->warn('VendorInfoSeeder dilewati: vendor belum tersedia.');
+            return;
+        }
+
+        $fallback = [
+            ['company_name' => 'Vendor Utama A', 'company_address' => 'Jakarta Pusat', 'company_phone' => '021-600001', 'specialization' => 'Teknis Event'],
+            ['company_name' => 'Vendor Utama B', 'company_address' => 'Jakarta Barat', 'company_phone' => '021-600002', 'specialization' => 'Audio Visual'],
+            ['company_name' => 'Vendor Utama C', 'company_address' => 'Jakarta Selatan', 'company_phone' => '021-600003', 'specialization' => 'Jaringan'],
         ];
 
         foreach ($vendors as $index => $vendor) {
-            $companyData = $companies[$index % count($companies)];
-            
+            $default = $fallback[$index % count($fallback)];
             $vendor->update([
-                'company_name' => $companyData['name'],
-                'company_address' => $companyData['address'],
-                'company_phone' => $companyData['phone'],
-                'specialization' => $companyData['specialization'],
+                'company_name' => $vendor->company_name ?: $default['company_name'],
+                'company_address' => $vendor->company_address ?: $default['company_address'],
+                'company_phone' => $vendor->company_phone ?: $default['company_phone'],
+                'specialization' => $vendor->specialization ?: $default['specialization'],
             ]);
         }
 
-        $this->command->info('✅ Updated ' . $vendors->count() . ' vendors with company information');
+        $this->command?->info('VendorInfoSeeder selesai: profil vendor dipastikan terisi.');
     }
 }

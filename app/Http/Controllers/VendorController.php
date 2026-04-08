@@ -17,15 +17,22 @@ class VendorController extends Controller
     {
         try {
             Log::info('Fetching vendor tickets for user: ' . Auth::id());
+            $activeStatuses = ['new', 'in_progress', 'waiting_response'];
             
             $query = Ticket::with(['user', 'category', 'slaTracking'])
                 ->where('assigned_to', Auth::id())
+                ->whereIn('status', $activeStatuses)
                 ->orderBy('created_at', 'desc');
 
             // Filter by status
             if ($request->has('status') && $request->status !== '') {
-                $query->where('status', $request->status);
-                Log::info('Filtering by status: ' . $request->status);
+                if (in_array($request->status, $activeStatuses, true)) {
+                    $query->where('status', $request->status);
+                    Log::info('Filtering by status: ' . $request->status);
+                } else {
+                    // Prevent resolved/closed tickets from appearing in active vendor ticket page.
+                    $query->whereRaw('1 = 0');
+                }
             }
 
             // Filter by priority - FIXED: removed typo '-'
@@ -112,7 +119,7 @@ class VendorController extends Controller
         try {
             Log::info('Fetching ticket detail for vendor. Ticket ID: ' . $ticketId . ', User ID: ' . Auth::id());
             
-            $ticket = Ticket::with(['user', 'category', 'slaTracking', 'attachments'])
+            $ticket = Ticket::with(['user', 'category', 'slaTracking', 'attachments', 'feedback', 'additionalInfos.user'])
                 ->where('id', $ticketId)
                 ->where('assigned_to', Auth::id())
                 ->firstOrFail();
@@ -381,10 +388,9 @@ class VendorController extends Controller
         try {
             Log::info('Fetching vendor history for user: ' . Auth::id());
 
-            $query = Ticket::with(['user', 'category', 'slaTracking'])
+            $baseQuery = Ticket::query()
                 ->where('assigned_to', Auth::id())
-                ->whereIn('status', ['resolved', 'closed'])
-                ->orderBy('resolved_at', 'desc');
+                ->whereIn('status', ['resolved', 'closed']);
 
             // Filter by date range
             if ($request->has('start_date') && $request->start_date && 
@@ -392,13 +398,22 @@ class VendorController extends Controller
                 $startDate = Carbon::parse($request->start_date)->startOfDay();
                 $endDate = Carbon::parse($request->end_date)->endOfDay();
                 
-                $query->whereBetween('resolved_at', [$startDate, $endDate]);
+                $baseQuery->whereBetween('resolved_at', [$startDate, $endDate]);
             }
 
             // Filter by priority
             if ($request->has('priority') && $request->priority !== '') {
-                $query->where('priority', $request->priority);
+                $baseQuery->where('priority', $request->priority);
             }
+
+            $statusCounts = (clone $baseQuery)
+                ->selectRaw('status, COUNT(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
+
+            $query = (clone $baseQuery)
+                ->with(['user', 'category', 'slaTracking'])
+                ->orderBy('resolved_at', 'desc');
 
             $perPage = $request->per_page ?? 15;
             $tickets = $query->paginate($perPage);
@@ -410,6 +425,11 @@ class VendorController extends Controller
                 'last_page' => $tickets->lastPage(),
                 'per_page' => $tickets->perPage(),
                 'total' => $tickets->total(),
+                'summary' => [
+                    'total' => $tickets->total(),
+                    'resolved' => (int) ($statusCounts['resolved'] ?? 0),
+                    'closed' => (int) ($statusCounts['closed'] ?? 0),
+                ],
             ]);
 
         } catch (\Exception $e) {

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -128,8 +128,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==================== CLIENT ROUTES ====================
     Route::middleware('role:client')->prefix('client')->group(function () {
         Route::get('/tickets', [ClientController::class, 'myTickets']);
+        Route::get('/tickets/history', [ClientController::class, 'ticketHistory']);    // ← HARUS PERTAMA
+        Route::get('/tickets/{ticket}', [ClientController::class, 'show']);            // ← Baru {ticket}
+        Route::post('/tickets/{ticket}/additional-info', [ClientController::class, 'submitAdditionalInfo']);
         Route::post('/tickets/{ticket}/feedback', [ClientController::class, 'submitFeedback']);
-        Route::get('/tickets/history', [ClientController::class, 'ticketHistory']);
         Route::prefix('settings')->group(function () {
             Route::post('/profile', [ClientSettingsController::class, 'updateProfile']);
             Route::delete('/avatar', [ClientSettingsController::class, 'deleteAvatar']);

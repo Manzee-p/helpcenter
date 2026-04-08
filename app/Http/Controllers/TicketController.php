@@ -267,7 +267,8 @@ class TicketController extends Controller
                 'assignedTo',
                 'attachments',
                 'feedback',
-                'slaTracking'
+                'slaTracking',
+                'additionalInfos.user'
             ])->find($id);
 
             if (!$ticket) {

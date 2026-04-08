@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Feedback;
 use App\Models\Ticket;
+use App\Models\TicketAdditionalInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -97,6 +98,165 @@ class ClientController extends Controller
     }
 
     /**
+     * Get detail of a single ticket owned by the authenticated client
+     */
+    public function show($id)
+    {
+        try {
+            Log::info('Fetching ticket detail', [
+                'ticket_id' => $id,
+                'user_id'   => Auth::id(),
+            ]);
+
+            // Validasi ID
+            if (!is_numeric($id) || $id <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID tiket tidak valid',
+                ], 400);
+            }
+
+            $ticket = Ticket::with([
+                'category',
+                'assignedTo',
+                'attachments',
+                'feedback',
+                'slaTracking',
+                'additionalInfos.user',
+            ])
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+            if (!$ticket) {
+                Log::warning('Ticket not found or unauthorized', [
+                    'ticket_id' => $id,
+                    'auth_user_id' => Auth::id(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tiket tidak ditemukan atau bukan milik Anda',
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data'    => $ticket,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching ticket detail: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail tiket',
+                'error'   => config('app.debug') ? $e->getMessage() : 'Internal server error',
+            ], 500);
+        }
+    }
+
+    /**
+     * Submit additional information when vendor requests more info.
+     */
+    public function submitAdditionalInfo(Request $request, $ticketId)
+    {
+        try {
+            $ticket = Ticket::where('user_id', Auth::id())->findOrFail($ticketId);
+
+            if ($ticket->status !== 'waiting_response') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Informasi tambahan hanya dapat dikirim saat status menunggu respons.',
+                ], 400);
+            }
+
+            $validated = $request->validate([
+                'note' => 'nullable|string|max:2000',
+                'photo' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+                'photos' => 'nullable|array|max:5',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:5120',
+            ]);
+
+            $note = trim((string) ($validated['note'] ?? ''));
+            $photos = [];
+            if ($request->hasFile('photos')) {
+                $photos = $request->file('photos');
+            } elseif ($request->hasFile('photo')) {
+                $photos = [$request->file('photo')];
+            }
+            $hasPhoto = count($photos) > 0;
+
+            if ($note === '' && !$hasPhoto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Isi catatan atau unggah foto terlebih dahulu.',
+                ], 422);
+            }
+
+            $infos = [];
+            if ($hasPhoto) {
+                foreach ($photos as $index => $file) {
+                    $path = $file->store('ticket-additional-info', 'public');
+                    $info = TicketAdditionalInfo::create([
+                        'ticket_id' => $ticket->id,
+                        'user_id' => Auth::id(),
+                        // simpan catatan pada item pertama agar tidak duplikat berulang
+                        'note' => $index === 0 && $note !== '' ? $note : null,
+                        'photo_path' => $path,
+                        'photo_name' => $file->getClientOriginalName(),
+                        'photo_type' => $file->getClientMimeType(),
+                        'photo_size' => $file->getSize(),
+                    ]);
+                    $infos[] = $info->load('user');
+                }
+            } else {
+                $info = TicketAdditionalInfo::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id' => Auth::id(),
+                    'note' => $note !== '' ? $note : null,
+                ]);
+                $infos[] = $info->load('user');
+            }
+
+            if ($ticket->assigned_to) {
+                NotificationController::createNotification(
+                    $ticket->assigned_to,
+                    'additional_info_submitted',
+                    'Informasi Tambahan Diterima',
+                    "Klien mengirim informasi tambahan untuk tiket {$ticket->ticket_number}.",
+                    $ticket->id
+                );
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Informasi tambahan berhasil dikirim.',
+                'data' => $infos,
+            ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket tidak ditemukan atau bukan milik Anda',
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Error submitting additional info: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim informasi tambahan.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+            ], 500);
+        }
+    }
+
+    /**
      * Submit feedback for a resolved/closed ticket
      */
     public function submitFeedback(Request $request, $ticketId)
@@ -129,21 +289,21 @@ class ClientController extends Controller
 
             // Validate feedback data
             $validated = $request->validate([
-                'rating' => 'required|integer|min:1|max:5',
+                'rating'  => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string|max:1000',
             ]);
 
             // Create feedback
             $feedback = Feedback::create([
                 'ticket_id' => $ticket->id,
-                'user_id' => Auth::id(),
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'] ?? null,
+                'user_id'   => Auth::id(),
+                'rating'    => $validated['rating'],
+                'comment'   => $validated['comment'] ?? null,
             ]);
 
             Log::info('Feedback submitted successfully', [
                 'feedback_id' => $feedback->id,
-                'rating' => $feedback->rating
+                'rating'      => $feedback->rating
             ]);
 
             // Notify vendor if assigned
@@ -162,8 +322,8 @@ class ClientController extends Controller
             }
 
             return response()->json([
-                'success' => true,
-                'message' => 'Feedback submitted successfully',
+                'success'  => true,
+                'message'  => 'Feedback submitted successfully',
                 'feedback' => $feedback,
             ], 201);
 
@@ -182,7 +342,7 @@ class ClientController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors'  => $e->errors()
             ], 422);
 
         } catch (\Exception $e) {
@@ -192,7 +352,7 @@ class ClientController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to submit feedback',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'error'   => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
@@ -211,8 +371,7 @@ class ClientController extends Controller
             // Filter by date range
             if ($request->filled('start_date') && $request->filled('end_date')) {
                 $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
-                
+                $endDate   = \Carbon\Carbon::parse($request->end_date)->endOfDay();
                 $query->whereBetween('created_at', [$startDate, $endDate]);
             }
 
@@ -246,14 +405,14 @@ class ClientController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $tickets->items(),
+                'data'    => $tickets->items(),
                 'pagination' => [
                     'current_page' => $tickets->currentPage(),
-                    'last_page' => $tickets->lastPage(),
-                    'per_page' => $tickets->perPage(),
-                    'total' => $tickets->total(),
-                    'from' => $tickets->firstItem(),
-                    'to' => $tickets->lastItem()
+                    'last_page'    => $tickets->lastPage(),
+                    'per_page'     => $tickets->perPage(),
+                    'total'        => $tickets->total(),
+                    'from'         => $tickets->firstItem(),
+                    'to'           => $tickets->lastItem()
                 ]
             ]);
 
@@ -264,7 +423,7 @@ class ClientController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch ticket history',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'error'   => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }
@@ -279,9 +438,9 @@ class ClientController extends Controller
 
             $stats = [
                 'total_tickets' => Ticket::where('user_id', $clientId)->count(),
-                'new_tickets' => Ticket::where('user_id', $clientId)->where('status', 'new')->count(),
-                'in_progress' => Ticket::where('user_id', $clientId)->where('status', 'in_progress')->count(),
-                'resolved' => Ticket::where('user_id', $clientId)->whereIn('status', ['resolved', 'closed'])->count(),
+                'new_tickets'   => Ticket::where('user_id', $clientId)->where('status', 'new')->count(),
+                'in_progress'   => Ticket::where('user_id', $clientId)->where('status', 'in_progress')->count(),
+                'resolved'      => Ticket::where('user_id', $clientId)->whereIn('status', ['resolved', 'closed'])->count(),
             ];
 
             // Get recent tickets
@@ -300,9 +459,9 @@ class ClientController extends Controller
                 ->get();
 
             return response()->json([
-                'success' => true,
-                'stats' => $stats,
-                'recent_tickets' => $recentTickets,
+                'success'          => true,
+                'stats'            => $stats,
+                'recent_tickets'   => $recentTickets,
                 'pending_feedback' => $pendingFeedback,
             ]);
 
@@ -312,7 +471,7 @@ class ClientController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch dashboard data',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'error'   => config('app.debug') ? $e->getMessage() : 'Internal server error'
             ], 500);
         }
     }

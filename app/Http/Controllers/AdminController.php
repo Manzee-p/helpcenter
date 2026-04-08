@@ -422,6 +422,12 @@ class AdminController extends Controller
         ]);
 
         $ticket = Ticket::findOrFail($ticketId);
+
+        if ($ticket->status === 'closed') {
+            return response()->json([
+                'message' => 'Tiket yang sudah ditutup tidak bisa ditugaskan ulang.'
+            ], 422);
+        }
         
         $vendor = User::findOrFail($validated['assigned_to']);
         if (!$vendor->isVendor() && !$vendor->isAdmin()) {
@@ -433,6 +439,7 @@ class AdminController extends Controller
         $ticket->update([
             'assigned_to' => $validated['assigned_to'],
             'assigned_at' => now(),
+            // Otomatis masuk proses saat admin menugaskan vendor.
             'status' => 'in_progress',
         ]);
 
@@ -453,7 +460,7 @@ class AdminController extends Controller
         );
 
         return response()->json([
-            'message' => 'Ticket assigned successfully',
+            'message' => 'Tiket berhasil ditugaskan dan status otomatis menjadi diproses.',
             'ticket' => $ticket->load('assignedTo'),
         ]);
     }
