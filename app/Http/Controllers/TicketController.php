@@ -172,6 +172,7 @@ class TicketController extends Controller
                             'file_path' => $path,
                             'file_type' => $file->getClientMimeType(),
                             'file_size' => $file->getSize(),
+                            'file_type' => $file->getMimeType(), 
                         ]);
 
                         Log::info('Attachment saved', ['file_name' => $file->getClientOriginalName()]);

@@ -122,4 +122,40 @@ class Ticket extends Model
     {
         return !is_null($this->created_by_admin);
     }
+
+    public function getStatusLabelAttribute()
+    {
+        return match ($this->status) {
+            'new' => 'Baru',
+            'in_progress' => 'Dalam Proses',
+            'waiting_response' => 'Menunggu Respon',
+            'resolved' => 'Selesai',
+            'closed' => 'Ditutup',
+            default => $this->status ?? '-',
+        };
+    }
+
+    public function assignedVendor() {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function feedbacks()
+    {
+        return $this->hasMany(\App\Models\Feedback::class, 'ticket_id');
+    }
+
+    public function additionalInfos()
+    {
+        return $this->hasMany(\App\Models\TicketAdditionalInfo::class, 'ticket_id');
+    }
+
+    public function deletionRequests()
+    {
+        return $this->hasMany(\App\Models\TicketDeletionRequest::class, 'ticket_id');
+    }
+
+    public function latestDeletionRequest()
+    {
+        return $this->hasOne(\App\Models\TicketDeletionRequest::class, 'ticket_id')->latestOfMany();
+    }
 }

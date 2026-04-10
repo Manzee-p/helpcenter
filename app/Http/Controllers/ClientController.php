@@ -2,75 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Feedback;
 use App\Models\Ticket;
+use App\Models\Feedback;
+use App\Models\TicketCategory;
+use App\Models\TicketAdditionalInfo;
+use App\Models\TicketDeletionRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
-    /**
-     * Get all tickets for the authenticated client
-     */
+    public function __construct()
+    {
+        $this->middleware(['auth', 'role:client']);
+    }
+
+    // ─── My Tickets (active) ──────────────────────────────────────────
     public function myTickets(Request $request)
     {
-        try {
-            Log::info('Fetching tickets for client: ' . Auth::id());
+        $userId = Auth::id();
+        $query  = Ticket::with(['category', 'assignedVendor', 'feedback', 'latestDeletionRequest'])
+                    ->where('user_id', $userId);
 
-            $query = Ticket::with(['category', 'assignedTo', 'slaTracking', 'attachments', 'feedback'])
-                ->where('user_id', Auth::id());
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
-            // Filter by status
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('ticket_number', 'like', "%{$search}%");
+            });
+        }
 
-            // Filter by priority
-            if ($request->filled('priority')) {
-                $query->where('priority', $request->priority);
-            }
+        $tickets = $query
+            ->orderByRaw("CASE WHEN status = 'new' THEN 0 ELSE 1 END")
+            ->orderBy('created_at', 'desc')
+            ->paginate(12);
 
-            // Search
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('ticket_number', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
-                });
-            }
+        // Pending feedback — for the top panel
+        $pendingFeedbackTickets = Ticket::where('user_id', $userId)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereDoesntHave('feedback')
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
-            // Sorting
-            if ($request->filled('sort')) {
-                switch ($request->sort) {
-                    case 'oldest':
-                        $query->orderBy('created_at', 'asc');
-                        break;
-                    case 'priority':
-                        $query->orderByRaw("
-                            CASE priority
-                                WHEN 'urgent' THEN 1
-                                WHEN 'high' THEN 2
-                                WHEN 'medium' THEN 3
-                                WHEN 'low' THEN 4
-                                ELSE 5
-                            END
-                        ");
-                        break;
-                    default: // newest
-                        $query->orderBy('created_at', 'desc');
-                }
-            } else {
-                $query->orderBy('created_at', 'desc');
-            }
-
-            // Pagination
-            $perPage = $request->input('per_page', 15);
-            $tickets = $query->paginate($perPage);
-
-            Log::info('Found ' . $tickets->total() . ' tickets for client');
-
+        if ($this->isApiRequest($request)) {
             return response()->json([
                 'success' => true,
                 'data' => $tickets->items(),
@@ -80,240 +61,372 @@ class ClientController extends Controller
                     'per_page' => $tickets->perPage(),
                     'total' => $tickets->total(),
                     'from' => $tickets->firstItem(),
-                    'to' => $tickets->lastItem()
-                ]
+                    'to' => $tickets->lastItem(),
+                ],
+                'pending_feedback' => $pendingFeedbackTickets,
+            ]);
+        }
+
+        return view('client.tickets', compact('tickets', 'pendingFeedbackTickets'));
+    }
+
+    // ─── Create ticket form ───────────────────────────────────────────
+    public function create()
+    {
+        $categories = TicketCategory::orderBy('name')->get();
+        return view('client.create', compact('categories'));
+    }
+
+    // ─── Store new ticket ─────────────────────────────────────────────
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title'         => 'required|string|max:255',
+            'category_id'   => 'required|exists:ticket_categories,id',
+            'description'   => 'required|string|max:2000',
+            'urgency_level' => 'nullable|in:low,medium,high,critical',
+            'event_name'    => 'nullable|string|max:255',
+            'venue'         => 'nullable|string|max:255',
+            'area'          => 'nullable|string|max:255',
+            'attachments'   => 'nullable|array|max:5',
+            'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
+        ]);
+
+        $ticketNumber = 'TKT-' . strtoupper(uniqid());
+
+        DB::beginTransaction();
+
+        try {
+            $ticket = Ticket::create([
+                'ticket_number' => $ticketNumber,
+                'title'         => $validated['title'],
+                'category_id'   => $validated['category_id'],
+                'description'   => $validated['description'],
+                'urgency_level' => $validated['urgency_level'] ?? null,
+                'event_name'    => $validated['event_name']    ?? null,
+                'venue'         => $validated['venue']         ?? null,
+                'area'          => $validated['area']          ?? null,
+                'user_id'       => Auth::id(),
+                'status'        => 'new',
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Error fetching client tickets: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('ticket-attachments/' . $ticket->id, 'public');
+                    $ticket->attachments()->create([
+                        'file_path' => $path,
+                        'file_name' => $file->getClientOriginalName(),
+                        'file_size' => $file->getSize(),
+                        'file_type' => $file->getMimeType(),
+                    ]);
+                }
+            }
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch tickets',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+            DB::commit();
+
+            return redirect()->route('client.tickets.index')
+                ->with('success', 'Tiket berhasil dibuat! Nomor tiket: ' . $ticketNumber);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Create ticket failed: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'title' => $validated['title'] ?? null,
+            ]);
+
+            return back()->withInput()->with('error', 'Tiket gagal dibuat. Coba lagi.');
         }
     }
 
-    /**
-     * Submit feedback for a resolved/closed ticket
-     */
+    // ─── Show single ticket ───────────────────────────────────────────
+    public function show(Request $request, $id)
+    {
+        $ticket = Ticket::with(['category', 'assignedVendor', 'feedback', 'attachments', 'additionalInfos.user', 'user', 'assignedTo', 'deletionRequests.reviewer'])
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        if ($this->isApiRequest($request)) {
+            return response()->json([
+                'success' => true,
+                'data' => $ticket,
+            ]);
+        }
+
+        return view('client.show', compact('ticket'));
+    }
+
+    // ─── Ticket history (all, with filtering) ────────────────────────
+    public function ticketHistory(Request $request)
+    {
+        $userId = Auth::id();
+        $query  = Ticket::with(['category', 'assignedVendor', 'feedback'])
+                    ->where('user_id', $userId);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('ticket_number', 'like', "%{$search}%");
+            });
+        }
+
+        $tickets = $query->orderBy('created_at', 'desc')->paginate(12);
+
+        // Pending feedback items for the highlight panel
+        $pendingFeedbackItems = Ticket::where('user_id', $userId)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereDoesntHave('feedback')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        if ($this->isApiRequest($request)) {
+            return response()->json([
+                'success' => true,
+                'data' => $tickets->items(),
+                'pagination' => [
+                    'current_page' => $tickets->currentPage(),
+                    'last_page' => $tickets->lastPage(),
+                    'per_page' => $tickets->perPage(),
+                    'total' => $tickets->total(),
+                    'from' => $tickets->firstItem(),
+                    'to' => $tickets->lastItem(),
+                ],
+                'pending_feedback' => $pendingFeedbackItems,
+            ]);
+        }
+
+        return view('client.history', compact('tickets', 'pendingFeedbackItems'));
+    }
+
+    // ─── Pending ratings ──────────────────────────────────────────────
+    public function pendingRatings()
+    {
+        $tickets = Ticket::with(['category', 'assignedVendor'])
+            ->where('user_id', Auth::id())
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereDoesntHave('feedback')
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('client.pending_ratings', compact('tickets'));
+    }
+
+    // ─── Submit feedback ──────────────────────────────────────────────
+    public function storeFeedback(Request $request, $ticketId)
+    {
+        $request->validate([
+            'rating'  => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:1000',
+        ]);
+
+        $ticket = Ticket::where('user_id', Auth::id())
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereDoesntHave('feedback')
+            ->findOrFail($ticketId);
+
+        Feedback::create([
+            'ticket_id' => $ticket->id,
+            'user_id'   => Auth::id(),
+            'rating'    => $request->rating,
+            'comment'   => $request->comment,
+        ]);
+
+        return back()->with('success', 'Rating berhasil dikirim. Terima kasih!');
+    }
+
     public function submitFeedback(Request $request, $ticketId)
     {
         try {
-            Log::info('Client submitting feedback', [
-                'client_id' => Auth::id(),
-                'ticket_id' => $ticketId
-            ]);
-
-            // Find ticket and verify ownership
-            $ticket = Ticket::where('user_id', Auth::id())
-                ->findOrFail($ticketId);
-
-            // Check if ticket is resolved or closed
-            if (!in_array($ticket->status, ['resolved', 'closed'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Can only provide feedback for resolved or closed tickets'
-                ], 400);
-            }
-
-            // Check if feedback already exists
-            if ($ticket->feedback) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Feedback already submitted for this ticket'
-                ], 400);
-            }
-
-            // Validate feedback data
-            $validated = $request->validate([
-                'rating' => 'required|integer|min:1|max:5',
+            $request->validate([
+                'rating'  => 'required|integer|min:1|max:5',
                 'comment' => 'nullable|string|max:1000',
             ]);
 
-            // Create feedback
+            $ticket = Ticket::where('user_id', Auth::id())->findOrFail($ticketId);
+
+            if (!in_array($ticket->status, ['resolved', 'closed'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Feedback hanya bisa untuk tiket resolved/closed.',
+                ], 400);
+            }
+
+            if ($ticket->feedback) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Feedback untuk tiket ini sudah pernah dikirim.',
+                ], 400);
+            }
+
             $feedback = Feedback::create([
                 'ticket_id' => $ticket->id,
-                'user_id' => Auth::id(),
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'] ?? null,
+                'user_id'   => Auth::id(),
+                'rating'    => $request->rating,
+                'comment'   => $request->comment,
             ]);
-
-            Log::info('Feedback submitted successfully', [
-                'feedback_id' => $feedback->id,
-                'rating' => $feedback->rating
-            ]);
-
-            // Notify vendor if assigned
-            if ($ticket->assigned_to) {
-                try {
-                    NotificationController::createNotification(
-                        $ticket->assigned_to,
-                        'feedback_received',
-                        'New Feedback Received',
-                        "Client provided {$validated['rating']}-star rating for ticket: {$ticket->title}",
-                        $ticket->id
-                    );
-                } catch (\Exception $e) {
-                    Log::warning('Failed to send feedback notification: ' . $e->getMessage());
-                }
-            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Feedback submitted successfully',
-                'feedback' => $feedback,
+                'message' => 'Feedback berhasil dikirim.',
+                'data' => $feedback,
             ], 201);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::warning('Ticket not found or unauthorized', [
-                'ticket_id' => $ticketId,
-                'client_id' => Auth::id()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Ticket not found or you do not have access to this ticket'
-            ], 404);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors(),
             ], 422);
-
-        } catch (\Exception $e) {
-            Log::error('Error submitting feedback: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
+        } catch (\Throwable $e) {
+            Log::error('Submit feedback error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to submit feedback',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'message' => 'Gagal mengirim feedback.',
             ], 500);
         }
     }
 
-    /**
-     * Get ticket history with feedback
-     */
-    public function ticketHistory(Request $request)
+    public function submitAdditionalInfo(Request $request, $ticketId)
     {
         try {
-            Log::info('Fetching ticket history for client: ' . Auth::id());
+            $ticket = Ticket::where('user_id', Auth::id())->findOrFail($ticketId);
 
-            $query = Ticket::with(['category', 'assignedTo', 'feedback', 'slaTracking'])
-                ->where('user_id', Auth::id());
-
-            // Filter by date range
-            if ($request->filled('start_date') && $request->filled('end_date')) {
-                $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
-                $endDate = \Carbon\Carbon::parse($request->end_date)->endOfDay();
-                
-                $query->whereBetween('created_at', [$startDate, $endDate]);
+            if ($ticket->status !== 'waiting_response') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Informasi tambahan hanya dapat dikirim saat status waiting_response.',
+                ], 400);
             }
 
-            // Filter by status
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // Filter by priority
-            if ($request->filled('priority')) {
-                $query->where('priority', $request->priority);
-            }
-
-            // Search
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('ticket_number', 'like', "%{$search}%");
-                });
-            }
-
-            // Order by created_at desc
-            $query->orderBy('created_at', 'desc');
-
-            // Pagination
-            $perPage = $request->input('per_page', 20);
-            $tickets = $query->paginate($perPage);
-
-            Log::info('Found ' . $tickets->total() . ' tickets in history');
-
-            return response()->json([
-                'success' => true,
-                'data' => $tickets->items(),
-                'pagination' => [
-                    'current_page' => $tickets->currentPage(),
-                    'last_page' => $tickets->lastPage(),
-                    'per_page' => $tickets->perPage(),
-                    'total' => $tickets->total(),
-                    'from' => $tickets->firstItem(),
-                    'to' => $tickets->lastItem()
-                ]
+            $validated = $request->validate([
+                'note' => 'nullable|string|max:2000',
+                'photo' => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf|max:5120',
+                'photos' => 'nullable|array|max:5',
+                'photos.*' => 'file|mimes:jpg,jpeg,png,webp|max:5120',
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Error fetching ticket history: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            $note = trim((string) ($validated['note'] ?? ''));
+            $photos = $request->hasFile('photos')
+                ? $request->file('photos')
+                : ($request->hasFile('photo') ? [$request->file('photo')] : []);
+
+            if ($note === '' && empty($photos)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Isi catatan atau upload foto terlebih dahulu.',
+                ], 422);
+            }
+
+            $created = [];
+            if (!empty($photos)) {
+                foreach ($photos as $index => $file) {
+                    $path = $file->store('ticket-additional-info', 'public');
+                    $created[] = TicketAdditionalInfo::create([
+                        'ticket_id' => $ticket->id,
+                        'user_id' => Auth::id(),
+                        'note' => $index === 0 && $note !== '' ? $note : null,
+                        'photo_path' => $path,
+                        'photo_name' => $file->getClientOriginalName(),
+                        'photo_type' => $file->getClientMimeType(),
+                        'photo_size' => $file->getSize(),
+                    ]);
+                }
+            } else {
+                $created[] = TicketAdditionalInfo::create([
+                    'ticket_id' => $ticket->id,
+                    'user_id' => Auth::id(),
+                    'note' => $note,
+                ]);
+            }
+
+            if ($ticket->assigned_to) {
+                NotificationController::createNotification(
+                    $ticket->assigned_to,
+                    'additional_info_submitted',
+                    'Informasi Tambahan Masuk',
+                    "Klien mengirim informasi tambahan untuk tiket {$ticket->ticket_number}.",
+                    $ticket->id
+                );
+            }
+
+            if ($this->isApiRequest($request)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Informasi tambahan berhasil dikirim.',
+                    'data' => $created,
+                ], 201);
+            }
+
+            return back()->with('success', 'Informasi tambahan berhasil dikirim.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (!$this->isApiRequest($request)) {
+                return back()->withErrors($e->errors())->withInput();
+            }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch ticket history',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                'message' => 'Validasi gagal.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Submit additional info error: ' . $e->getMessage());
+
+            if (!$this->isApiRequest($request)) {
+                return back()->with('error', 'Gagal mengirim informasi tambahan.');
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim informasi tambahan.',
             ], 500);
         }
     }
 
-    /**
-     * Get client dashboard statistics
-     */
-    public function dashboard()
+    public function submitDeletionRequest(Request $request, $ticketId)
     {
-        try {
-            $clientId = Auth::id();
+        $ticket = Ticket::where('user_id', Auth::id())->findOrFail($ticketId);
 
-            $stats = [
-                'total_tickets' => Ticket::where('user_id', $clientId)->count(),
-                'new_tickets' => Ticket::where('user_id', $clientId)->where('status', 'new')->count(),
-                'in_progress' => Ticket::where('user_id', $clientId)->where('status', 'in_progress')->count(),
-                'resolved' => Ticket::where('user_id', $clientId)->whereIn('status', ['resolved', 'closed'])->count(),
-            ];
+        $validated = $request->validate([
+            'reasons' => 'required|array|min:1|max:5',
+            'reasons.*' => 'required|string|in:' . implode(',', TicketDeletionRequest::REASONS),
+            'custom_reason' => 'required|string|min:10|max:1500',
+        ]);
 
-            // Get recent tickets
-            $recentTickets = Ticket::with(['category', 'assignedTo'])
-                ->where('user_id', $clientId)
-                ->orderBy('created_at', 'desc')
-                ->take(5)
-                ->get();
+        $existingPending = TicketDeletionRequest::where('ticket_id', $ticket->id)
+            ->where('status', 'pending')
+            ->exists();
 
-            // Get tickets pending feedback
-            $pendingFeedback = Ticket::where('user_id', $clientId)
-                ->whereIn('status', ['resolved', 'closed'])
-                ->doesntHave('feedback')
-                ->orderBy('resolved_at', 'desc')
-                ->take(5)
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'stats' => $stats,
-                'recent_tickets' => $recentTickets,
-                'pending_feedback' => $pendingFeedback,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching client dashboard: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch dashboard data',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+        if ($existingPending) {
+            return back()->with('warning', 'Permintaan penghapusan tiket ini masih menunggu persetujuan admin.');
         }
+
+        TicketDeletionRequest::create([
+            'ticket_id' => $ticket->id,
+            'user_id' => Auth::id(),
+            'reasons' => array_values(array_unique($validated['reasons'])),
+            'custom_reason' => $validated['custom_reason'],
+            'status' => 'pending',
+        ]);
+
+        $adminIds = User::where('role', 'admin')->pluck('id');
+        foreach ($adminIds as $adminId) {
+            NotificationController::createNotification(
+                $adminId,
+                'ticket_deletion_request',
+                'Permintaan Hapus Tiket Baru',
+                "Client mengajukan penghapusan tiket {$ticket->ticket_number}.",
+                $ticket->id
+            );
+        }
+
+        return back()->with('success', 'Permintaan penghapusan tiket berhasil dikirim ke admin.');
+    }
+
+    private function isApiRequest(Request $request): bool
+    {
+        return $request->is('api/*') || $request->expectsJson() || $request->wantsJson();
     }
 }

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Validator;
 
 class StatusBoardController extends Controller
 {
+
+
     /**
      * Get public status board (NO AUTH REQUIRED)
      */
@@ -105,51 +107,97 @@ class StatusBoardController extends Controller
      */
     public function index(Request $request)
     {
-        try {
-            $query = StatusBoard::with(['creator:id,name', 'assignedTo:id,name', 'updates']);
+        $query = \App\Models\StatusBoard::query();
 
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            if ($request->filled('category')) {
-                $query->where('category', $request->category);
-            }
-
-            if ($request->filled('severity')) {
-                $query->where('severity', $request->severity);
-            }
-
-            if ($request->filled('search')) {
-                $search = $request->search;
-                $query->where(function($q) use ($search) {
-                    $q->where('title', 'ILIKE', "%{$search}%")
-                      ->orWhere('incident_number', 'ILIKE', "%{$search}%")
-                      ->orWhere('affected_area', 'ILIKE', "%{$search}%");
-                });
-            }
-
-            $statuses = $query->orderBy('started_at', 'desc')
-                             ->paginate($request->input('per_page', 15));
-
-            return response()->json([
-                'success' => true,
-                'data' => $statuses->items(),
-                'pagination' => [
-                    'current_page' => $statuses->currentPage(),
-                    'last_page' => $statuses->lastPage(),
-                    'per_page' => $statuses->perPage(),
-                    'total' => $statuses->total(),
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Get status boards error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memuat data'
-            ], 500);
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('severity')) {
+            $query->where('severity', $request->severity);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                ->orWhere('incident_number', 'like', "%{$search}%");
+            });
+        }
+
+        $statuses = $query->orderBy('started_at', 'desc')->paginate(10);
+
+        // stats
+        $total     = \App\Models\StatusBoard::count();
+        $active    = \App\Models\StatusBoard::whereNotIn('status', ['resolved'])->count();
+        $resolved  = \App\Models\StatusBoard::where('status', 'resolved')->count();
+        $critical  = \App\Models\StatusBoard::where('severity', 'critical')->count();
+
+        return view('admin.status-board.index', compact(
+            'statuses',
+            'total',
+            'active',
+            'resolved',
+            'critical'
+        ));
+    }
+
+    public function create()
+    {
+        return view('admin.status-board.create');
+    }
+
+    public function detail($id)
+    {
+        $status = StatusBoard::with([
+            'creator:id,name',
+            'assignedTo:id,name,email,role',
+            'updates.user:id,name',
+        ])->findOrFail($id);
+
+        return view('admin.status-board.show', compact('status'));
+    }
+
+    public function apiIndex(Request $request)
+    {
+        $query = \App\Models\StatusBoard::with(['creator:id,name', 'assignedTo:id,name', 'updates']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->filled('severity')) {
+            $query->where('severity', $request->severity);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                ->orWhere('incident_number', 'like', "%{$search}%");
+            });
+        }
+
+        $statuses = $query->orderBy('started_at', 'desc')->paginate(15);
+
+        return response()->json([
+            'success' => true,
+            'data' => $statuses->items(),
+            'pagination' => [
+                'current_page' => $statuses->currentPage(),
+                'last_page' => $statuses->lastPage(),
+                'per_page' => $statuses->perPage(),
+                'total' => $statuses->total(),
+            ]
+        ]);
     }
 
     /**
@@ -194,67 +242,53 @@ class StatusBoardController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'category' => 'required|in:power_outage,technical_issue,facility_issue,network_issue,other',
-                'affected_area' => 'nullable|string|max:255',
-                'severity' => 'required|in:critical,high,medium,low',
-                'started_at' => 'required|date',
-                'assigned_to' => 'nullable|exists:users,id',
-                'is_public' => 'boolean',
-                'is_pinned' => 'boolean',
-            ]);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'category' => 'required',
+            'affected_area' => 'nullable|string',
+            'severity' => 'required',
+            'started_at' => 'required|date',
+            'assigned_to' => 'nullable|exists:users,id',
+            'is_public' => 'nullable|boolean',
+            'is_pinned' => 'nullable|boolean',
+        ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
+        $incidentNumber = $this->generateIncidentNumber();
 
-            $validated = $validator->validated();
-            $incidentNumber = $this->generateIncidentNumber();
+        $statusBoard = StatusBoard::create([
+            'incident_number' => $incidentNumber,
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'category' => $validated['category'],
+            'affected_area' => $validated['affected_area'] ?? null,
+            'severity' => $validated['severity'],
+            'started_at' => $validated['started_at'],
+            'created_by' => Auth::id(),
+            'assigned_to' => $validated['assigned_to'] ?? null,
+            'is_public' => $request->boolean('is_public'),
+            'is_pinned' => $request->boolean('is_pinned'),
+            'status' => 'investigating',
+        ]);
 
-            $statusBoard = StatusBoard::create([
-                'incident_number' => $incidentNumber,
-                'title' => $validated['title'],
-                'description' => $validated['description'],
-                'category' => $validated['category'],
-                'affected_area' => $validated['affected_area'] ?? null,
-                'severity' => $validated['severity'],
-                'started_at' => $validated['started_at'],
-                'created_by' => Auth::id(),
-                'assigned_to' => $validated['assigned_to'] ?? null,
-                'is_public' => $validated['is_public'] ?? true,
-                'is_pinned' => $validated['is_pinned'] ?? false,
-                'status' => 'investigating',
-            ]);
+        StatusUpdate::create([
+            'status_board_id' => $statusBoard->id,
+            'user_id' => Auth::id(),
+            'message' => 'Status incident dibuat',
+            'update_type' => 'investigating',
+        ]);
 
-            StatusUpdate::create([
-                'status_board_id' => $statusBoard->id,
-                'user_id' => Auth::id(),
-                'message' => 'Status incident dibuat',
-                'update_type' => 'investigating',
-            ]);
-
-            $statusBoard->load(['creator', 'assignedTo', 'updates.user']);
-
+        if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Status berhasil dibuat',
-                'data' => $statusBoard
+                'data' => $statusBoard->load(['creator:id,name', 'assignedTo:id,name']),
             ], 201);
-
-        } catch (\Exception $e) {
-            Log::error('Create status error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal membuat status'
-            ], 500);
         }
+
+        return redirect()
+            ->route('admin.status-board.index')
+            ->with('success', 'Status berhasil dibuat');
     }
 
     /**

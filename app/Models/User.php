@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Models\TicketDeletionRequest;
 
 class User extends Authenticatable
 {
@@ -228,6 +229,11 @@ class User extends Authenticatable
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function ticketDeletionRequests()
+    {
+        return $this->hasMany(TicketDeletionRequest::class, 'user_id');
     }
 
     // HELPER METHODS

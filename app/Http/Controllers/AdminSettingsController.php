@@ -13,6 +13,12 @@ class AdminSettingsController extends Controller
     /**
      * ✅ ULTIMATE FIX: Update admin profile with GUARANTEED DATABASE SAVE
      */
+
+    public function index()
+    {
+        return view('admin.settings.index');
+    }
+    
     public function updateProfile(Request $request)
     {
         try {

@@ -12,45 +12,18 @@ class NotificationController extends Controller
     /**
      * Get user notifications
      */
-    public function index(Request $request)
+    public function index()
     {
-        try {
-            // Validasi user authenticated
-            if (!Auth::check()) {
-                return response()->json([
-                    'message' => 'Unauthenticated'
-                ], 401);
-            }
-
-            $query = Notification::where('user_id', Auth::id())
-                ->orderBy('created_at', 'desc');
-
-            // Filter unread only
-            if ($request->filled('unread_only') && $request->unread_only === 'true') {
-                $query->whereNull('read_at');
-            }
-
-            $notifications = $query->get();
-
+        if (request()->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'data' => $notifications,
-                'total' => $notifications->count(),
-                'unread' => $notifications->whereNull('read_at')->count()
+                'data' => [],
+                'total' => 0,
+                'unread' => 0
             ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Get notifications error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil notifikasi',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
         }
+
+        return view('notifications.index');
     }
 
     /**

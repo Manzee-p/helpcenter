@@ -18,37 +18,51 @@ class VendorReportController extends Controller
      */
     public function index(Request $request)
     {
-        try {
-            $query = VendorReport::with('vendor');
+        $user = Auth::user();
 
-            $user = Auth::user();
-            
-            // If vendor, show only their reports
-            if ($user->isVendor()) {
-                $query->where('vendor_id', $user->id);
-            }
+        $periodType = $request->get('period_type', 'monthly');
 
-            // Filter by vendor (admin only)
-            if ($user->isAdmin() && $request->has('vendor_id')) {
-                $query->where('vendor_id', $request->vendor_id);
-            }
+        $query = VendorReport::with('vendor');
 
-            // Filter by period type
-            if ($request->has('period_type')) {
-                $query->where('period_type', $request->period_type);
-            }
-
-            $reports = $query->orderBy('period_start', 'desc')
-                ->paginate($request->per_page ?? 15);
-
-            return response()->json($reports);
-        } catch (\Exception $e) {
-            Log::error('Error fetching vendor reports: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Failed to fetch reports',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
+        // kalau vendor → cuma lihat milik sendiri
+        if ($user->isVendor()) {
+            $query->where('vendor_id', $user->id);
         }
+
+        // kalau admin → bisa filter vendor
+        if ($user->isAdmin() && $request->has('vendor_id')) {
+            $query->where('vendor_id', $request->vendor_id);
+        }
+
+        // filter period
+        if ($request->has('period_type')) {
+            $query->where('period_type', $request->period_type);
+        }
+
+        $reports = $query->orderBy('period_start', 'desc')
+            ->paginate(15);
+
+        // ambil report sekarang (yang paling atas)
+        $currentReport = $reports->first();
+
+        // trend dummy (WAJIB ADA biar ga error blade)
+        $monthlyPerformance = VendorReport::where('vendor_id', $user->id)
+            ->orderBy('period_start')
+            ->take(6)
+            ->get()
+            ->map(function ($r) {
+                return [
+                    'month' => \Carbon\Carbon::parse($r->period_start)->format('M'),
+                    'resolved' => $r->resolved_tickets
+                ];
+            });
+
+        return view('vendor.reports.index', compact(
+            'reports',
+            'currentReport',
+            'monthlyPerformance',
+            'periodType'
+        ));
     }
 
     /**
