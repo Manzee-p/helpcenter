@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\TicketCategory;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
 class TicketCategorySeeder extends Seeder
@@ -12,17 +11,16 @@ class TicketCategorySeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    public function run()
+    public function run(): void
     {
         $categories = [
-            ['name' => 'Sound System', 'description' => 'Masalah terkait audio dan sound system'],
-            ['name' => 'Lighting', 'description' => 'Masalah terkait pencahayaan'],
-            ['name' => 'Venue', 'description' => 'Masalah terkait tempat/venue'],
-            ['name' => 'Technical', 'description' => 'Masalah teknis lainnya'],
-            ['name' => 'Logistik', 'description' => 'Masalah pengiriman dan logistik'],
-            ['name' => 'Registrasi', 'description' => 'Masalah registrasi peserta'],
-            ['name' => 'Lainnya', 'description' => 'Masalah lain yang tidak terkategori'],
-        ];  
+            ['name' => 'Sound System', 'description' => 'Gangguan audio, speaker, mic, mixer.'],
+            ['name' => 'Lighting', 'description' => 'Gangguan lampu, kontrol DMX, rigging lampu.'],
+            ['name' => 'Jaringan', 'description' => 'Internet lambat, wifi putus, konfigurasi network.'],
+            ['name' => 'Venue', 'description' => 'Kendala fasilitas lokasi atau ruangan.'],
+            ['name' => 'Perangkat', 'description' => 'Laptop, proyektor, kabel, perangkat pendukung.'],
+            ['name' => 'Lainnya', 'description' => 'Kebutuhan lain di luar kategori utama.'],
+        ];
 
         foreach ($categories as $category) {
             TicketCategory::updateOrCreate(
@@ -34,5 +32,7 @@ class TicketCategorySeeder extends Seeder
                 ]
             );
         }
+
+        $this->command?->info('TicketCategorySeeder selesai: kategori tiket diperbarui.');
     }
 }

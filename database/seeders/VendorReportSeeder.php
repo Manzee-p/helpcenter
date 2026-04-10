@@ -2,165 +2,81 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\VendorReport;
-use App\Models\User;
 use App\Models\Ticket;
+use App\Models\User;
+use App\Models\VendorReport;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Seeder;
 
 class VendorReportSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Clear existing reports first
-        $this->command->info('Clearing existing vendor reports...');
-        VendorReport::truncate();
-        
-        $vendors = User::where('role', 'vendor')->get();
+        $vendors = User::query()->where('role', 'vendor')->where('is_active', true)->get();
 
         if ($vendors->isEmpty()) {
-            $this->command->error('Please run UserSeeder first!');
+            $this->command?->warn('VendorReportSeeder dilewati: vendor aktif belum tersedia.');
             return;
         }
 
-        $count = 0;
-
         foreach ($vendors as $vendor) {
-            $this->command->info("Processing vendor: {$vendor->name}");
-            
-            // Check if vendor has any tickets at all
-            $totalVendorTickets = Ticket::where('assigned_to', $vendor->id)->count();
-            $this->command->info("  Total tickets assigned to {$vendor->name}: {$totalVendorTickets}");
-            
-            // Generate reports for last 6 months
-            for ($i = 5; $i >= 0; $i--) {
-                $periodStart = Carbon::now()->subMonths($i)->startOfMonth();
-                $periodEnd = Carbon::now()->subMonths($i)->endOfMonth();
+            for ($monthOffset = 5; $monthOffset >= 0; $monthOffset--) {
+                $start = Carbon::now()->subMonths($monthOffset)->startOfMonth();
+                $end = Carbon::now()->subMonths($monthOffset)->endOfMonth();
 
-                // Get tickets for this vendor in this period - CHECK created_at instead of assigned_at
-                $tickets = Ticket::where('assigned_to', $vendor->id)
-                    ->where(function($query) use ($periodStart, $periodEnd) {
-                        // Check either assigned_at or created_at within period
-                        $query->whereBetween('assigned_at', [$periodStart, $periodEnd])
-                              ->orWhereBetween('created_at', [$periodStart, $periodEnd]);
-                    })
+                $tickets = Ticket::query()
+                    ->where('assigned_to', $vendor->id)
+                    ->whereBetween('created_at', [$start, $end])
                     ->with(['category', 'slaTracking'])
                     ->get();
 
-                $this->command->info("  Found {$tickets->count()} tickets for {$periodStart->format('M Y')}");
+                $total = $tickets->count();
+                $resolved = $tickets->whereIn('status', ['resolved', 'closed'])->count();
+                $pending = $tickets->whereIn('status', ['new', 'in_progress', 'waiting_response'])->count();
 
-                if ($tickets->isEmpty()) {
-                    $this->command->warn("  - No tickets for {$periodStart->format('M Y')} - Creating empty report");
-                    
-                    // Create empty report to show in the table
-                    VendorReport::updateOrCreate(
-                        [
-                            'vendor_id' => $vendor->id,
-                            'period_start' => $periodStart,
-                            'period_end' => $periodEnd,
-                        ],
-                        [
-                            'period_type' => 'monthly',
-                            'total_tickets' => 0,
-                            'resolved_tickets' => 0,
-                            'pending_tickets' => 0,
-                            'avg_response_time' => null,
-                            'avg_resolution_time' => null,
-                            'sla_compliance_rate' => null,
-                            'tickets_by_category' => [],
-                            'tickets_by_priority' => [],
-                        ]
-                    );
-                    $count++;
-                    continue;
-                }
+                $avgResponse = $tickets
+                    ->filter(fn ($t) => $t->slaTracking && $t->slaTracking->actual_response_time !== null)
+                    ->avg(fn ($t) => $t->slaTracking->actual_response_time);
 
-                $totalTickets = $tickets->count();
-                $resolvedTickets = $tickets->whereIn('status', ['resolved', 'closed'])->count();
-                $pendingTickets = $totalTickets - $resolvedTickets;
+                $avgResolution = $tickets
+                    ->filter(fn ($t) => $t->slaTracking && $t->slaTracking->actual_resolution_time !== null)
+                    ->avg(fn ($t) => $t->slaTracking->actual_resolution_time);
 
-                // Calculate averages
-                $ticketsWithResponse = $tickets->filter(fn($t) => $t->slaTracking && $t->slaTracking->actual_response_time);
-                $avgResponseTime = $ticketsWithResponse->count() > 0 
-                    ? round($ticketsWithResponse->avg(fn($t) => $t->slaTracking->actual_response_time), 2)
-                    : null;
+                $slaRows = $tickets->filter(fn ($t) => $t->slaTracking && $t->slaTracking->response_sla_met !== null);
+                $slaMet = $slaRows->filter(fn ($t) => (bool) $t->slaTracking->response_sla_met)->count();
+                $slaCompliance = $slaRows->count() > 0 ? round(($slaMet / $slaRows->count()) * 100, 2) : null;
 
-                $ticketsWithResolution = $tickets->filter(fn($t) => $t->slaTracking && $t->slaTracking->actual_resolution_time);
-                $avgResolutionTime = $ticketsWithResolution->count() > 0
-                    ? round($ticketsWithResolution->avg(fn($t) => $t->slaTracking->actual_resolution_time), 2)
-                    : null;
+                $byCategory = $tickets
+                    ->groupBy(fn ($t) => $t->category?->name ?? 'Tanpa Kategori')
+                    ->map(fn ($rows) => $rows->count())
+                    ->toArray();
 
-                // SLA compliance - FIXED: Use filter instead of where
-                $ticketsWithSla = $tickets->filter(fn($t) => $t->slaTracking && $t->slaTracking->response_sla_met !== null);
-                
-                $slaCompliance = null;
-                if ($ticketsWithSla->count() > 0) {
-                    $slaMetCount = $ticketsWithSla->filter(function($t) {
-                        $responseMet = $t->slaTracking->response_sla_met;
-                        
-                        // If ticket is resolved, check resolution SLA too
-                        if (in_array($t->status, ['resolved', 'closed']) && $t->slaTracking->resolution_sla_met !== null) {
-                            return $responseMet && $t->slaTracking->resolution_sla_met;
-                        }
-                        
-                        return $responseMet;
-                    })->count();
-                    
-                    $slaCompliance = round(($slaMetCount / $ticketsWithSla->count()) * 100, 2);
-                }
+                $byPriority = $tickets
+                    ->groupBy('priority')
+                    ->map(fn ($rows) => $rows->count())
+                    ->toArray();
 
-                // Group by category
-                $ticketsByCategory = $tickets->groupBy(function($ticket) {
-                    return $ticket->category ? $ticket->category->name : 'Uncategorized';
-                })->map->count()->toArray();
-
-                // Group by priority
-                $ticketsByPriority = $tickets->groupBy('priority')->map->count()->toArray();
-
-                // Use updateOrCreate instead of create to avoid duplicates
-                VendorReport::updateOrCreate(
+                VendorReport::query()->updateOrCreate(
                     [
                         'vendor_id' => $vendor->id,
-                        'period_start' => $periodStart,
-                        'period_end' => $periodEnd,
+                        'period_start' => $start->toDateString(),
+                        'period_end' => $end->toDateString(),
                     ],
                     [
                         'period_type' => 'monthly',
-                        'total_tickets' => $totalTickets,
-                        'resolved_tickets' => $resolvedTickets,
-                        'pending_tickets' => $pendingTickets,
-                        'avg_response_time' => $avgResponseTime,
-                        'avg_resolution_time' => $avgResolutionTime,
+                        'total_tickets' => $total,
+                        'resolved_tickets' => $resolved,
+                        'pending_tickets' => $pending,
+                        'avg_response_time' => $avgResponse !== null ? round($avgResponse, 2) : null,
+                        'avg_resolution_time' => $avgResolution !== null ? round($avgResolution, 2) : null,
                         'sla_compliance_rate' => $slaCompliance,
-                        'tickets_by_category' => $ticketsByCategory,
-                        'tickets_by_priority' => $ticketsByPriority,
+                        'tickets_by_category' => $byCategory,
+                        'tickets_by_priority' => $byPriority,
                     ]
                 );
-
-                $count++;
-                $this->command->info("  ✓ {$periodStart->format('M Y')}: {$totalTickets} tickets (Resolved: {$resolvedTickets}, Pending: {$pendingTickets})");
             }
-            
-            $this->command->info(""); // Empty line for readability
         }
 
-        $this->command->info("✅ Created/Updated {$count} vendor reports");
-        
-        // Show summary
-        $this->command->table(
-            ['Vendor', 'Total Reports', 'Reports with Data'],
-            $vendors->map(function($vendor) {
-                $totalReports = VendorReport::where('vendor_id', $vendor->id)->count();
-                $reportsWithData = VendorReport::where('vendor_id', $vendor->id)
-                    ->where('total_tickets', '>', 0)
-                    ->count();
-                return [
-                    $vendor->name,
-                    $totalReports,
-                    $reportsWithData
-                ];
-            })
-        );
+        $this->command?->info('VendorReportSeeder selesai: laporan bulanan vendor (6 bulan) diperbarui.');
     }
 }

@@ -85,6 +85,11 @@ class Ticket extends Model
         return $this->hasOne(Feedback::class);
     }
 
+    public function additionalInfos()
+    {
+        return $this->hasMany(TicketAdditionalInfo::class)->latest('created_at');
+    }
+
     public function slaTracking()
     {
         return $this->hasOne(SlaTracking::class);
