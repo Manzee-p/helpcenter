@@ -149,11 +149,6 @@ class Ticket extends Model
         return $this->hasMany(\App\Models\Feedback::class, 'ticket_id');
     }
 
-    public function additionalInfos()
-    {
-        return $this->hasMany(\App\Models\TicketAdditionalInfo::class, 'ticket_id');
-    }
-
     public function deletionRequests()
     {
         return $this->hasMany(\App\Models\TicketDeletionRequest::class, 'ticket_id');
