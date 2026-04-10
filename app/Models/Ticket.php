@@ -140,6 +140,30 @@ class Ticket extends Model
         };
     }
 
+    public function getPriorityLabelAttribute()
+    {
+        return match ($this->priority) {
+            'low' => 'Rendah',
+            'medium' => 'Sedang',
+            'high' => 'Tinggi',
+            'urgent', 'critical' => 'Kritis',
+            null, '' => '-',
+            default => ucfirst(str_replace('_', ' ', (string) $this->priority)),
+        };
+    }
+
+    public function getUrgencyLabelAttribute()
+    {
+        return match ($this->urgency_level) {
+            'low' => 'Rendah',
+            'medium' => 'Sedang',
+            'high' => 'Tinggi',
+            'critical', 'urgent' => 'Kritis',
+            null, '' => '-',
+            default => ucfirst(str_replace('_', ' ', (string) $this->urgency_level)),
+        };
+    }
+
     public function assignedVendor() {
         return $this->belongsTo(User::class, 'assigned_to');
     }

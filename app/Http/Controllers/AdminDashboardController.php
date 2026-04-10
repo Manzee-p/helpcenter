@@ -64,8 +64,13 @@ class AdminDashboardController extends Controller
             // ─── Recent Tickets ───
             $recentTickets = Ticket::with(['user', 'category', 'assignedTo'])
                 ->orderBy('created_at', 'desc')
-                ->limit(9)
-                ->get();
+                ->limit(50)
+                ->get()
+                ->unique(function ($ticket) {
+                    return mb_strtolower(trim(($ticket->title ?? '') . '|' . ($ticket->user_id ?? 0)));
+                })
+                ->take(9)
+                ->values();
 
             return view('admin.dashboard', compact(
                 'stats',

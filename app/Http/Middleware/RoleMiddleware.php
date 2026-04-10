@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -50,6 +51,30 @@ class RoleMiddleware
         // ========================================
         $user = $request->user();
         $userRole = $user->role ?? null;
+
+        // Block akun yang dinonaktifkan admin.
+        if (!$user->is_active) {
+            Log::warning('RoleMiddleware: Inactive account blocked', [
+                'user_id' => $user->id,
+                'user_email' => $user->email,
+                'route' => $request->path(),
+            ]);
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun Anda sudah dinonaktifkan. Hubungi admin.',
+                    'code' => 'ACCOUNT_INACTIVE',
+                ], 403);
+            }
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Akun Anda sudah dinonaktifkan. Hubungi admin.']);
+        }
 
         // Check if user has a role
         if (!$userRole) {

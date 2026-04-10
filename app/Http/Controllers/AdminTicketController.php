@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Swal; // opsional, jika pakai Laravel SweetAlert package
 
 class AdminTicketController extends Controller
@@ -54,7 +55,7 @@ class AdminTicketController extends Controller
         ];
 
         // ── Vendor list untuk modal assign ──
-        $vendors = User::where('role', 'vendor')->orderBy('name')->get();
+        $vendors = User::where('role', 'vendor')->where('is_active', true)->orderBy('name')->get();
 
         return view('admin.tickets.index', compact('tickets', 'stats', 'vendors'));
     }
@@ -73,7 +74,7 @@ class AdminTicketController extends Controller
             'slaTracking',
         ])->findOrFail($id);
 
-        $vendors = User::where('role', 'vendor')->orderBy('name')->get();
+        $vendors = User::where('role', 'vendor')->where('is_active', true)->orderBy('name')->get();
 
         return view('admin.tickets.show', compact('ticket', 'vendors'));
     }
@@ -84,7 +85,10 @@ class AdminTicketController extends Controller
     public function assign(Request $request, $id)
     {
         $request->validate([
-            'assigned_to' => 'required|exists:users,id',
+            'assigned_to' => [
+                'required',
+                Rule::exists('users', 'id')->where(fn ($q) => $q->where('role', 'vendor')->where('is_active', true)),
+            ],
         ]);
 
         $ticket = Ticket::findOrFail($id);

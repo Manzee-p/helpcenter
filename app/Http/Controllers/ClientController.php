@@ -92,6 +92,20 @@ class ClientController extends Controller
             'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
 
+        // Cegah double submit tiket identik dalam waktu dekat.
+        $duplicateExists = Ticket::where('user_id', Auth::id())
+            ->where('category_id', $validated['category_id'])
+            ->whereRaw('LOWER(title) = ?', [mb_strtolower(trim($validated['title']))])
+            ->whereRaw('LOWER(description) = ?', [mb_strtolower(trim($validated['description']))])
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->exists();
+
+        if ($duplicateExists) {
+            return back()
+                ->withInput()
+                ->with('warning', 'Tiket serupa baru saja dibuat. Mohon cek daftar tiket Anda agar tidak duplikat.');
+        }
+
         $ticketNumber = 'TKT-' . strtoupper(uniqid());
 
         DB::beginTransaction();

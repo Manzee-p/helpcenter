@@ -16,44 +16,36 @@ class TicketSeeder extends Seeder
      */
     public function run(): void
     {
-        if (Ticket::query()->count() > 0) {
-            $this->command?->info('TicketSeeder dilewati: data tiket sudah ada.');
-            return;
-        }
-
         $clients = User::query()->where('role', 'client')->pluck('id')->values();
         $vendors = User::query()->where('role', 'vendor')->where('is_active', true)->pluck('id')->values();
         $categories = TicketCategory::query()->pluck('id', 'name');
 
         if ($clients->isEmpty() || $vendors->isEmpty() || $categories->isEmpty()) {
-            $this->command?->warn('TicketSeeder gagal: pastikan UserSeeder dan TicketCategorySeeder sudah jalan.');
+            $this->command?->warn('TicketSeeder gagal: jalankan UserSeeder dan TicketCategorySeeder terlebih dahulu.');
             return;
         }
 
-        $statusPattern = [
-            'new',
-            'in_progress',
-            'waiting_response',
-            'resolved',
-            'closed',
-            'in_progress',
-            'resolved',
-            'closed',
-        ];
-
-        $priorityPattern = ['low', 'medium', 'medium', 'high', 'urgent', 'medium', 'high', 'low'];
-        $urgencyPattern = ['low', 'medium', 'high', 'critical', 'medium', 'high', 'low', 'medium'];
-
         $titlesByCategory = [
             'Sound System' => [
-                'Mic utama tidak bersuara',
-                'Output speaker kanan berdengung',
-                'Mixer kehilangan channel input',
+                'Mic tidak menyala',
+                'Speaker berdengung',
+                'Audio delay saat streaming',
+                'Volume terlalu kecil',
+                'Feedback dari speaker',
             ],
             'Lighting' => [
-                'Lampu panggung tidak sinkron',
-                'Controller lighting gagal kirim preset',
-                'Area backstage terlalu gelap',
+                'Lampu panggung mati',
+                'LED screen berkedip',
+                'Lighting controller error',
+                'Warna lampu tidak sesuai',
+                'DMX controller tidak respons',
+            ],
+            'Technical' => [
+                'Proyektor tidak menyala',
+                'Laptop tidak connect ke Wi-Fi',
+                'HDMI cable rusak',
+                'Power outlet tidak berfungsi',
+                'Internet connection unstable',
             ],
             'Jaringan' => [
                 'Internet event drop saat live stream',
@@ -61,14 +53,28 @@ class TicketSeeder extends Seeder
                 'Latency tinggi pada jaringan FOH',
             ],
             'Venue' => [
-                'AC ruangan utama kurang dingin',
-                'Akses listrik area booth bermasalah',
+                'AC ruangan terlalu dingin',
+                'Kursi peserta kurang',
                 'Area registrasi terlalu padat',
+                'Parkir penuh',
+                'Ruangan terlalu sempit',
+            ],
+            'Logistik' => [
+                'Barang belum sampai',
+                'Pengiriman terlambat',
+                'Barang rusak saat pengiriman',
+                'Kurang material',
+                'Setup equipment terlambat',
             ],
             'Perangkat' => [
                 'Proyektor tidak mendeteksi HDMI',
                 'Laptop operator restart berulang',
                 'Kabel extender display rusak',
+            ],
+            'Registrasi' => [
+                'Antrian registrasi menumpuk',
+                'Printer badge registrasi error',
+                'Data peserta tidak sinkron',
             ],
             'Lainnya' => [
                 'Butuh penyesuaian layout kabel',
@@ -77,81 +83,165 @@ class TicketSeeder extends Seeder
             ],
         ];
 
-        $venues = ['Hall A', 'Hall B', 'Ballroom Utama', 'Meeting Room 1', 'Meeting Room 2', 'Auditorium'];
-        $areas = ['Main Stage', 'FOH', 'Backstage', 'Area Registrasi', 'VIP Lounge', 'Ruang Kontrol'];
-
-        $totalTickets = 90;
+        $venues = ['Ballroom A', 'Ballroom B', 'Convention Hall', 'Meeting Room 1', 'Meeting Room 2', 'Auditorium'];
+        $areas = ['Stage', 'Registration Desk', 'Exhibition Area', 'VIP Lounge', 'Main Hall', 'Backstage', 'FOH'];
         $now = Carbon::now();
+        $generatedTicketNumbers = [];
+        $dailyCounters = [];
+        $createdCount = 0;
 
-        for ($i = 0; $i < $totalTickets; $i++) {
-            $createdAt = $now->copy()->subDays(rand(0, 75))->subMinutes(rand(0, 1440));
-            $status = $statusPattern[$i % count($statusPattern)];
-            $priority = $priorityPattern[$i % count($priorityPattern)];
-            $urgency = $urgencyPattern[$i % count($urgencyPattern)];
+        for ($month = 11; $month >= 0; $month--) {
+            $startDate = $now->copy()->subMonths($month)->startOfMonth();
+            $endDate = $now->copy()->subMonths($month)->endOfMonth();
 
-            $categoryName = array_keys($titlesByCategory)[$i % count($titlesByCategory)];
-            $categoryId = (int) ($categories[$categoryName] ?? $categories->first());
-            $titleOptions = $titlesByCategory[$categoryName] ?? $titlesByCategory['Lainnya'];
-            $title = $titleOptions[$i % count($titleOptions)];
+            $ticketsThisMonth = $month <= 1 ? rand(35, 50) : ($month <= 4 ? rand(25, 35) : rand(15, 25));
 
-            $clientId = (int) $clients[$i % $clients->count()];
-            $assignedTo = in_array($status, ['in_progress', 'waiting_response', 'resolved', 'closed'], true)
-                ? (int) $vendors[$i % $vendors->count()]
-                : null;
+            for ($i = 0; $i < $ticketsThisMonth; $i++) {
+                $createdAt = Carbon::createFromTimestamp(rand($startDate->timestamp, $endDate->timestamp));
+                $dateKey = $createdAt->format('Ymd');
 
-            $ticket = Ticket::create([
-                'ticket_number' => $this->generateTicketNumber($createdAt, $i + 1),
-                'title' => $title,
-                'description' => "Laporan dari client terkait {$title}. Mohon ditangani sesuai SOP operasional.",
-                'user_id' => $clientId,
-                'category_id' => $categoryId,
-                'assigned_to' => $assignedTo,
-                'status' => $status,
-                'priority' => $priority,
-                'urgency_level' => $urgency,
-                'event_name' => 'Event Operasional ' . $createdAt->format('M Y'),
-                'venue' => $venues[$i % count($venues)],
-                'area' => $areas[$i % count($areas)],
-                'created_at' => $createdAt,
-                'updated_at' => $createdAt,
-            ]);
+                if (!isset($dailyCounters[$dateKey])) {
+                    $dailyCounters[$dateKey] = (int) Ticket::query()
+                        ->whereDate('created_at', $createdAt->toDateString())
+                        ->count();
+                }
+                $dailyCounters[$dateKey]++;
 
-            $assignedAt = null;
-            $firstResponseAt = null;
-            $resolvedAt = null;
-            $closedAt = null;
+                $ticketNumber = $this->generateUniqueTicketNumber(
+                    $createdAt,
+                    $dailyCounters[$dateKey],
+                    $generatedTicketNumbers
+                );
 
-            if ($assignedTo) {
-                $assignedAt = $createdAt->copy()->addMinutes(rand(5, 40));
-                $ticket->assigned_at = $assignedAt;
+                $categoryName = (string) $categories->keys()->random();
+                $categoryId = (int) $categories[$categoryName];
+                $titlePool = $titlesByCategory[$categoryName] ?? $titlesByCategory['Lainnya'];
+                $baseTitle = $titlePool[array_rand($titlePool)];
+                $clientId = (int) $clients->random();
+                $title = $baseTitle;
+
+                $priority = $this->pickPriorityWeighted();
+                $status = $this->pickStatusWeighted($month);
+                $needsAssignee = in_array($status, ['in_progress', 'waiting_response', 'resolved', 'closed'], true);
+                $assignedTo = $needsAssignee ? (int) $vendors->random() : null;
+                $urgency = $this->urgencyFromPriority($priority);
+
+                $ticket = Ticket::create([
+                    'ticket_number' => $ticketNumber,
+                    'title' => $title,
+                    'description' => 'Mohon segera ditangani. Issue ini mempengaruhi jalannya acara. Terima kasih.',
+                    'user_id' => $clientId,
+                    'category_id' => $categoryId,
+                    'assigned_to' => $assignedTo,
+                    'status' => $status,
+                    'priority' => $priority,
+                    'urgency_level' => $urgency,
+                    'event_name' => 'Event ' . $createdAt->format('M Y'),
+                    'venue' => $venues[array_rand($venues)],
+                    'area' => $areas[array_rand($areas)],
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ]);
+
+                $assignedAt = null;
+                $firstResponseAt = null;
+                $resolvedAt = null;
+                $closedAt = null;
+
+                if ($needsAssignee) {
+                    $assignedAt = $createdAt->copy()->addMinutes(rand(5, 30));
+                }
+
+                if (in_array($status, ['in_progress', 'waiting_response', 'resolved', 'closed'], true)) {
+                    $firstResponseAt = ($assignedAt ?? $createdAt)->copy()->addMinutes(rand(10, 60));
+                }
+
+                if (in_array($status, ['resolved', 'closed'], true)) {
+                    $resolvedAt = $createdAt->copy()->addMinutes(match ($priority) {
+                        'urgent' => rand(60, 240),
+                        'high' => rand(120, 480),
+                        'medium' => rand(240, 1440),
+                        default => rand(480, 2880),
+                    });
+                }
+
+                if ($status === 'closed') {
+                    $closedAt = ($resolvedAt ?? $createdAt)->copy()->addMinutes(rand(30, 180));
+                }
+
+                $ticket->update([
+                    'assigned_at' => $assignedAt,
+                    'first_response_at' => $firstResponseAt,
+                    'resolved_at' => $resolvedAt,
+                    'closed_at' => $closedAt,
+                    'updated_at' => $closedAt ?? $resolvedAt ?? $firstResponseAt ?? $assignedAt ?? $createdAt,
+                ]);
+
+                $this->createSlaTracking($ticket->fresh(), $firstResponseAt, $resolvedAt);
+                $createdCount++;
             }
-
-            if (in_array($status, ['in_progress', 'waiting_response', 'resolved', 'closed'], true)) {
-                $firstResponseAt = ($assignedAt ?? $createdAt)->copy()->addMinutes(rand(10, 60));
-                $ticket->first_response_at = $firstResponseAt;
-            }
-
-            if (in_array($status, ['resolved', 'closed'], true)) {
-                $resolvedAt = $createdAt->copy()->addMinutes(rand(120, 1800));
-                $ticket->resolved_at = $resolvedAt;
-            }
-
-            if ($status === 'closed') {
-                $closedAt = ($resolvedAt ?? $createdAt)->copy()->addMinutes(rand(30, 240));
-                $ticket->closed_at = $closedAt;
-            }
-
-            $ticket->save();
-
-            $this->createSlaTracking($ticket, $firstResponseAt, $resolvedAt);
         }
 
-        $this->command?->info("TicketSeeder selesai: {$totalTickets} tiket berhasil dibuat.");
+        $this->command?->info("TicketSeeder selesai: {$createdCount} tiket berhasil dibuat (gaya data mirip helpdesk-api, tanpa duplikat).");
     }
 
-    private function generateTicketNumber(Carbon $createdAt, int $sequence): string
+    private function generateUniqueTicketNumber(Carbon $createdAt, int $sequence, array &$generatedTicketNumbers): string
     {
-        return 'TKT-' . $createdAt->format('Ymd') . '-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+        while (true) {
+            $candidate = 'TKT-' . $createdAt->format('Ymd') . '-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT);
+
+            $existsInDb = Ticket::query()->where('ticket_number', $candidate)->exists();
+            if (!isset($generatedTicketNumbers[$candidate]) && !$existsInDb) {
+                $generatedTicketNumbers[$candidate] = true;
+                return $candidate;
+            }
+
+            $sequence++;
+        }
+    }
+
+    private function pickPriorityWeighted(): string
+    {
+        $rand = rand(1, 100);
+        return match (true) {
+            $rand <= 10 => 'urgent',
+            $rand <= 30 => 'high',
+            $rand <= 70 => 'medium',
+            default => 'low',
+        };
+    }
+
+    private function pickStatusWeighted(int $month): string
+    {
+        $rand = rand(1, 100);
+
+        if ($month >= 3) {
+            return match (true) {
+                $rand <= 55 => 'closed',
+                $rand <= 80 => 'resolved',
+                $rand <= 92 => 'in_progress',
+                $rand <= 97 => 'waiting_response',
+                default => 'new',
+            };
+        }
+
+        return match (true) {
+            $rand <= 15 => 'closed',
+            $rand <= 35 => 'resolved',
+            $rand <= 65 => 'in_progress',
+            $rand <= 80 => 'waiting_response',
+            default => 'new',
+        };
+    }
+
+    private function urgencyFromPriority(string $priority): string
+    {
+        return match ($priority) {
+            'urgent' => 'critical',
+            'high' => 'high',
+            'medium' => 'medium',
+            default => 'low',
+        };
     }
 
     private function createSlaTracking(Ticket $ticket, ?Carbon $firstResponseAt, ?Carbon $resolvedAt): void

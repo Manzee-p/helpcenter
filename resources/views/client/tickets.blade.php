@@ -4,6 +4,193 @@
 @section('page_title', 'Laporan Saya')
 @section('breadcrumb', 'Home / Laporan Saya')
 
+
+
+@section('content')
+<div class="tickets-page">
+
+    {{-- PAGE HEADER --}}
+    <div class="page-header-card">
+        <div>
+            <h1 class="page-header-title">Laporan Saya</h1>
+            <p class="page-header-sub">Pantau semua laporan aktif, vendor yang menangani, dan pelayanan yang belum Anda nilai.</p>
+        </div>
+        <a href="{{ route('client.tickets.create') }}" class="btn-create">
+            <i class='bx bx-plus-circle'></i> Buat Laporan
+        </a>
+    </div>
+
+    {{-- PENDING FEEDBACK PANEL --}}
+    @if($pendingFeedbackTickets->count())
+    <div class="pending-panel">
+        <div class="pending-panel-head">
+            <div>
+                <span class="panel-chip">Pelayanan Belum Dinilai</span>
+                <h2>{{ $pendingFeedbackTickets->count() }} laporan selesai menunggu rating</h2>
+            </div>
+            <a href="{{ route('client.history') }}" class="link-inline">Buka riwayat →</a>
+        </div>
+        <div class="pending-grid">
+            @foreach($pendingFeedbackTickets->take(3) as $t)
+            <a href="{{ route('client.history') }}" class="pending-item">
+                <div>
+                    <strong>#{{ $t->ticket_number }}</strong>
+                    <p>{{ $t->title }}</p>
+                </div>
+                <span class="badge-rating">Beri Rating</span>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- FILTERS --}}
+    <div class="filters-card">
+        <form method="GET" action="{{ route('client.tickets.index') }}" id="filterForm">
+            <div class="filters-row">
+                <div>
+                    <label class="filter-label"><i class='bx bx-filter'></i> Status</label>
+                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">Semua Status</option>
+                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
+                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam Proses</option>
+                        <option value="waiting_response" {{ request('status') === 'waiting_response' ? 'selected' : '' }}>Menunggu Respons</option>
+                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Resolved</option>
+                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Closed</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label"><i class='bx bx-search'></i> Search</label>
+                    <input type="text" name="search" class="filter-search"
+                        placeholder="Cari nomor tiket, judul, atau vendor..."
+                        value="{{ request('search') }}"
+                        onkeyup="debounceSubmit()"
+                    />
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- TICKETS --}}
+    @if($tickets->isEmpty())
+        <div class="state-card">
+            <div class="state-icon"><i class='bx bx-search-alt'></i></div>
+            <h3 class="state-title">Tidak ada laporan ditemukan</h3>
+            <p class="state-text">
+                @if(request('status') || request('search'))
+                    Coba ubah filter pencarian Anda.
+                @else
+                    Buat laporan pertama untuk mulai meminta bantuan.
+                @endif
+            </p>
+            @unless(request('status') || request('search'))
+                <a href="{{ route('client.tickets.create') }}" class="btn-create" style="display:inline-flex;">
+                    <i class='bx bx-plus-circle'></i> Buat Laporan
+                </a>
+            @endunless
+        </div>
+    @else
+        <div class="tickets-grid">
+            @foreach($tickets as $ticket)
+            @php
+                $statusLabels = [
+                    'new'              => 'Baru',
+                    'in_progress'      => 'Diproses',
+                    'waiting_response' => 'Menunggu',
+                    'resolved'         => 'Selesai',
+                    'closed'           => 'Ditutup',
+                ];
+                $priorityLabels = [
+                    'low'    => 'Rendah',
+                    'medium' => 'Sedang',
+                    'high'   => 'Tinggi',
+                    'urgent' => 'Mendesak',
+                ];
+            @endphp
+            <a href="{{ route('client.tickets.show', $ticket->id) }}" class="ticket-card">
+                <div class="ticket-card-head">
+                    <span class="ticket-num">#{{ $ticket->ticket_number }}</span>
+                    <span class="status-badge status-{{ $ticket->status }}">
+                        {{ $statusLabels[$ticket->status] ?? $ticket->status }}
+                    </span>
+                </div>
+
+                <h3 class="ticket-card-title">{{ $ticket->title }}</h3>
+
+                <div class="ticket-meta-row">
+                    <span class="meta-chip">
+                        <i class='bx bx-category-alt'></i>
+                        {{ $ticket->category->name ?? 'N/A' }}
+                    </span>
+                    @if($ticket->priority)
+                    <span class="meta-chip priority-{{ $ticket->priority }}">
+                        <i class='bx bx-flag'></i>
+                        {{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}
+                    </span>
+                    @endif
+                </div>
+
+                <div class="ticket-foot">
+                    <div class="ticket-date">
+                        <i class='bx bx-time'></i>
+                        {{ \Carbon\Carbon::parse($ticket->created_at)->locale('id')->diffForHumans() }}
+                    </div>
+                    @if($ticket->assignedVendor)
+                    <div class="assignee-avatar">
+                        {{ strtoupper(substr($ticket->assignedVendor->name, 0, 2)) }}
+                    </div>
+                    @endif
+                </div>
+
+                @if(in_array($ticket->status, ['resolved','closed']) && !$ticket->feedback)
+                    <span class="rating-alert"><i class='bx bx-star'></i> Vendor belum dinilai</span>
+                @endif
+                @if($ticket->latestDeletionRequest && $ticket->latestDeletionRequest->status === 'pending')
+                    <span class="rating-alert" style="background:#fff1f2;color:#be123c;">
+                        <i class='bx bx-time-five'></i> Menunggu persetujuan hapus admin
+                    </span>
+                @endif
+            </a>
+            @endforeach
+        </div>
+
+        {{-- PAGINATION --}}
+        @if($tickets->lastPage() > 1)
+        <div class="pagination-wrap">
+            @if($tickets->onFirstPage())
+                <button class="page-btn" disabled><i class='bx bx-chevron-left'></i> Prev</button>
+            @else
+                <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="page-btn"><i class='bx bx-chevron-left'></i> Prev</a>
+            @endif
+
+            @foreach(range(1, $tickets->lastPage()) as $page)
+                @if(abs($page - $tickets->currentPage()) <= 2)
+                    <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="page-btn {{ $page === $tickets->currentPage() ? 'active' : '' }}">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            @if($tickets->hasMorePages())
+                <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="page-btn">Next <i class='bx bx-chevron-right'></i></a>
+            @else
+                <button class="page-btn" disabled>Next <i class='bx bx-chevron-right'></i></button>
+            @endif
+        </div>
+        @endif
+    @endif
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+let searchTimeout = null;
+function debounceSubmit() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { document.getElementById('filterForm').submit(); }, 500);
+}
+</script>
+@endpush
+
 @push('styles')
 <style>
 .tickets-page { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -301,187 +488,3 @@
 </style>
 @endpush
 
-@section('content')
-<div class="tickets-page">
-
-    {{-- PAGE HEADER --}}
-    <div class="page-header-card">
-        <div>
-            <h1 class="page-header-title">Laporan Saya</h1>
-            <p class="page-header-sub">Pantau semua laporan aktif, vendor yang menangani, dan pelayanan yang belum Anda nilai.</p>
-        </div>
-        <a href="{{ route('client.tickets.create') }}" class="btn-create">
-            <i class='bx bx-plus-circle'></i> Buat Laporan
-        </a>
-    </div>
-
-    {{-- PENDING FEEDBACK PANEL --}}
-    @if($pendingFeedbackTickets->count())
-    <div class="pending-panel">
-        <div class="pending-panel-head">
-            <div>
-                <span class="panel-chip">Pelayanan Belum Dinilai</span>
-                <h2>{{ $pendingFeedbackTickets->count() }} laporan selesai menunggu rating</h2>
-            </div>
-            <a href="{{ route('client.history') }}" class="link-inline">Buka riwayat →</a>
-        </div>
-        <div class="pending-grid">
-            @foreach($pendingFeedbackTickets->take(3) as $t)
-            <a href="{{ route('client.history') }}" class="pending-item">
-                <div>
-                    <strong>#{{ $t->ticket_number }}</strong>
-                    <p>{{ $t->title }}</p>
-                </div>
-                <span class="badge-rating">Beri Rating</span>
-            </a>
-            @endforeach
-        </div>
-    </div>
-    @endif
-
-    {{-- FILTERS --}}
-    <div class="filters-card">
-        <form method="GET" action="{{ route('client.tickets.index') }}" id="filterForm">
-            <div class="filters-row">
-                <div>
-                    <label class="filter-label"><i class='bx bx-filter'></i> Status</label>
-                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-                        <option value="">Semua Status</option>
-                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
-                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam Proses</option>
-                        <option value="waiting_response" {{ request('status') === 'waiting_response' ? 'selected' : '' }}>Menunggu Respons</option>
-                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Resolved</option>
-                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Closed</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="filter-label"><i class='bx bx-search'></i> Search</label>
-                    <input type="text" name="search" class="filter-search"
-                        placeholder="Cari nomor tiket, judul, atau vendor..."
-                        value="{{ request('search') }}"
-                        onkeyup="debounceSubmit()"
-                    />
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- TICKETS --}}
-    @if($tickets->isEmpty())
-        <div class="state-card">
-            <div class="state-icon"><i class='bx bx-search-alt'></i></div>
-            <h3 class="state-title">Tidak ada laporan ditemukan</h3>
-            <p class="state-text">
-                @if(request('status') || request('search'))
-                    Coba ubah filter pencarian Anda.
-                @else
-                    Buat laporan pertama untuk mulai meminta bantuan.
-                @endif
-            </p>
-            @unless(request('status') || request('search'))
-                <a href="{{ route('client.tickets.create') }}" class="btn-create" style="display:inline-flex;">
-                    <i class='bx bx-plus-circle'></i> Buat Laporan
-                </a>
-            @endunless
-        </div>
-    @else
-        <div class="tickets-grid">
-            @foreach($tickets as $ticket)
-            @php
-                $statusLabels = [
-                    'new'              => 'Baru',
-                    'in_progress'      => 'Diproses',
-                    'waiting_response' => 'Menunggu',
-                    'resolved'         => 'Selesai',
-                    'closed'           => 'Ditutup',
-                ];
-                $priorityLabels = [
-                    'low'    => 'Rendah',
-                    'medium' => 'Sedang',
-                    'high'   => 'Tinggi',
-                    'urgent' => 'Mendesak',
-                ];
-            @endphp
-            <a href="{{ route('client.tickets.show', $ticket->id) }}" class="ticket-card">
-                <div class="ticket-card-head">
-                    <span class="ticket-num">#{{ $ticket->ticket_number }}</span>
-                    <span class="status-badge status-{{ $ticket->status }}">
-                        {{ $statusLabels[$ticket->status] ?? $ticket->status }}
-                    </span>
-                </div>
-
-                <h3 class="ticket-card-title">{{ $ticket->title }}</h3>
-
-                <div class="ticket-meta-row">
-                    <span class="meta-chip">
-                        <i class='bx bx-category-alt'></i>
-                        {{ $ticket->category->name ?? 'N/A' }}
-                    </span>
-                    @if($ticket->priority)
-                    <span class="meta-chip priority-{{ $ticket->priority }}">
-                        <i class='bx bx-flag'></i>
-                        {{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}
-                    </span>
-                    @endif
-                </div>
-
-                <div class="ticket-foot">
-                    <div class="ticket-date">
-                        <i class='bx bx-time'></i>
-                        {{ \Carbon\Carbon::parse($ticket->created_at)->locale('id')->diffForHumans() }}
-                    </div>
-                    @if($ticket->assignedVendor)
-                    <div class="assignee-avatar">
-                        {{ strtoupper(substr($ticket->assignedVendor->name, 0, 2)) }}
-                    </div>
-                    @endif
-                </div>
-
-                @if(in_array($ticket->status, ['resolved','closed']) && !$ticket->feedback)
-                    <span class="rating-alert"><i class='bx bx-star'></i> Vendor belum dinilai</span>
-                @endif
-                @if($ticket->latestDeletionRequest && $ticket->latestDeletionRequest->status === 'pending')
-                    <span class="rating-alert" style="background:#fff1f2;color:#be123c;">
-                        <i class='bx bx-time-five'></i> Menunggu persetujuan hapus admin
-                    </span>
-                @endif
-            </a>
-            @endforeach
-        </div>
-
-        {{-- PAGINATION --}}
-        @if($tickets->lastPage() > 1)
-        <div class="pagination-wrap">
-            @if($tickets->onFirstPage())
-                <button class="page-btn" disabled><i class='bx bx-chevron-left'></i> Prev</button>
-            @else
-                <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="page-btn"><i class='bx bx-chevron-left'></i> Prev</a>
-            @endif
-
-            @foreach(range(1, $tickets->lastPage()) as $page)
-                @if(abs($page - $tickets->currentPage()) <= 2)
-                    <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="page-btn {{ $page === $tickets->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-                @endif
-            @endforeach
-
-            @if($tickets->hasMorePages())
-                <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="page-btn">Next <i class='bx bx-chevron-right'></i></a>
-            @else
-                <button class="page-btn" disabled>Next <i class='bx bx-chevron-right'></i></button>
-            @endif
-        </div>
-        @endif
-    @endif
-
-</div>
-@endsection
-
-@push('scripts')
-<script>
-let searchTimeout = null;
-function debounceSubmit() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => { document.getElementById('filterForm').submit(); }, 500);
-}
-</script>
-@endpush

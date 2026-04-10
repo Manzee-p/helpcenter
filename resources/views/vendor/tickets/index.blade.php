@@ -4,6 +4,285 @@
 @section('page_title', 'Tiket Ditugaskan')
 @section('breadcrumb', 'Home / Tiket')
 
+
+
+@section('content')
+@php
+    $statusLabels   = ['new'=>'Baru','in_progress'=>'Diproses','waiting_response'=>'Menunggu Respons','assigned'=>'Ditugaskan','resolved'=>'Selesai','closed'=>'Ditutup'];
+    $priorityLabels = ['low'=>'Rendah','medium'=>'Sedang','high'=>'Tinggi','urgent'=>'Mendesak','critical'=>'Kritis'];
+
+    function initials($name) {
+        if (!$name) return 'NA';
+        $parts = array_filter(explode(' ', $name));
+        return strtoupper(substr(implode('', array_map(fn($p)=>$p[0], $parts)), 0, 2));
+    }
+
+    $dotMap = [
+        'new'              => 'td-new',
+        'in_progress'      => 'td-in_progress',
+        'waiting_response' => 'td-waiting_response',
+        'assigned'         => 'td-assigned',
+    ];
+@endphp
+
+<div class="tickets-page">
+
+    {{-- ═══ HERO ═══ --}}
+    <section class="h-hero">
+        <div class="h-hero-icon"><i class='bx bx-list-check'></i></div>
+        <div>
+            <h1>Tiket Ditugaskan</h1>
+            <p>Pantau dan kelola tiket aktif yang ditugaskan kepada Anda — lengkap dengan status dan prioritas terkini.</p>
+        </div>
+    </section>
+
+    {{-- ═══ SUMMARY CARDS ═══ --}}
+    <section class="sum-grid">
+        <div class="sum-card">
+            <div class="sum-icon si-indigo"><i class='bx bx-collection'></i></div>
+            <div>
+                <div class="sum-label">Total Tiket</div>
+                <div class="sum-value">{{ $tickets->total() }}</div>
+            </div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-icon si-amber"><i class='bx bx-time'></i></div>
+            <div>
+                <div class="sum-label">Diproses</div>
+                <div class="sum-value">{{ $stats['in_progress'] }}</div>
+            </div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-icon si-sky"><i class='bx bx-hourglass'></i></div>
+            <div>
+                <div class="sum-label">Menunggu</div>
+                <div class="sum-value">{{ $stats['waiting'] }}</div>
+            </div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-icon si-green"><i class='bx bx-bell'></i></div>
+            <div>
+                <div class="sum-label">Baru</div>
+                <div class="sum-value">{{ $stats['new'] }}</div>
+            </div>
+        </div>
+    </section>
+
+    {{-- ═══ FILTER ═══ --}}
+    <div class="filter-card">
+        <div class="filter-head"><i class='bx bx-filter-alt'></i> Filter Tiket</div>
+        <form method="GET" action="{{ route('vendor.tickets.index') }}" class="filter-body" id="filterForm">
+            <div class="fg">
+                <label><i class='bx bx-flag'></i> Status</label>
+                <select name="status" onchange="this.form.submit()">
+                    <option value="">Semua Status Aktif</option>
+                    <option value="new"              {{ request('status')==='new'              ?'selected':'' }}>Baru</option>
+                    <option value="in_progress"      {{ request('status')==='in_progress'      ?'selected':'' }}>Diproses</option>
+                    <option value="waiting_response" {{ request('status')==='waiting_response' ?'selected':'' }}>Menunggu Respons</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label><i class='bx bx-sort-alt-2'></i> Prioritas</label>
+                <select name="priority" onchange="this.form.submit()">
+                    <option value="">Semua Prioritas</option>
+                    <option value="low"    {{ request('priority')==='low'    ?'selected':'' }}>Rendah</option>
+                    <option value="medium" {{ request('priority')==='medium' ?'selected':'' }}>Sedang</option>
+                    <option value="high"   {{ request('priority')==='high'   ?'selected':'' }}>Tinggi</option>
+                    <option value="urgent" {{ request('priority')==='urgent' ?'selected':'' }}>Mendesak</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label><i class='bx bx-search'></i> Pencarian</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class='bx bx-search'></i></span>
+                    <input type="text" name="search"
+                        placeholder="Cari nomor tiket atau judul..."
+                        value="{{ request('search') }}"
+                        onkeyup="debounceFilter()">
+                </div>
+            </div>
+            <div class="fg">
+                <label><i class='bx bx-layout'></i> Tampilan</label>
+                <div class="view-switch">
+                    <button type="button" class="vs-btn {{ request('view','list')==='list' ? 'active' : '' }}"
+                        onclick="setView('list', this)" title="List"><i class='bx bx-list-ul'></i></button>
+                    <button type="button" class="vs-btn {{ request('view')==='grid' ? 'active' : '' }}"
+                        onclick="setView('grid', this)" title="Grid"><i class='bx bx-grid-alt'></i></button>
+                </div>
+                <input type="hidden" name="view" id="viewInput" value="{{ request('view','list') }}">
+            </div>
+            <div class="fg">
+                <label>&nbsp;</label>
+                <a href="{{ route('vendor.tickets.index') }}" class="btn-apply">
+                    <i class='bx bx-x'></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {{-- ═══ TICKETS ═══ --}}
+    <div class="tickets-card">
+        <div class="tc-header">
+            <div class="tc-title">
+                <i class='bx bx-task'></i>
+                <h5>Daftar Tiket Aktif</h5>
+            </div>
+            <span class="tc-badge">{{ $tickets->total() }} total</span>
+        </div>
+
+        <div class="tc-body">
+            @if($tickets->isEmpty())
+                <div class="state-box">
+                    <i class='bx bx-folder-open'></i>
+                    <h5>Tidak ada tiket ditemukan</h5>
+                    <p>Coba ubah filter pencarian</p>
+                </div>
+
+            @elseif(request('view')==='grid')
+                {{-- ── GRID VIEW ── --}}
+                <div class="ticket-grid">
+                    @foreach($tickets as $t)
+                    <article class="tg-item">
+                        <div class="tg-top">
+                            <span class="tg-num">{{ $t->ticket_number }}</span>
+                            <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
+                        </div>
+                        <h6 class="tg-title">{{ Str::limit($t->title, 70) }}</h6>
+                        <div class="tg-meta">
+                            <span><i class='bx bx-user'></i>{{ $t->user->name ?? '-' }}</span>
+                            <span><i class='bx bx-category'></i>{{ $t->category->name ?? '-' }}</span>
+                            <span><i class='bx bx-time-five'></i>{{ \Carbon\Carbon::parse($t->created_at)->diffForHumans() }}</span>
+                        </div>
+                        <div class="tg-footer">
+                            <span class="badge-pill p-{{ $t->priority }}">{{ $priorityLabels[$t->priority] ?? $t->priority }}</span>
+                            <a href="{{ route('vendor.tickets.show', $t->id) }}" class="btn-detail">
+                                <i class='bx bx-show'></i> Detail
+                            </a>
+                        </div>
+                    </article>
+                    @endforeach
+                </div>
+
+            @else
+                {{-- ── LIST VIEW ── --}}
+                <div class="ticket-list">
+                    @foreach($tickets as $t)
+                    <div class="t-item">
+                        <div class="t-dot-wrap">
+                            <div class="t-dot {{ $dotMap[$t->status] ?? 'td-new' }}"></div>
+                        </div>
+                        <div class="t-content">
+                            <div class="t-top-row">
+                                <div>
+                                    <div class="t-num">{{ $t->ticket_number }}</div>
+                                    <div class="t-title">{{ $t->title }}</div>
+                                </div>
+                                <div class="t-badges">
+                                    <span class="badge-pill p-{{ $t->priority }}">{{ $priorityLabels[$t->priority] ?? $t->priority }}</span>
+                                    <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
+                                </div>
+                            </div>
+                            <div class="t-meta-row">
+                                <div class="t-meta-group">
+                                    <div class="t-meta-item">
+                                        <i class='bx bx-user'></i>
+                                        <span class="meta-lbl">Klien:</span>
+                                        <span class="meta-val">{{ $t->user->name ?? '-' }}</span>
+                                    </div>
+                                    <div class="t-meta-item">
+                                        <i class='bx bx-category'></i>
+                                        <span class="meta-lbl">Kategori:</span>
+                                        <span class="meta-val">{{ $t->category->name ?? '-' }}</span>
+                                    </div>
+                                </div>
+                                <div class="t-meta-group">
+                                    <div class="t-meta-item">
+                                        <i class='bx bx-calendar'></i>
+                                        <span class="meta-lbl">Dibuat:</span>
+                                        <span class="meta-val">{{ \Carbon\Carbon::parse($t->created_at)->format('d M Y H:i') }}</span>
+                                        <span class="meta-ago">({{ \Carbon\Carbon::parse($t->created_at)->diffForHumans() }})</span>
+                                    </div>
+                                    @if($t->updated_at && $t->updated_at != $t->created_at)
+                                    <div class="t-meta-item">
+                                        <i class='bx bx-refresh'></i>
+                                        <span class="meta-lbl">Update:</span>
+                                        <span class="meta-val">{{ \Carbon\Carbon::parse($t->updated_at)->diffForHumans() }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;padding-top:.5rem">
+                            <a href="{{ route('vendor.tickets.show', $t->id) }}" class="btn-detail">
+                                <i class='bx bx-show'></i> Detail
+                            </a>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        {{-- ═══ PAGINATION ═══ --}}
+        @if($tickets->lastPage() > 1)
+        <div class="tc-footer">
+            <div class="pg-info">
+                Menampilkan {{ $tickets->firstItem() }}–{{ $tickets->lastItem() }} dari {{ $tickets->total() }}
+            </div>
+            <div class="pg-controls">
+                @if($tickets->onFirstPage())
+                    <button class="pg-btn" disabled><i class='bx bx-chevron-left'></i></button>
+                @else
+                    <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="pg-btn"><i class='bx bx-chevron-left'></i></a>
+                @endif
+
+                @foreach($tickets->getUrlRange(1, $tickets->lastPage()) as $page => $url)
+                    @if($page == $tickets->currentPage())
+                        <button class="pg-btn active">{{ $page }}</button>
+                    @elseif(abs($page - $tickets->currentPage()) <= 2 || $page == 1 || $page == $tickets->lastPage())
+                        <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="pg-btn">{{ $page }}</a>
+                    @elseif(abs($page - $tickets->currentPage()) == 3)
+                        <button class="pg-btn" disabled style="border:none;opacity:.5">…</button>
+                    @endif
+                @endforeach
+
+                @if($tickets->hasMorePages())
+                    <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="pg-btn"><i class='bx bx-chevron-right'></i></a>
+                @else
+                    <button class="pg-btn" disabled><i class='bx bx-chevron-right'></i></button>
+                @endif
+            </div>
+        </div>
+        @endif
+    </div>
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+let vendorTicketsSearchTimer = null;
+function debounceFilter() {
+    clearTimeout(vendorTicketsSearchTimer);
+    vendorTicketsSearchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+}
+
+function setView(v, el) {
+    document.getElementById('viewInput').value = v;
+    document.querySelectorAll('.vs-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    localStorage.setItem('vendorTicketView', v);
+    document.getElementById('filterForm').submit();
+}
+
+// Restore preference on load
+const savedView = localStorage.getItem('vendorTicketView');
+if (savedView && savedView !== '{{ request("view","list") }}') {
+    document.getElementById('viewInput').value = savedView;
+}
+</script>
+@endpush
+
 @push('styles')
 <style>
 /* ══════════════════════════════════════
@@ -257,278 +536,3 @@
 </style>
 @endpush
 
-@section('content')
-@php
-    $statusLabels   = ['new'=>'Baru','in_progress'=>'Diproses','waiting_response'=>'Menunggu Respons','assigned'=>'Ditugaskan','resolved'=>'Selesai','closed'=>'Ditutup'];
-    $priorityLabels = ['low'=>'Rendah','medium'=>'Sedang','high'=>'Tinggi','urgent'=>'Mendesak','critical'=>'Kritis'];
-
-    function initials($name) {
-        if (!$name) return 'NA';
-        $parts = array_filter(explode(' ', $name));
-        return strtoupper(substr(implode('', array_map(fn($p)=>$p[0], $parts)), 0, 2));
-    }
-
-    $dotMap = [
-        'new'              => 'td-new',
-        'in_progress'      => 'td-in_progress',
-        'waiting_response' => 'td-waiting_response',
-        'assigned'         => 'td-assigned',
-    ];
-@endphp
-
-<div class="tickets-page">
-
-    {{-- ═══ HERO ═══ --}}
-    <section class="h-hero">
-        <div class="h-hero-icon"><i class='bx bx-list-check'></i></div>
-        <div>
-            <h1>Tiket Ditugaskan</h1>
-            <p>Pantau dan kelola tiket aktif yang ditugaskan kepada Anda — lengkap dengan status dan prioritas terkini.</p>
-        </div>
-    </section>
-
-    {{-- ═══ SUMMARY CARDS ═══ --}}
-    <section class="sum-grid">
-        <div class="sum-card">
-            <div class="sum-icon si-indigo"><i class='bx bx-collection'></i></div>
-            <div>
-                <div class="sum-label">Total Tiket</div>
-                <div class="sum-value">{{ $tickets->total() }}</div>
-            </div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-icon si-amber"><i class='bx bx-time'></i></div>
-            <div>
-                <div class="sum-label">Diproses</div>
-                <div class="sum-value">{{ $stats['in_progress'] }}</div>
-            </div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-icon si-sky"><i class='bx bx-hourglass'></i></div>
-            <div>
-                <div class="sum-label">Menunggu</div>
-                <div class="sum-value">{{ $stats['waiting'] }}</div>
-            </div>
-        </div>
-        <div class="sum-card">
-            <div class="sum-icon si-green"><i class='bx bx-bell'></i></div>
-            <div>
-                <div class="sum-label">Baru</div>
-                <div class="sum-value">{{ $stats['new'] }}</div>
-            </div>
-        </div>
-    </section>
-
-    {{-- ═══ FILTER ═══ --}}
-    <div class="filter-card">
-        <div class="filter-head"><i class='bx bx-filter-alt'></i> Filter Tiket</div>
-        <form method="GET" action="{{ route('vendor.tickets.index') }}" class="filter-body" id="filterForm">
-            <div class="fg">
-                <label><i class='bx bx-flag'></i> Status</label>
-                <select name="status" onchange="this.form.submit()">
-                    <option value="">Semua Status Aktif</option>
-                    <option value="new"              {{ request('status')==='new'              ?'selected':'' }}>Baru</option>
-                    <option value="in_progress"      {{ request('status')==='in_progress'      ?'selected':'' }}>Diproses</option>
-                    <option value="waiting_response" {{ request('status')==='waiting_response' ?'selected':'' }}>Menunggu Respons</option>
-                </select>
-            </div>
-            <div class="fg">
-                <label><i class='bx bx-sort-alt-2'></i> Prioritas</label>
-                <select name="priority" onchange="this.form.submit()">
-                    <option value="">Semua Prioritas</option>
-                    <option value="low"    {{ request('priority')==='low'    ?'selected':'' }}>Rendah</option>
-                    <option value="medium" {{ request('priority')==='medium' ?'selected':'' }}>Sedang</option>
-                    <option value="high"   {{ request('priority')==='high'   ?'selected':'' }}>Tinggi</option>
-                    <option value="urgent" {{ request('priority')==='urgent' ?'selected':'' }}>Mendesak</option>
-                </select>
-            </div>
-            <div class="fg">
-                <label><i class='bx bx-search'></i> Pencarian</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class='bx bx-search'></i></span>
-                    <input type="text" name="search"
-                        placeholder="Cari nomor tiket atau judul..."
-                        value="{{ request('search') }}"
-                        onkeyup="debounceFilter()">
-                </div>
-            </div>
-            <div class="fg">
-                <label><i class='bx bx-layout'></i> Tampilan</label>
-                <div class="view-switch">
-                    <button type="button" class="vs-btn {{ request('view','list')==='list' ? 'active' : '' }}"
-                        onclick="setView('list')" title="List"><i class='bx bx-list-ul'></i></button>
-                    <button type="button" class="vs-btn {{ request('view')==='grid' ? 'active' : '' }}"
-                        onclick="setView('grid')" title="Grid"><i class='bx bx-grid-alt'></i></button>
-                </div>
-                <input type="hidden" name="view" id="viewInput" value="{{ request('view','list') }}">
-            </div>
-            <div class="fg">
-                <label>&nbsp;</label>
-                <a href="{{ route('vendor.tickets.index') }}" class="btn-apply">
-                    <i class='bx bx-x'></i> Reset
-                </a>
-            </div>
-        </form>
-    </div>
-
-    {{-- ═══ TICKETS ═══ --}}
-    <div class="tickets-card">
-        <div class="tc-header">
-            <div class="tc-title">
-                <i class='bx bx-task'></i>
-                <h5>Daftar Tiket Aktif</h5>
-            </div>
-            <span class="tc-badge">{{ $tickets->total() }} total</span>
-        </div>
-
-        <div class="tc-body">
-            @if($tickets->isEmpty())
-                <div class="state-box">
-                    <i class='bx bx-folder-open'></i>
-                    <h5>Tidak ada tiket ditemukan</h5>
-                    <p>Coba ubah filter pencarian</p>
-                </div>
-
-            @elseif(request('view')==='grid')
-                {{-- ── GRID VIEW ── --}}
-                <div class="ticket-grid">
-                    @foreach($tickets as $t)
-                    <article class="tg-item">
-                        <div class="tg-top">
-                            <span class="tg-num">{{ $t->ticket_number }}</span>
-                            <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
-                        </div>
-                        <h6 class="tg-title">{{ Str::limit($t->title, 70) }}</h6>
-                        <div class="tg-meta">
-                            <span><i class='bx bx-user'></i>{{ $t->user->name ?? '-' }}</span>
-                            <span><i class='bx bx-category'></i>{{ $t->category->name ?? '-' }}</span>
-                            <span><i class='bx bx-time-five'></i>{{ \Carbon\Carbon::parse($t->created_at)->diffForHumans() }}</span>
-                        </div>
-                        <div class="tg-footer">
-                            <span class="badge-pill p-{{ $t->priority }}">{{ $priorityLabels[$t->priority] ?? $t->priority }}</span>
-                            <a href="{{ route('vendor.tickets.show', $t->id) }}" class="btn-detail">
-                                <i class='bx bx-show'></i> Detail
-                            </a>
-                        </div>
-                    </article>
-                    @endforeach
-                </div>
-
-            @else
-                {{-- ── LIST VIEW ── --}}
-                <div class="ticket-list">
-                    @foreach($tickets as $t)
-                    <div class="t-item">
-                        <div class="t-dot-wrap">
-                            <div class="t-dot {{ $dotMap[$t->status] ?? 'td-new' }}"></div>
-                        </div>
-                        <div class="t-content">
-                            <div class="t-top-row">
-                                <div>
-                                    <div class="t-num">{{ $t->ticket_number }}</div>
-                                    <div class="t-title">{{ $t->title }}</div>
-                                </div>
-                                <div class="t-badges">
-                                    <span class="badge-pill p-{{ $t->priority }}">{{ $priorityLabels[$t->priority] ?? $t->priority }}</span>
-                                    <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
-                                </div>
-                            </div>
-                            <div class="t-meta-row">
-                                <div class="t-meta-group">
-                                    <div class="t-meta-item">
-                                        <i class='bx bx-user'></i>
-                                        <span class="meta-lbl">Klien:</span>
-                                        <span class="meta-val">{{ $t->user->name ?? '-' }}</span>
-                                    </div>
-                                    <div class="t-meta-item">
-                                        <i class='bx bx-category'></i>
-                                        <span class="meta-lbl">Kategori:</span>
-                                        <span class="meta-val">{{ $t->category->name ?? '-' }}</span>
-                                    </div>
-                                </div>
-                                <div class="t-meta-group">
-                                    <div class="t-meta-item">
-                                        <i class='bx bx-calendar'></i>
-                                        <span class="meta-lbl">Dibuat:</span>
-                                        <span class="meta-val">{{ \Carbon\Carbon::parse($t->created_at)->format('d M Y H:i') }}</span>
-                                        <span class="meta-ago">({{ \Carbon\Carbon::parse($t->created_at)->diffForHumans() }})</span>
-                                    </div>
-                                    @if($t->updated_at && $t->updated_at != $t->created_at)
-                                    <div class="t-meta-item">
-                                        <i class='bx bx-refresh'></i>
-                                        <span class="meta-lbl">Update:</span>
-                                        <span class="meta-val">{{ \Carbon\Carbon::parse($t->updated_at)->diffForHumans() }}</span>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;padding-top:.5rem">
-                            <a href="{{ route('vendor.tickets.show', $t->id) }}" class="btn-detail">
-                                <i class='bx bx-show'></i> Detail
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            @endif
-        </div>
-
-        {{-- ═══ PAGINATION ═══ --}}
-        @if($tickets->lastPage() > 1)
-        <div class="tc-footer">
-            <div class="pg-info">
-                Menampilkan {{ $tickets->firstItem() }}–{{ $tickets->lastItem() }} dari {{ $tickets->total() }}
-            </div>
-            <div class="pg-controls">
-                @if($tickets->onFirstPage())
-                    <button class="pg-btn" disabled><i class='bx bx-chevron-left'></i></button>
-                @else
-                    <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="pg-btn"><i class='bx bx-chevron-left'></i></a>
-                @endif
-
-                @foreach($tickets->getUrlRange(1, $tickets->lastPage()) as $page => $url)
-                    @if($page == $tickets->currentPage())
-                        <button class="pg-btn active">{{ $page }}</button>
-                    @elseif(abs($page - $tickets->currentPage()) <= 2 || $page == 1 || $page == $tickets->lastPage())
-                        <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="pg-btn">{{ $page }}</a>
-                    @elseif(abs($page - $tickets->currentPage()) == 3)
-                        <button class="pg-btn" disabled style="border:none;opacity:.5">…</button>
-                    @endif
-                @endforeach
-
-                @if($tickets->hasMorePages())
-                    <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="pg-btn"><i class='bx bx-chevron-right'></i></a>
-                @else
-                    <button class="pg-btn" disabled><i class='bx bx-chevron-right'></i></button>
-                @endif
-            </div>
-        </div>
-        @endif
-    </div>
-
-</div>
-@endsection
-
-@push('scripts')
-<script>
-let searchTimer = null;
-function debounceFilter() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-}
-
-function setView(v) {
-    document.getElementById('viewInput').value = v;
-    document.querySelectorAll('.vs-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    localStorage.setItem('vendorTicketView', v);
-}
-
-// Restore preference on load
-const savedView = localStorage.getItem('vendorTicketView');
-if (savedView && savedView !== '{{ request("view","list") }}') {
-    document.getElementById('viewInput').value = savedView;
-}
-</script>
-@endpush

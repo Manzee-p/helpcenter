@@ -411,14 +411,14 @@ function toggleFullscreen() {
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────
-let searchTimer = null;
+let navSearchTimer = null;
 
 function showSearchDrop() {
     document.getElementById('search-drop').style.display = 'block';
 }
 
 function handleNavSearch(val) {
-    clearTimeout(searchTimer);
+    clearTimeout(navSearchTimer);
     const inner = document.getElementById('search-results-inner');
     if (!val.trim()) {
         inner.innerHTML = `<div class="search-empty"><i class='bx bx-search-alt'></i><span>Ketik untuk mencari...</span></div>`;
@@ -427,7 +427,7 @@ function handleNavSearch(val) {
     inner.innerHTML = `<div class="search-empty"><i class='bx bx-loader-alt bx-spin'></i><span>Mencari...</span></div>`;
     document.getElementById('search-drop').style.display = 'block';
 
-    searchTimer = setTimeout(() => {
+    navSearchTimer = setTimeout(() => {
         // TODO: ganti dengan AJAX ke endpoint pencarian tiket/user yang sesungguhnya
         inner.innerHTML = `
             <div class="search-result-item"><i class='bx bx-file'></i><span>Tiket #TKT-${val.toUpperCase()}</span></div>

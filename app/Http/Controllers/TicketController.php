@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Http\Controllers\NotificationController;
+use Illuminate\Validation\Rule;
 
 
 class TicketController extends Controller
@@ -127,6 +128,20 @@ class TicketController extends Controller
                 'attachments' => 'nullable|array',
                 'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:5120',
             ]);
+
+            // Guard anti-duplikat karena user sering klik submit berulang.
+            $duplicateExists = Ticket::where('user_id', $request->user()->id)
+                ->where('category_id', $validated['category_id'])
+                ->whereRaw('LOWER(title) = ?', [mb_strtolower(trim($validated['title']))])
+                ->whereRaw('LOWER(description) = ?', [mb_strtolower(trim($validated['description']))])
+                ->where('created_at', '>=', now()->subMinutes(10))
+                ->exists();
+
+            if ($duplicateExists) {
+                return response()->json([
+                    'message' => 'Tiket serupa baru saja dibuat. Cek daftar tiket Anda agar tidak duplikat.',
+                ], 409);
+            }
 
             Log::info('Validation passed', ['validated_data' => $validated]);
 
@@ -334,7 +349,11 @@ class TicketController extends Controller
             $validated = $request->validate([
                 'status' => 'sometimes|in:new,in_progress,waiting_response,resolved,closed',
                 'priority' => 'sometimes|in:low,medium,high,urgent',
-                'assigned_to' => 'sometimes|nullable|exists:users,id',
+                'assigned_to' => [
+                    'sometimes',
+                    'nullable',
+                    Rule::exists('users', 'id')->where(fn ($q) => $q->where('role', 'vendor')->where('is_active', true)),
+                ],
             ]);
 
             // Update SLA tracking for status changes

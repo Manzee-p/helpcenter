@@ -4,6 +4,327 @@
 @section('page_title', 'Manajemen Kategori')
 @section('breadcrumb', 'Home / Kategori')
 
+
+
+@section('content')
+<div class="categories-wrap">
+
+    {{-- ═══ FLASH MESSAGES ═══ --}}
+    @if(session('success'))
+    <div class="flash-success">
+        <i class='bx bx-check-circle'></i>
+        {{ session('success') }}
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="flash-error">
+        <i class='bx bx-error-circle'></i>
+        {{ session('error') }}
+    </div>
+    @endif
+
+    {{-- ═══ HERO ═══ --}}
+    <section class="cat-hero">
+        <div class="cat-hero-text">
+            <h4>Manajemen Kategori</h4>
+            <p>Kelola kategori tiket agar alur penanganan lebih rapi dan mudah dipantau.</p>
+        </div>
+        <button class="btn-add-cat" onclick="openAddModal()">
+            <i class='bx bx-plus'></i> Tambah Kategori
+        </button>
+    </section>
+
+    {{-- ═══ CATEGORY LIST ═══ --}}
+    <article class="cat-card">
+        @if($categories->isEmpty())
+            <div class="cat-empty">
+                <i class='bx bx-category'></i>
+                <h6>Belum ada kategori</h6>
+                <p>Mulai dengan menambahkan kategori pertama Anda</p>
+            </div>
+        @else
+            <div class="category-list">
+                @foreach($categories as $category)
+                <div class="category-item">
+
+                    {{-- Icon + Info --}}
+                    <div class="cat-item-left">
+                        <div class="cat-icon">
+                            <i class='bx bx-category'></i>
+                        </div>
+                        <div class="cat-details">
+                            <h6 class="cat-name">{{ $category->name }}</h6>
+                            <p class="cat-desc">
+                                {{ $category->description ?: 'Tidak ada deskripsi' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Badges + Actions --}}
+                    <div class="cat-item-right">
+                        <div class="cat-badges">
+                            <span class="badge-ticket">
+                                <i class='bx bx-receipt'></i>
+                                {{ $category->tickets_count ?? 0 }} tiket
+                            </span>
+                            <span class="badge-status {{ $category->is_active ? 'active' : 'inactive' }}">
+                                <span class="badge-dot"></span>
+                                {{ $category->is_active ? 'Aktif' : 'Tidak Aktif' }}
+                            </span>
+                        </div>
+
+                        <div class="cat-actions">
+                            <button
+                                class="cat-btn-icon cat-btn-edit"
+                                title="Edit kategori"
+                                onclick="openEditModal({{ $category->id }}, '{{ addslashes($category->name) }}', '{{ addslashes($category->description ?? '') }}', {{ $category->is_active ? 'true' : 'false' }})"
+                            >
+                                <i class='bx bx-edit'></i>
+                            </button>
+
+                            @if(($category->tickets_count ?? 0) > 0)
+                                <button
+                                    class="cat-btn-icon cat-btn-delete"
+                                    title="Tidak bisa dihapus — ada tiket aktif"
+                                    disabled
+                                >
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            @else
+                                <button
+                                    class="cat-btn-icon cat-btn-delete"
+                                    title="Hapus kategori"
+                                    onclick="openDeleteModal({{ $category->id }}, '{{ addslashes($category->name) }}')"
+                                >
+                                    <i class='bx bx-trash'></i>
+                                </button>
+                            @endif
+                        </div>
+                    </div>
+
+                </div>
+                @endforeach
+            </div>
+        @endif
+    </article>
+
+</div>
+
+{{-- ════════════════════════════════════════════
+     MODAL: ADD / EDIT CATEGORY
+════════════════════════════════════════════ --}}
+<div class="cat-modal-backdrop" id="categoryModalBackdrop">
+    <div class="cat-modal" id="categoryModal" role="dialog" aria-modal="true">
+
+        <div class="cat-modal-header">
+            <div class="cat-modal-header-text">
+                <h5 id="modalTitle">Tambah Kategori Baru</h5>
+                <p id="modalSubtitle">Buat kategori untuk mengorganisir tiket</p>
+            </div>
+            <button class="cat-modal-close" onclick="closeModal()" aria-label="Tutup">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+
+        <form id="categoryForm" method="POST">
+            @csrf
+            <input type="hidden" name="_method" id="formMethod" value="POST">
+            <input type="hidden" name="category_id" id="categoryId">
+
+            <div class="cat-modal-body">
+
+                {{-- Name --}}
+                <div class="cat-form-group">
+                    <label class="cat-label" for="catName">
+                        Nama Kategori <span class="req">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        class="cat-input"
+                        id="catName"
+                        name="name"
+                        required
+                        placeholder="Contoh: Sound System"
+                        maxlength="255"
+                    >
+                </div>
+
+                {{-- Description --}}
+                <div class="cat-form-group">
+                    <label class="cat-label" for="catDesc">Deskripsi</label>
+                    <textarea
+                        class="cat-textarea"
+                        id="catDesc"
+                        name="description"
+                        rows="3"
+                        placeholder="Jelaskan kategori ini secara singkat..."
+                    ></textarea>
+                </div>
+
+                {{-- Active Toggle --}}
+                <div class="cat-switch-row">
+                    <div class="cat-switch-info">
+                        <span class="cat-switch-label">Status Aktif</span>
+                        <p class="cat-switch-desc">Kategori aktif dapat dipilih saat membuat tiket baru</p>
+                    </div>
+                    <label class="cat-toggle">
+                        <input type="hidden" name="is_active" value="0">
+                        <input type="checkbox" name="is_active" id="catIsActive" value="1" checked>
+                        <span class="cat-toggle-track"></span>
+                    </label>
+                </div>
+
+            </div>
+
+            <div class="cat-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn-save" id="saveBtn">
+                    <i class='bx bx-check'></i>
+                    <span id="saveBtnText">Simpan</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ════════════════════════════════════════════
+     MODAL: DELETE CONFIRMATION
+════════════════════════════════════════════ --}}
+<div class="cat-modal-backdrop" id="deleteModalBackdrop">
+    <div class="cat-modal cat-delete-modal" role="dialog" aria-modal="true">
+
+        <div class="cat-modal-header">
+            <div class="cat-modal-header-text">
+                <h5>Hapus Kategori?</h5>
+                <p>Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <button class="cat-modal-close" onclick="closeDeleteModal()" aria-label="Tutup">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+
+        <div class="cat-delete-warning">
+            <p>Anda yakin ingin menghapus kategori berikut?</p>
+            <div class="cat-delete-detail" id="deleteTargetName">—</div>
+        </div>
+
+        <div class="cat-modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Batal</button>
+            <form id="deleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn-delete-confirm">
+                    <i class='bx bx-trash'></i> Ya, Hapus
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+/* ═══════════════════════════════════════════
+   CATEGORY MODAL CONTROLLER
+   Vanilla JS — no framework dependency
+═══════════════════════════════════════════ */
+
+const backdrop    = document.getElementById('categoryModalBackdrop')
+const delBackdrop = document.getElementById('deleteModalBackdrop')
+
+/* ── Helpers ── */
+function showBackdrop(el) {
+    el.classList.add('show')
+    document.body.style.overflow = 'hidden'
+}
+
+function hideBackdrop(el) {
+    el.classList.remove('show')
+    document.body.style.overflow = ''
+}
+
+/* ── Add Modal ── */
+function openAddModal() {
+    document.getElementById('modalTitle').textContent    = 'Tambah Kategori Baru'
+    document.getElementById('modalSubtitle').textContent = 'Buat kategori untuk mengorganisir tiket'
+    document.getElementById('saveBtnText').textContent   = 'Simpan'
+    document.getElementById('formMethod').value          = 'POST'
+    document.getElementById('categoryId').value          = ''
+    document.getElementById('catName').value             = ''
+    document.getElementById('catDesc').value             = ''
+    document.getElementById('catIsActive').checked       = true
+
+    const form = document.getElementById('categoryForm')
+    form.action = '{{ route("admin.categories.store") }}'
+
+    showBackdrop(backdrop)
+    setTimeout(() => document.getElementById('catName').focus(), 300)
+}
+
+/* ── Edit Modal ── */
+function openEditModal(id, name, description, isActive) {
+    document.getElementById('modalTitle').textContent    = 'Edit Kategori'
+    document.getElementById('modalSubtitle').textContent = 'Perbarui informasi kategori'
+    document.getElementById('saveBtnText').textContent   = 'Perbarui'
+    document.getElementById('formMethod').value          = 'PUT'
+    document.getElementById('categoryId').value          = id
+    document.getElementById('catName').value             = name
+    document.getElementById('catDesc').value             = description
+    document.getElementById('catIsActive').checked       = isActive
+
+    const form = document.getElementById('categoryForm')
+    form.action = `/admin/categories/${id}`
+
+    showBackdrop(backdrop)
+    setTimeout(() => document.getElementById('catName').focus(), 300)
+}
+
+/* ── Close ── */
+function closeModal() {
+    hideBackdrop(backdrop)
+}
+
+/* ── Delete Modal ── */
+function openDeleteModal(id, name) {
+    document.getElementById('deleteTargetName').textContent = name
+    document.getElementById('deleteForm').action = `/admin/categories/${id}`
+    showBackdrop(delBackdrop)
+}
+
+function closeDeleteModal() {
+    hideBackdrop(delBackdrop)
+}
+
+/* ── Close on backdrop click ── */
+backdrop.addEventListener('click', function(e) {
+    if (e.target === backdrop) closeModal()
+})
+
+delBackdrop.addEventListener('click', function(e) {
+    if (e.target === delBackdrop) closeDeleteModal()
+})
+
+/* ── Close on Escape ── */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeModal()
+        closeDeleteModal()
+    }
+})
+
+/* ── Form submit: show loading state ── */
+document.getElementById('categoryForm').addEventListener('submit', function() {
+    const btn  = document.getElementById('saveBtn')
+    const text = document.getElementById('saveBtnText')
+    btn.disabled = true
+    text.textContent = 'Menyimpan...'
+    btn.insertAdjacentHTML('afterbegin', '<span class="cat-spinner"></span> ')
+})
+</script>
+@endpush
+
 @push('styles')
 <style>
 /* ═══════════════════════════════════════════
@@ -687,323 +1008,4 @@
     }
 }
 </style>
-@endpush
-
-@section('content')
-<div class="categories-wrap">
-
-    {{-- ═══ FLASH MESSAGES ═══ --}}
-    @if(session('success'))
-    <div class="flash-success">
-        <i class='bx bx-check-circle'></i>
-        {{ session('success') }}
-    </div>
-    @endif
-
-    @if(session('error'))
-    <div class="flash-error">
-        <i class='bx bx-error-circle'></i>
-        {{ session('error') }}
-    </div>
-    @endif
-
-    {{-- ═══ HERO ═══ --}}
-    <section class="cat-hero">
-        <div class="cat-hero-text">
-            <h4>Manajemen Kategori</h4>
-            <p>Kelola kategori tiket agar alur penanganan lebih rapi dan mudah dipantau.</p>
-        </div>
-        <button class="btn-add-cat" onclick="openAddModal()">
-            <i class='bx bx-plus'></i> Tambah Kategori
-        </button>
-    </section>
-
-    {{-- ═══ CATEGORY LIST ═══ --}}
-    <article class="cat-card">
-        @if($categories->isEmpty())
-            <div class="cat-empty">
-                <i class='bx bx-category'></i>
-                <h6>Belum ada kategori</h6>
-                <p>Mulai dengan menambahkan kategori pertama Anda</p>
-            </div>
-        @else
-            <div class="category-list">
-                @foreach($categories as $category)
-                <div class="category-item">
-
-                    {{-- Icon + Info --}}
-                    <div class="cat-item-left">
-                        <div class="cat-icon">
-                            <i class='bx bx-category'></i>
-                        </div>
-                        <div class="cat-details">
-                            <h6 class="cat-name">{{ $category->name }}</h6>
-                            <p class="cat-desc">
-                                {{ $category->description ?: 'Tidak ada deskripsi' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Badges + Actions --}}
-                    <div class="cat-item-right">
-                        <div class="cat-badges">
-                            <span class="badge-ticket">
-                                <i class='bx bx-receipt'></i>
-                                {{ $category->tickets_count ?? 0 }} tiket
-                            </span>
-                            <span class="badge-status {{ $category->is_active ? 'active' : 'inactive' }}">
-                                <span class="badge-dot"></span>
-                                {{ $category->is_active ? 'Aktif' : 'Tidak Aktif' }}
-                            </span>
-                        </div>
-
-                        <div class="cat-actions">
-                            <button
-                                class="cat-btn-icon cat-btn-edit"
-                                title="Edit kategori"
-                                onclick="openEditModal({{ $category->id }}, '{{ addslashes($category->name) }}', '{{ addslashes($category->description ?? '') }}', {{ $category->is_active ? 'true' : 'false' }})"
-                            >
-                                <i class='bx bx-edit'></i>
-                            </button>
-
-                            @if(($category->tickets_count ?? 0) > 0)
-                                <button
-                                    class="cat-btn-icon cat-btn-delete"
-                                    title="Tidak bisa dihapus — ada tiket aktif"
-                                    disabled
-                                >
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            @else
-                                <button
-                                    class="cat-btn-icon cat-btn-delete"
-                                    title="Hapus kategori"
-                                    onclick="openDeleteModal({{ $category->id }}, '{{ addslashes($category->name) }}')"
-                                >
-                                    <i class='bx bx-trash'></i>
-                                </button>
-                            @endif
-                        </div>
-                    </div>
-
-                </div>
-                @endforeach
-            </div>
-        @endif
-    </article>
-
-</div>
-
-{{-- ════════════════════════════════════════════
-     MODAL: ADD / EDIT CATEGORY
-════════════════════════════════════════════ --}}
-<div class="cat-modal-backdrop" id="categoryModalBackdrop">
-    <div class="cat-modal" id="categoryModal" role="dialog" aria-modal="true">
-
-        <div class="cat-modal-header">
-            <div class="cat-modal-header-text">
-                <h5 id="modalTitle">Tambah Kategori Baru</h5>
-                <p id="modalSubtitle">Buat kategori untuk mengorganisir tiket</p>
-            </div>
-            <button class="cat-modal-close" onclick="closeModal()" aria-label="Tutup">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-
-        <form id="categoryForm" method="POST">
-            @csrf
-            <input type="hidden" name="_method" id="formMethod" value="POST">
-            <input type="hidden" name="category_id" id="categoryId">
-
-            <div class="cat-modal-body">
-
-                {{-- Name --}}
-                <div class="cat-form-group">
-                    <label class="cat-label" for="catName">
-                        Nama Kategori <span class="req">*</span>
-                    </label>
-                    <input
-                        type="text"
-                        class="cat-input"
-                        id="catName"
-                        name="name"
-                        required
-                        placeholder="Contoh: Sound System"
-                        maxlength="255"
-                    >
-                </div>
-
-                {{-- Description --}}
-                <div class="cat-form-group">
-                    <label class="cat-label" for="catDesc">Deskripsi</label>
-                    <textarea
-                        class="cat-textarea"
-                        id="catDesc"
-                        name="description"
-                        rows="3"
-                        placeholder="Jelaskan kategori ini secara singkat..."
-                    ></textarea>
-                </div>
-
-                {{-- Active Toggle --}}
-                <div class="cat-switch-row">
-                    <div class="cat-switch-info">
-                        <span class="cat-switch-label">Status Aktif</span>
-                        <p class="cat-switch-desc">Kategori aktif dapat dipilih saat membuat tiket baru</p>
-                    </div>
-                    <label class="cat-toggle">
-                        <input type="hidden" name="is_active" value="0">
-                        <input type="checkbox" name="is_active" id="catIsActive" value="1" checked>
-                        <span class="cat-toggle-track"></span>
-                    </label>
-                </div>
-
-            </div>
-
-            <div class="cat-modal-footer">
-                <button type="button" class="btn-cancel" onclick="closeModal()">Batal</button>
-                <button type="submit" class="btn-save" id="saveBtn">
-                    <i class='bx bx-check'></i>
-                    <span id="saveBtnText">Simpan</span>
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-{{-- ════════════════════════════════════════════
-     MODAL: DELETE CONFIRMATION
-════════════════════════════════════════════ --}}
-<div class="cat-modal-backdrop" id="deleteModalBackdrop">
-    <div class="cat-modal cat-delete-modal" role="dialog" aria-modal="true">
-
-        <div class="cat-modal-header">
-            <div class="cat-modal-header-text">
-                <h5>Hapus Kategori?</h5>
-                <p>Tindakan ini tidak dapat dibatalkan.</p>
-            </div>
-            <button class="cat-modal-close" onclick="closeDeleteModal()" aria-label="Tutup">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-
-        <div class="cat-delete-warning">
-            <p>Anda yakin ingin menghapus kategori berikut?</p>
-            <div class="cat-delete-detail" id="deleteTargetName">—</div>
-        </div>
-
-        <div class="cat-modal-footer">
-            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Batal</button>
-            <form id="deleteForm" method="POST">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn-delete-confirm">
-                    <i class='bx bx-trash'></i> Ya, Hapus
-                </button>
-            </form>
-        </div>
-
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script>
-/* ═══════════════════════════════════════════
-   CATEGORY MODAL CONTROLLER
-   Vanilla JS — no framework dependency
-═══════════════════════════════════════════ */
-
-const backdrop    = document.getElementById('categoryModalBackdrop')
-const delBackdrop = document.getElementById('deleteModalBackdrop')
-
-/* ── Helpers ── */
-function showBackdrop(el) {
-    el.classList.add('show')
-    document.body.style.overflow = 'hidden'
-}
-
-function hideBackdrop(el) {
-    el.classList.remove('show')
-    document.body.style.overflow = ''
-}
-
-/* ── Add Modal ── */
-function openAddModal() {
-    document.getElementById('modalTitle').textContent    = 'Tambah Kategori Baru'
-    document.getElementById('modalSubtitle').textContent = 'Buat kategori untuk mengorganisir tiket'
-    document.getElementById('saveBtnText').textContent   = 'Simpan'
-    document.getElementById('formMethod').value          = 'POST'
-    document.getElementById('categoryId').value          = ''
-    document.getElementById('catName').value             = ''
-    document.getElementById('catDesc').value             = ''
-    document.getElementById('catIsActive').checked       = true
-
-    const form = document.getElementById('categoryForm')
-    form.action = '{{ route("admin.categories.store") }}'
-
-    showBackdrop(backdrop)
-    setTimeout(() => document.getElementById('catName').focus(), 300)
-}
-
-/* ── Edit Modal ── */
-function openEditModal(id, name, description, isActive) {
-    document.getElementById('modalTitle').textContent    = 'Edit Kategori'
-    document.getElementById('modalSubtitle').textContent = 'Perbarui informasi kategori'
-    document.getElementById('saveBtnText').textContent   = 'Perbarui'
-    document.getElementById('formMethod').value          = 'PUT'
-    document.getElementById('categoryId').value          = id
-    document.getElementById('catName').value             = name
-    document.getElementById('catDesc').value             = description
-    document.getElementById('catIsActive').checked       = isActive
-
-    const form = document.getElementById('categoryForm')
-    form.action = `/admin/categories/${id}`
-
-    showBackdrop(backdrop)
-    setTimeout(() => document.getElementById('catName').focus(), 300)
-}
-
-/* ── Close ── */
-function closeModal() {
-    hideBackdrop(backdrop)
-}
-
-/* ── Delete Modal ── */
-function openDeleteModal(id, name) {
-    document.getElementById('deleteTargetName').textContent = name
-    document.getElementById('deleteForm').action = `/admin/categories/${id}`
-    showBackdrop(delBackdrop)
-}
-
-function closeDeleteModal() {
-    hideBackdrop(delBackdrop)
-}
-
-/* ── Close on backdrop click ── */
-backdrop.addEventListener('click', function(e) {
-    if (e.target === backdrop) closeModal()
-})
-
-delBackdrop.addEventListener('click', function(e) {
-    if (e.target === delBackdrop) closeDeleteModal()
-})
-
-/* ── Close on Escape ── */
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeModal()
-        closeDeleteModal()
-    }
-})
-
-/* ── Form submit: show loading state ── */
-document.getElementById('categoryForm').addEventListener('submit', function() {
-    const btn  = document.getElementById('saveBtn')
-    const text = document.getElementById('saveBtnText')
-    btn.disabled = true
-    text.textContent = 'Menyimpan...'
-    btn.insertAdjacentHTML('afterbegin', '<span class="cat-spinner"></span> ')
-})
-</script>
 @endpush

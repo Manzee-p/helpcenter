@@ -4,6 +4,316 @@
 @section('page_title', 'Manajemen Tiket')
 @section('breadcrumb', 'Home / Tiket / Semua Tiket')
 
+
+
+@section('content')
+<div class="tickets-wrap">
+
+    {{-- ═══ HERO ═══ --}}
+    <section class="hero-card">
+        <div class="hero-copy">
+            <span class="hero-kicker">Manajemen Tiket</span>
+            <h3>Semua tiket dalam satu layar</h3>
+            <p>Admin fokus pada pemantauan, penugasan, dan penghapusan tiket tanpa alur membuat tiket baru untuk client.</p>
+        </div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <a href="{{ route('admin.ticket-deletion-requests.index') }}" class="btn-outline-sm">
+                <i class='bx bx-trash-alt'></i> Permintaan Hapus
+            </a>
+            <a href="{{ route('admin.tickets.index') }}" class="btn-primary-sm">
+                <i class='bx bx-refresh'></i> Muat Ulang
+            </a>
+        </div>
+    </section>
+
+    {{-- ═══ STATS ═══ --}}
+    <section class="stats-grid">
+        <article class="stat-card">
+            <span>Total tiket</span>
+            <strong>{{ $tickets->total() }}</strong>
+            <small>Keseluruhan tiket yang tercatat</small>
+        </article>
+        <article class="stat-card stat-card--new">
+            <span>Tiket baru</span>
+            <strong>{{ $stats['new_count'] ?? 0 }}</strong>
+            <small>Perlu ditinjau admin</small>
+        </article>
+        <article class="stat-card stat-card--progress">
+            <span>Dalam proses</span>
+            <strong>{{ $stats['in_progress_count'] ?? 0 }}</strong>
+            <small>Masih dikerjakan vendor</small>
+        </article>
+        <article class="stat-card stat-card--assigned">
+            <span>Sudah ditugaskan</span>
+            <strong>{{ $stats['assigned_count'] ?? 0 }}</strong>
+            <small>Sudah punya vendor penanggung jawab</small>
+        </article>
+    </section>
+
+    {{-- ═══ FILTER ═══ --}}
+    <section class="filter-card">
+        <form method="GET" action="{{ route('admin.tickets.index') }}" id="filter-form">
+            <div class="filter-search">
+                <i class='bx bx-search'></i>
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Cari nomor tiket, judul, atau nama client..."
+                    id="search-input"
+                    autocomplete="off"
+                >
+            </div>
+            <div class="filter-row">
+                <div class="filter-field">
+                    <label>Status</label>
+                    <select name="status" onchange="this.form.submit()">
+                        <option value="">Semua status</option>
+                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
+                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam proses</option>
+                        <option value="waiting_response" {{ request('status') === 'waiting_response' ? 'selected' : '' }}>Menunggu respon</option>
+                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Terselesaikan</option>
+                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Ditutup</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label>Prioritas</label>
+                    <select name="priority" onchange="this.form.submit()">
+                        <option value="">Semua prioritas</option>
+                        <option value="low"    {{ request('priority') === 'low'    ? 'selected' : '' }}>Rendah</option>
+                        <option value="medium" {{ request('priority') === 'medium' ? 'selected' : '' }}>Sedang</option>
+                        <option value="high"   {{ request('priority') === 'high'   ? 'selected' : '' }}>Tinggi</option>
+                        <option value="urgent" {{ request('priority') === 'urgent' ? 'selected' : '' }}>Mendesak</option>
+                    </select>
+                </div>
+                <input type="hidden" name="view" value="{{ request('view', 'table') }}" id="view-input">
+                <div class="view-switch">
+                    <button type="button" class="{{ request('view', 'table') === 'table' ? 'active' : '' }}" onclick="switchView('table')" title="Tampilan tabel">
+                        <i class='bx bx-list-ul'></i>
+                    </button>
+                    <button type="button" class="{{ request('view') === 'grid' ? 'active' : '' }}" onclick="switchView('grid')" title="Tampilan grid">
+                        <i class='bx bx-grid-alt'></i>
+                    </button>
+                </div>
+                @if(request()->hasAny(['status','priority','search']))
+                    <a href="{{ route('admin.tickets.index') }}" class="btn-reset">Reset filter</a>
+                @endif
+            </div>
+        </form>
+    </section>
+
+    {{-- ═══ CONTENT ═══ --}}
+    <section class="content-card">
+        <div class="content-head">
+            <div>
+                <h5>Daftar tiket</h5>
+                <p>{{ $tickets->count() }} tiket tampil pada halaman ini</p>
+            </div>
+        </div>
+
+        @if($tickets->isEmpty())
+            <div class="state-box">Belum ada tiket yang cocok dengan filter saat ini.</div>
+        @elseif(request('view') === 'grid')
+            {{-- ── GRID VIEW ── --}}
+            <div class="ticket-grid">
+                @foreach($tickets as $ticket)
+                <article class="ticket-card" onclick="window.location='{{ route('admin.tickets.show', $ticket->id) }}'">
+                    <div class="ticket-card__top">
+                        <strong>{{ $ticket->ticket_number }}</strong>
+                        <span class="badge badge-{{ $ticket->status }}">{{ $ticket->status_label }}</span>
+                    </div>
+                    <h3>{{ $ticket->title }}</h3>
+                    <p>{{ Str::limit($ticket->description, 110) }}</p>
+                    <div class="ticket-card__meta">
+                        <span><i class='bx bx-user'></i> {{ $ticket->user->name ?? 'Client tidak diketahui' }}</span>
+                        <span><i class='bx bx-wrench'></i> {{ $ticket->assignedTo->name ?? 'Belum ditugaskan' }}</span>
+                        <span><i class='bx bx-calendar'></i> {{ $ticket->created_at?->format('d M Y') ?? '-' }}</span>
+                    </div>
+                    <div class="ticket-card__footer">
+                        <span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ $ticket->priority_label }}</span>
+                        <div class="card-actions" onclick="event.stopPropagation()">
+                            <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="icon-btn" title="Lihat detail"><i class='bx bx-show'></i></a>
+                            <button class="icon-btn" title="Tugaskan vendor" onclick="openAssignModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-user-plus'></i></button>
+                            <button class="icon-btn icon-btn--danger" title="Hapus tiket" onclick="confirmDelete({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-trash'></i></button>
+                        </div>
+                    </div>
+                </article>
+                @endforeach
+            </div>
+        @else
+            {{-- ── TABLE VIEW ── --}}
+            <div class="table-shell">
+                <table class="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>Tiket</th>
+                            <th>Client</th>
+                            <th>Status</th>
+                            <th>Prioritas</th>
+                            <th>Vendor</th>
+                            <th>Dibuat</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($tickets as $ticket)
+                        <tr onclick="window.location='{{ route('admin.tickets.show', $ticket->id) }}'">
+                            <td>
+                                <div class="ticket-main">
+                                    <strong>{{ $ticket->ticket_number }}</strong>
+                                    <span>{{ Str::limit($ticket->title, 55) }}</span>
+                                </div>
+                            </td>
+                            <td>{{ $ticket->user->name ?? '-' }}</td>
+                            <td><span class="badge badge-{{ $ticket->status }}">{{ $ticket->status_label }}</span></td>
+                            <td><span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ $ticket->priority_label }}</span></td>
+                            <td>{{ $ticket->assignedTo->name ?? 'Belum ditugaskan' }}</td>
+                            <td>{{ $ticket->created_at?->format('d M Y') ?? '-' }}</td>
+                            <td class="td-actions" onclick="event.stopPropagation()">
+                                <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="icon-btn" title="Lihat detail"><i class='bx bx-show'></i></a>
+                                <button class="icon-btn" title="Tugaskan vendor" onclick="openAssignModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-user-plus'></i></button>
+                                <button class="icon-btn icon-btn--danger" title="Hapus tiket" onclick="confirmDelete({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-trash'></i></button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        {{-- ── PAGINATION ── --}}
+        @if($tickets->lastPage() > 1)
+        <div class="pagination-wrap">
+            <button {{ $tickets->onFirstPage() ? 'disabled' : '' }} onclick="goPage({{ $tickets->currentPage() - 1 }})">Sebelumnya</button>
+            <div class="page-numbers">
+                @foreach($tickets->getUrlRange(max(1, $tickets->currentPage()-2), min($tickets->lastPage(), $tickets->currentPage()+2)) as $page => $url)
+                    <button class="{{ $page === $tickets->currentPage() ? 'active' : '' }}" onclick="goPage({{ $page }})">{{ $page }}</button>
+                @endforeach
+            </div>
+            <button {{ $tickets->currentPage() === $tickets->lastPage() ? 'disabled' : '' }} onclick="goPage({{ $tickets->currentPage() + 1 }})">Berikutnya</button>
+        </div>
+        @endif
+    </section>
+</div>
+
+{{-- ═══ ASSIGN MODAL ═══ --}}
+<div id="assign-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:1050; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:24px; padding:1.75rem; width:100%; max-width:480px; margin:1rem; box-shadow:0 25px 60px rgba(0,0,0,0.2); animation: fadeIn 0.2s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <h5 style="margin:0; font-weight:800; color:var(--text);">Tugaskan Vendor</h5>
+            <button onclick="closeAssignModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">&times;</button>
+        </div>
+        <p style="color:var(--text-muted); margin-bottom:1.25rem; font-size:0.9rem;">Pilih vendor untuk tiket <strong id="assign-ticket-number"></strong></p>
+        <div style="margin-bottom:1rem;">
+            <label style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Vendor</label>
+            <select id="assign-vendor-select" style="width:100%; border:1.5px solid var(--border); border-radius:14px; padding:0.875rem 1rem; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none; background:var(--bg);">
+                <option value="">-- Pilih vendor --</option>
+                @foreach($vendors as $vendor)
+                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+            <button onclick="closeAssignModal()" class="btn-reset">Batal</button>
+            <button onclick="submitAssign()" class="btn-primary-sm">Tugaskan</button>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ DELETE FORM ═══ --}}
+<form id="delete-form" method="POST" style="display:none;">
+    @csrf
+    @method('DELETE')
+</form>
+@endsection
+
+@push('scripts')
+<script>
+// ── View Switch ──
+function switchView(mode) {
+    document.getElementById('view-input').value = mode;
+    document.getElementById('filter-form').submit();
+}
+
+// ── Pagination ──
+function goPage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location = url.toString();
+}
+
+// ── Search Debounce ──
+let adminTicketsSearchTimer;
+document.getElementById('search-input').addEventListener('input', function() {
+    clearTimeout(adminTicketsSearchTimer);
+    adminTicketsSearchTimer = setTimeout(() => document.getElementById('filter-form').submit(), 500);
+});
+
+// ── Assign Modal ──
+let assignTicketId = null;
+function openAssignModal(id, number) {
+    assignTicketId = id;
+    document.getElementById('assign-ticket-number').textContent = number;
+    document.getElementById('assign-vendor-select').value = '';
+    document.getElementById('assign-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+function closeAssignModal() {
+    document.getElementById('assign-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+function submitAssign() {
+    const vendorId = document.getElementById('assign-vendor-select').value;
+    if (!vendorId) {
+        Swal.fire({ icon:'warning', title:'Pilih vendor dulu', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
+        return;
+    }
+    fetch(`/api/tickets/${assignTicketId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({ assigned_to: vendorId })
+    })
+    .then(r => r.json())
+    .then(() => {
+        closeAssignModal();
+        Swal.fire({ icon:'success', title:'Vendor berhasil ditugaskan', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
+        setTimeout(() => location.reload(), 1500);
+    })
+    .catch(() => {
+        Swal.fire({ icon:'error', title:'Gagal menugaskan vendor', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
+    });
+}
+
+// ── Delete Confirm ──
+function confirmDelete(id, number) {
+    Swal.fire({
+        title: 'Hapus tiket?',
+        html: `Tiket <strong>${number}</strong> akan dihapus permanen.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Hapus',
+        cancelButtonText: 'Batal',
+    }).then(result => {
+        if (!result.isConfirmed) return;
+        const form = document.getElementById('delete-form');
+        form.action = `/admin/tickets/${id}`;
+        form.submit();
+    });
+}
+
+// Close modal on backdrop click
+document.getElementById('assign-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeAssignModal();
+});
+</script>
+@endpush
+
 @push('styles')
 <style>
 /* ───── PAGE WRAP ───── */
@@ -253,310 +563,3 @@
 </style>
 @endpush
 
-@section('content')
-<div class="tickets-wrap">
-
-    {{-- ═══ HERO ═══ --}}
-    <section class="hero-card">
-        <div class="hero-copy">
-            <span class="hero-kicker">Manajemen Tiket</span>
-            <h3>Semua tiket dalam satu layar</h3>
-            <p>Admin fokus pada pemantauan, penugasan, dan penghapusan tiket tanpa alur membuat tiket baru untuk client.</p>
-        </div>
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
-            <a href="{{ route('admin.ticket-deletion-requests.index') }}" class="btn-outline-sm">
-                <i class='bx bx-trash-alt'></i> Permintaan Hapus
-            </a>
-            <a href="{{ route('admin.tickets.index') }}" class="btn-primary-sm">
-                <i class='bx bx-refresh'></i> Muat Ulang
-            </a>
-        </div>
-    </section>
-
-    {{-- ═══ STATS ═══ --}}
-    <section class="stats-grid">
-        <article class="stat-card">
-            <span>Total tiket</span>
-            <strong>{{ $tickets->total() }}</strong>
-            <small>Keseluruhan tiket yang tercatat</small>
-        </article>
-        <article class="stat-card stat-card--new">
-            <span>Tiket baru</span>
-            <strong>{{ $stats['new_count'] ?? 0 }}</strong>
-            <small>Perlu ditinjau admin</small>
-        </article>
-        <article class="stat-card stat-card--progress">
-            <span>Dalam proses</span>
-            <strong>{{ $stats['in_progress_count'] ?? 0 }}</strong>
-            <small>Masih dikerjakan vendor</small>
-        </article>
-        <article class="stat-card stat-card--assigned">
-            <span>Sudah ditugaskan</span>
-            <strong>{{ $stats['assigned_count'] ?? 0 }}</strong>
-            <small>Sudah punya vendor penanggung jawab</small>
-        </article>
-    </section>
-
-    {{-- ═══ FILTER ═══ --}}
-    <section class="filter-card">
-        <form method="GET" action="{{ route('admin.tickets.index') }}" id="filter-form">
-            <div class="filter-search">
-                <i class='bx bx-search'></i>
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ request('search') }}"
-                    placeholder="Cari nomor tiket, judul, atau nama client..."
-                    id="search-input"
-                    autocomplete="off"
-                >
-            </div>
-            <div class="filter-row">
-                <div class="filter-field">
-                    <label>Status</label>
-                    <select name="status" onchange="this.form.submit()">
-                        <option value="">Semua status</option>
-                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
-                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam proses</option>
-                        <option value="waiting_response" {{ request('status') === 'waiting_response' ? 'selected' : '' }}>Menunggu respon</option>
-                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Terselesaikan</option>
-                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Ditutup</option>
-                    </select>
-                </div>
-                <div class="filter-field">
-                    <label>Prioritas</label>
-                    <select name="priority" onchange="this.form.submit()">
-                        <option value="">Semua prioritas</option>
-                        <option value="low"    {{ request('priority') === 'low'    ? 'selected' : '' }}>Rendah</option>
-                        <option value="medium" {{ request('priority') === 'medium' ? 'selected' : '' }}>Sedang</option>
-                        <option value="high"   {{ request('priority') === 'high'   ? 'selected' : '' }}>Tinggi</option>
-                        <option value="urgent" {{ request('priority') === 'urgent' ? 'selected' : '' }}>Mendesak</option>
-                    </select>
-                </div>
-                <input type="hidden" name="view" value="{{ request('view', 'table') }}" id="view-input">
-                <div class="view-switch">
-                    <button type="button" class="{{ request('view', 'table') === 'table' ? 'active' : '' }}" onclick="switchView('table')" title="Tampilan tabel">
-                        <i class='bx bx-list-ul'></i>
-                    </button>
-                    <button type="button" class="{{ request('view') === 'grid' ? 'active' : '' }}" onclick="switchView('grid')" title="Tampilan grid">
-                        <i class='bx bx-grid-alt'></i>
-                    </button>
-                </div>
-                @if(request()->hasAny(['status','priority','search']))
-                    <a href="{{ route('admin.tickets.index') }}" class="btn-reset">Reset filter</a>
-                @endif
-            </div>
-        </form>
-    </section>
-
-    {{-- ═══ CONTENT ═══ --}}
-    <section class="content-card">
-        <div class="content-head">
-            <div>
-                <h5>Daftar tiket</h5>
-                <p>{{ $tickets->count() }} tiket tampil pada halaman ini</p>
-            </div>
-        </div>
-
-        @if($tickets->isEmpty())
-            <div class="state-box">Belum ada tiket yang cocok dengan filter saat ini.</div>
-        @elseif(request('view') === 'grid')
-            {{-- ── GRID VIEW ── --}}
-            <div class="ticket-grid">
-                @foreach($tickets as $ticket)
-                <article class="ticket-card" onclick="window.location='{{ route('admin.tickets.show', $ticket->id) }}'">
-                    <div class="ticket-card__top">
-                        <strong>{{ $ticket->ticket_number }}</strong>
-                        <span class="badge badge-{{ $ticket->status }}">{{ formatTicketStatus($ticket->status) }}</span>
-                    </div>
-                    <h3>{{ $ticket->title }}</h3>
-                    <p>{{ Str::limit($ticket->description, 110) }}</p>
-                    <div class="ticket-card__meta">
-                        <span><i class='bx bx-user'></i> {{ $ticket->user->name ?? 'Client tidak diketahui' }}</span>
-                        <span><i class='bx bx-wrench'></i> {{ $ticket->assignedTo->name ?? 'Belum ditugaskan' }}</span>
-                        <span><i class='bx bx-calendar'></i> {{ $ticket->created_at?->format('d M Y') ?? '-' }}</span>
-                    </div>
-                    <div class="ticket-card__footer">
-                        <span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ formatTicketPriority($ticket->priority) }}</span>
-                        <div class="card-actions" onclick="event.stopPropagation()">
-                            <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="icon-btn" title="Lihat detail"><i class='bx bx-show'></i></a>
-                            <button class="icon-btn" title="Tugaskan vendor" onclick="openAssignModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-user-plus'></i></button>
-                            <button class="icon-btn icon-btn--danger" title="Hapus tiket" onclick="confirmDelete({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-trash'></i></button>
-                        </div>
-                    </div>
-                </article>
-                @endforeach
-            </div>
-        @else
-            {{-- ── TABLE VIEW ── --}}
-            <div class="table-shell">
-                <table class="tickets-table">
-                    <thead>
-                        <tr>
-                            <th>Tiket</th>
-                            <th>Client</th>
-                            <th>Status</th>
-                            <th>Prioritas</th>
-                            <th>Vendor</th>
-                            <th>Dibuat</th>
-                            <th class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($tickets as $ticket)
-                        <tr onclick="window.location='{{ route('admin.tickets.show', $ticket->id) }}'">
-                            <td>
-                                <div class="ticket-main">
-                                    <strong>{{ $ticket->ticket_number }}</strong>
-                                    <span>{{ Str::limit($ticket->title, 55) }}</span>
-                                </div>
-                            </td>
-                            <td>{{ $ticket->user->name ?? '-' }}</td>
-                            <td><span class="badge badge-{{ $ticket->status }}">{{ $ticket->status_label }}</span></td>
-                            <td><span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ $ticket->priority_label }}</span></td>
-                            <td>{{ $ticket->assignedTo->name ?? 'Belum ditugaskan' }}</td>
-                            <td>{{ $ticket->created_at?->format('d M Y') ?? '-' }}</td>
-                            <td class="td-actions" onclick="event.stopPropagation()">
-                                <a href="{{ route('admin.tickets.show', $ticket->id) }}" class="icon-btn" title="Lihat detail"><i class='bx bx-show'></i></a>
-                                <button class="icon-btn" title="Tugaskan vendor" onclick="openAssignModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-user-plus'></i></button>
-                                <button class="icon-btn icon-btn--danger" title="Hapus tiket" onclick="confirmDelete({{ $ticket->id }}, '{{ $ticket->ticket_number }}')"><i class='bx bx-trash'></i></button>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-
-        {{-- ── PAGINATION ── --}}
-        @if($tickets->lastPage() > 1)
-        <div class="pagination-wrap">
-            <button {{ $tickets->onFirstPage() ? 'disabled' : '' }} onclick="goPage({{ $tickets->currentPage() - 1 }})">Sebelumnya</button>
-            <div class="page-numbers">
-                @foreach($tickets->getUrlRange(max(1, $tickets->currentPage()-2), min($tickets->lastPage(), $tickets->currentPage()+2)) as $page => $url)
-                    <button class="{{ $page === $tickets->currentPage() ? 'active' : '' }}" onclick="goPage({{ $page }})">{{ $page }}</button>
-                @endforeach
-            </div>
-            <button {{ $tickets->currentPage() === $tickets->lastPage() ? 'disabled' : '' }} onclick="goPage({{ $tickets->currentPage() + 1 }})">Berikutnya</button>
-        </div>
-        @endif
-    </section>
-</div>
-
-{{-- ═══ ASSIGN MODAL ═══ --}}
-<div id="assign-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:1050; align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:24px; padding:1.75rem; width:100%; max-width:480px; margin:1rem; box-shadow:0 25px 60px rgba(0,0,0,0.2); animation: fadeIn 0.2s ease;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
-            <h5 style="margin:0; font-weight:800; color:var(--text);">Tugaskan Vendor</h5>
-            <button onclick="closeAssignModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">&times;</button>
-        </div>
-        <p style="color:var(--text-muted); margin-bottom:1.25rem; font-size:0.9rem;">Pilih vendor untuk tiket <strong id="assign-ticket-number"></strong></p>
-        <div style="margin-bottom:1rem;">
-            <label style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Vendor</label>
-            <select id="assign-vendor-select" style="width:100%; border:1.5px solid var(--border); border-radius:14px; padding:0.875rem 1rem; font-family:'Plus Jakarta Sans',sans-serif; font-size:0.9rem; outline:none; background:var(--bg);">
-                <option value="">-- Pilih vendor --</option>
-                @foreach($vendors as $vendor)
-                    <option value="{{ $vendor->id }}">{{ $vendor->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
-            <button onclick="closeAssignModal()" class="btn-reset">Batal</button>
-            <button onclick="submitAssign()" class="btn-primary-sm">Tugaskan</button>
-        </div>
-    </div>
-</div>
-
-{{-- ═══ DELETE FORM ═══ --}}
-<form id="delete-form" method="POST" style="display:none;">
-    @csrf
-    @method('DELETE')
-</form>
-@endsection
-
-@push('scripts')
-<script>
-// ── View Switch ──
-function switchView(mode) {
-    document.getElementById('view-input').value = mode;
-    document.getElementById('filter-form').submit();
-}
-
-// ── Pagination ──
-function goPage(page) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('page', page);
-    window.location = url.toString();
-}
-
-// ── Search Debounce ──
-let searchTimer;
-document.getElementById('search-input').addEventListener('input', function() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => document.getElementById('filter-form').submit(), 500);
-});
-
-// ── Assign Modal ──
-let assignTicketId = null;
-function openAssignModal(id, number) {
-    assignTicketId = id;
-    document.getElementById('assign-ticket-number').textContent = number;
-    document.getElementById('assign-vendor-select').value = '';
-    document.getElementById('assign-modal').style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-}
-function closeAssignModal() {
-    document.getElementById('assign-modal').style.display = 'none';
-    document.body.style.overflow = '';
-}
-function submitAssign() {
-    const vendorId = document.getElementById('assign-vendor-select').value;
-    if (!vendorId) {
-        Swal.fire({ icon:'warning', title:'Pilih vendor dulu', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
-        return;
-    }
-    fetch(`/api/tickets/${assignTicketId}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ assigned_to: vendorId })
-    })
-    .then(r => r.json())
-    .then(() => {
-        closeAssignModal();
-        Swal.fire({ icon:'success', title:'Vendor berhasil ditugaskan', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
-        setTimeout(() => location.reload(), 1500);
-    })
-    .catch(() => {
-        Swal.fire({ icon:'error', title:'Gagal menugaskan vendor', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
-    });
-}
-
-// ── Delete Confirm ──
-function confirmDelete(id, number) {
-    Swal.fire({
-        title: 'Hapus tiket?',
-        html: `Tiket <strong>${number}</strong> akan dihapus permanen.`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#94a3b8',
-        confirmButtonText: 'Hapus',
-        cancelButtonText: 'Batal',
-    }).then(result => {
-        if (!result.isConfirmed) return;
-        const form = document.getElementById('delete-form');
-        form.action = `/admin/tickets/${id}`;
-        form.submit();
-    });
-}
-
-// Close modal on backdrop click
-document.getElementById('assign-modal').addEventListener('click', function(e) {
-    if (e.target === this) closeAssignModal();
-});
-</script>
-@endpush

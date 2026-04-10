@@ -4,6 +4,217 @@
 @section('page_title', 'Belum Dirating')
 @section('breadcrumb', 'Home / Belum Dirating')
 
+
+
+@section('content')
+@php
+    $total       = $tickets->count();
+    $pending     = $tickets->whereNull('feedback')->count();
+    $rated       = 0;
+    $progress    = 0;
+    // Re-compute from all closed
+    $allClosed   = \App\Models\Ticket::where('user_id', Auth::id())
+                        ->whereIn('status', ['resolved','closed'])->count();
+    $allRated    = \App\Models\Ticket::where('user_id', Auth::id())
+                        ->whereIn('status', ['resolved','closed'])->has('feedback')->count();
+    $progressPct = $allClosed > 0 ? round(($allRated / $allClosed) * 100) : 0;
+@endphp
+
+<div class="pending-ratings-page">
+
+    {{-- HERO --}}
+    <div class="pr-hero">
+        <div class="pr-hero-text">
+            <h1>⭐ Belum Dirating</h1>
+            <p>Tiket yang sudah selesai tetapi masih menunggu penilaian dari Anda.</p>
+        </div>
+        <a href="{{ route('client.pending-ratings') }}" class="btn-refresh">
+            <i class='bx bx-refresh'></i> Muat Ulang
+        </a>
+    </div>
+
+    {{-- STATS --}}
+    <div class="pr-stats">
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--blue"><i class='bx bx-file'></i></div>
+            <div class="stat-info">
+                <span>Total Selesai</span>
+                <strong>{{ $allClosed }}</strong>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--amber"><i class='bx bx-star'></i></div>
+            <div class="stat-info">
+                <span>Belum Dirating</span>
+                <strong>{{ $tickets->count() }}</strong>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--green"><i class='bx bx-check-circle'></i></div>
+            <div class="stat-info">
+                <span>Sudah Dirating</span>
+                <strong>{{ $allRated }}</strong>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon stat-icon--purple"><i class='bx bx-bar-chart-alt-2'></i></div>
+            <div class="stat-info">
+                <span>Progress Rating</span>
+                <strong>{{ $progressPct }}%</strong>
+            </div>
+        </div>
+    </div>
+
+    {{-- PROGRESS BAR --}}
+    <div class="progress-wrap">
+        <span class="progress-label">Progress Penilaian</span>
+        <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: {{ $progressPct }}%"></div>
+        </div>
+        <span class="progress-pct">{{ $progressPct }}%</span>
+    </div>
+
+    {{-- TABLE --}}
+    <div class="table-card">
+        <div class="table-card-head">
+            <h2><i class='bx bx-star'></i> Tiket Menunggu Rating</h2>
+            <span class="count-badge">{{ $tickets->count() }} tiket</span>
+        </div>
+
+        @if($tickets->isEmpty())
+            <div class="empty-state">
+                <div class="empty-icon"><i class='bx bx-happy-heart-eyes'></i></div>
+                <h3 class="empty-title">Semua tiket sudah dirating!</h3>
+                <p class="empty-text">Terima kasih, feedback Anda sangat membantu evaluasi vendor kami.</p>
+            </div>
+        @else
+        <div class="table-responsive">
+            <table class="pr-table">
+                <thead>
+                    <tr>
+                        <th>Tiket</th>
+                        <th>Kategori</th>
+                        <th>Status</th>
+                        <th>Vendor</th>
+                        <th>Selesai</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($tickets as $ticket)
+                    <tr>
+                        <td>
+                            <div class="ticket-cell-num">#{{ $ticket->ticket_number }}</div>
+                            <div class="ticket-cell-title">{{ Str::limit($ticket->title, 45) }}</div>
+                        </td>
+                        <td>
+                            <span class="badge-cat">{{ $ticket->category->name ?? 'N/A' }}</span>
+                        </td>
+                        <td>
+                            <span class="badge-status {{ $ticket->status === 'resolved' ? 'badge-resolved' : 'badge-closed' }}">
+                                {{ $ticket->status === 'resolved' ? 'Selesai' : 'Ditutup' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="vendor-name">{{ $ticket->assignedVendor->name ?? 'Tidak ada vendor' }}</span>
+                        </td>
+                        <td>
+                            <span class="time-text">
+                                {{ \Carbon\Carbon::parse($ticket->resolved_at ?? $ticket->updated_at)->locale('id')->diffForHumans() }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-group">
+                                <a href="{{ route('client.tickets.show', $ticket->id) }}" class="btn-detail">
+                                    <i class='bx bx-show'></i> Detail
+                                </a>
+                                <button class="btn-rate" onclick="openModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}', '{{ addslashes($ticket->title) }}')">
+                                    <i class='bx bx-star'></i> Beri Rating
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </div>
+
+</div>
+
+{{-- FEEDBACK MODAL --}}
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <div class="modal-head">
+            <h3>Beri Rating Layanan</h3>
+            <button class="modal-close" onclick="closeModal()"><i class='bx bx-x'></i></button>
+        </div>
+
+        <div class="modal-ticket-info">
+            <strong id="modal-ticket-num"></strong>
+            <p id="modal-ticket-title"></p>
+        </div>
+
+        <form id="feedbackForm" method="POST" action="">
+            @csrf
+            <div class="star-group" id="starGroup">
+                @for($i = 1; $i <= 5; $i++)
+                <button type="button" class="star-btn" data-value="{{ $i }}" onclick="setRating({{ $i }})">★</button>
+                @endfor
+            </div>
+            <div class="star-label" id="starLabel">Pilih bintang untuk memberi rating</div>
+            <input type="hidden" name="rating" id="ratingInput" value="0">
+
+            <textarea name="comment" class="modal-textarea" placeholder="Ceritakan pengalaman Anda dengan layanan ini... (opsional)"></textarea>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Batal</button>
+                <button type="submit" class="btn-submit-rate" id="submitBtn" disabled>
+                    <i class='bx bx-send'></i> Kirim Rating
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+const starLabels = ['','Sangat Buruk','Kurang Baik','Cukup','Bagus','Luar Biasa!'];
+let currentRating = 0;
+
+function openModal(ticketId, ticketNum, ticketTitle) {
+    document.getElementById('modal-ticket-num').textContent = '#' + ticketNum;
+    document.getElementById('modal-ticket-title').textContent = ticketTitle;
+    document.getElementById('feedbackForm').action = '/client/tickets/' + ticketId + '/feedback';
+    setRating(0);
+    document.getElementById('feedbackModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('feedbackModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function setRating(val) {
+    currentRating = val;
+    document.getElementById('ratingInput').value = val;
+    document.getElementById('starLabel').textContent = val > 0 ? starLabels[val] : 'Pilih bintang untuk memberi rating';
+    document.querySelectorAll('.star-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i < val);
+    });
+    document.getElementById('submitBtn').disabled = val === 0;
+}
+
+// Close on overlay click
+document.getElementById('feedbackModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+});
+</script>
+@endpush
+
 @push('styles')
 <style>
 /* ══════════════════════════════════════════
@@ -357,213 +568,4 @@ table.pr-table { width: 100%; border-collapse: collapse; }
     .progress-bar-track { width: 100%; }
 }
 </style>
-@endpush
-
-@section('content')
-@php
-    $total       = $tickets->count();
-    $pending     = $tickets->whereNull('feedback')->count();
-    $rated       = 0;
-    $progress    = 0;
-    // Re-compute from all closed
-    $allClosed   = \App\Models\Ticket::where('user_id', Auth::id())
-                        ->whereIn('status', ['resolved','closed'])->count();
-    $allRated    = \App\Models\Ticket::where('user_id', Auth::id())
-                        ->whereIn('status', ['resolved','closed'])->has('feedback')->count();
-    $progressPct = $allClosed > 0 ? round(($allRated / $allClosed) * 100) : 0;
-@endphp
-
-<div class="pending-ratings-page">
-
-    {{-- HERO --}}
-    <div class="pr-hero">
-        <div class="pr-hero-text">
-            <h1>⭐ Belum Dirating</h1>
-            <p>Tiket yang sudah selesai tetapi masih menunggu penilaian dari Anda.</p>
-        </div>
-        <a href="{{ route('client.pending-ratings') }}" class="btn-refresh">
-            <i class='bx bx-refresh'></i> Muat Ulang
-        </a>
-    </div>
-
-    {{-- STATS --}}
-    <div class="pr-stats">
-        <div class="stat-card">
-            <div class="stat-icon stat-icon--blue"><i class='bx bx-file'></i></div>
-            <div class="stat-info">
-                <span>Total Selesai</span>
-                <strong>{{ $allClosed }}</strong>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon stat-icon--amber"><i class='bx bx-star'></i></div>
-            <div class="stat-info">
-                <span>Belum Dirating</span>
-                <strong>{{ $tickets->count() }}</strong>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon stat-icon--green"><i class='bx bx-check-circle'></i></div>
-            <div class="stat-info">
-                <span>Sudah Dirating</span>
-                <strong>{{ $allRated }}</strong>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon stat-icon--purple"><i class='bx bx-bar-chart-alt-2'></i></div>
-            <div class="stat-info">
-                <span>Progress Rating</span>
-                <strong>{{ $progressPct }}%</strong>
-            </div>
-        </div>
-    </div>
-
-    {{-- PROGRESS BAR --}}
-    <div class="progress-wrap">
-        <span class="progress-label">Progress Penilaian</span>
-        <div class="progress-bar-track">
-            <div class="progress-bar-fill" style="width: {{ $progressPct }}%"></div>
-        </div>
-        <span class="progress-pct">{{ $progressPct }}%</span>
-    </div>
-
-    {{-- TABLE --}}
-    <div class="table-card">
-        <div class="table-card-head">
-            <h2><i class='bx bx-star'></i> Tiket Menunggu Rating</h2>
-            <span class="count-badge">{{ $tickets->count() }} tiket</span>
-        </div>
-
-        @if($tickets->isEmpty())
-            <div class="empty-state">
-                <div class="empty-icon"><i class='bx bx-happy-heart-eyes'></i></div>
-                <h3 class="empty-title">Semua tiket sudah dirating!</h3>
-                <p class="empty-text">Terima kasih, feedback Anda sangat membantu evaluasi vendor kami.</p>
-            </div>
-        @else
-        <div class="table-responsive">
-            <table class="pr-table">
-                <thead>
-                    <tr>
-                        <th>Tiket</th>
-                        <th>Kategori</th>
-                        <th>Status</th>
-                        <th>Vendor</th>
-                        <th>Selesai</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($tickets as $ticket)
-                    <tr>
-                        <td>
-                            <div class="ticket-cell-num">#{{ $ticket->ticket_number }}</div>
-                            <div class="ticket-cell-title">{{ Str::limit($ticket->title, 45) }}</div>
-                        </td>
-                        <td>
-                            <span class="badge-cat">{{ $ticket->category->name ?? 'N/A' }}</span>
-                        </td>
-                        <td>
-                            <span class="badge-status {{ $ticket->status === 'resolved' ? 'badge-resolved' : 'badge-closed' }}">
-                                {{ $ticket->status === 'resolved' ? 'Selesai' : 'Ditutup' }}
-                            </span>
-                        </td>
-                        <td>
-                            <span class="vendor-name">{{ $ticket->assignedVendor->name ?? 'Tidak ada vendor' }}</span>
-                        </td>
-                        <td>
-                            <span class="time-text">
-                                {{ \Carbon\Carbon::parse($ticket->resolved_at ?? $ticket->updated_at)->locale('id')->diffForHumans() }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-group">
-                                <a href="{{ route('client.tickets.show', $ticket->id) }}" class="btn-detail">
-                                    <i class='bx bx-show'></i> Detail
-                                </a>
-                                <button class="btn-rate" onclick="openModal({{ $ticket->id }}, '{{ $ticket->ticket_number }}', '{{ addslashes($ticket->title) }}')">
-                                    <i class='bx bx-star'></i> Beri Rating
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @endif
-    </div>
-
-</div>
-
-{{-- FEEDBACK MODAL --}}
-<div class="modal-overlay" id="feedbackModal">
-    <div class="modal-box">
-        <div class="modal-head">
-            <h3>Beri Rating Layanan</h3>
-            <button class="modal-close" onclick="closeModal()"><i class='bx bx-x'></i></button>
-        </div>
-
-        <div class="modal-ticket-info">
-            <strong id="modal-ticket-num"></strong>
-            <p id="modal-ticket-title"></p>
-        </div>
-
-        <form id="feedbackForm" method="POST" action="">
-            @csrf
-            <div class="star-group" id="starGroup">
-                @for($i = 1; $i <= 5; $i++)
-                <button type="button" class="star-btn" data-value="{{ $i }}" onclick="setRating({{ $i }})">★</button>
-                @endfor
-            </div>
-            <div class="star-label" id="starLabel">Pilih bintang untuk memberi rating</div>
-            <input type="hidden" name="rating" id="ratingInput" value="0">
-
-            <textarea name="comment" class="modal-textarea" placeholder="Ceritakan pengalaman Anda dengan layanan ini... (opsional)"></textarea>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeModal()">Batal</button>
-                <button type="submit" class="btn-submit-rate" id="submitBtn" disabled>
-                    <i class='bx bx-send'></i> Kirim Rating
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script>
-const starLabels = ['','Sangat Buruk','Kurang Baik','Cukup','Bagus','Luar Biasa!'];
-let currentRating = 0;
-
-function openModal(ticketId, ticketNum, ticketTitle) {
-    document.getElementById('modal-ticket-num').textContent = '#' + ticketNum;
-    document.getElementById('modal-ticket-title').textContent = ticketTitle;
-    document.getElementById('feedbackForm').action = '/client/tickets/' + ticketId + '/feedback';
-    setRating(0);
-    document.getElementById('feedbackModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    document.getElementById('feedbackModal').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
-function setRating(val) {
-    currentRating = val;
-    document.getElementById('ratingInput').value = val;
-    document.getElementById('starLabel').textContent = val > 0 ? starLabels[val] : 'Pilih bintang untuk memberi rating';
-    document.querySelectorAll('.star-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i < val);
-    });
-    document.getElementById('submitBtn').disabled = val === 0;
-}
-
-// Close on overlay click
-document.getElementById('feedbackModal').addEventListener('click', function(e) {
-    if (e.target === this) closeModal();
-});
-</script>
 @endpush

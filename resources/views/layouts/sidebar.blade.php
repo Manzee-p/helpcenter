@@ -89,7 +89,7 @@
                 <li class="nav-item {{ request()->routeIs('admin.analytics') ? 'active' : '' }}">
                     <a href="{{ route('admin.analytics') }}" class="nav-link">
                         <div class="nav-icon"><i class='bx bx-bar-chart-alt-2'></i></div>
-                        <span>Analitik</span>
+                        <span>Analistik</span>
                     </a>
                 </li>
 

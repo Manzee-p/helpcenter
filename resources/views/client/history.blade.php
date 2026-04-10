@@ -4,6 +4,255 @@
 @section('page_title', 'Riwayat Laporan')
 @section('breadcrumb', 'Home / Riwayat')
 
+
+
+@section('content')
+<div class="history-page">
+
+    {{-- PAGE HEADER --}}
+    <div class="page-header-card">
+        <div>
+            <h1 class="page-header-title">Riwayat Laporan</h1>
+            <p class="page-header-sub">Lihat laporan yang sudah selesai, yang sudah diberi rating, dan pelayanan yang masih menunggu penilaian Anda.</p>
+        </div>
+        <a href="{{ route('client.tickets.create') }}" class="btn-create">
+            <i class='bx bx-plus-circle'></i> Buat Laporan
+        </a>
+    </div>
+
+    {{-- PENDING HIGHLIGHT --}}
+    @if($pendingFeedbackItems->count())
+    <div class="pending-highlight">
+        <div class="highlight-head">
+            <span class="highlight-chip">Butuh Penilaian</span>
+            <h2>{{ $pendingFeedbackItems->count() }} pelayanan selesai belum Anda nilai</h2>
+        </div>
+        <div class="highlight-grid">
+            @foreach($pendingFeedbackItems->take(3) as $item)
+            <a href="#" class="highlight-item" onclick="openFeedback({{ $item->id }}, '{{ addslashes($item->title) }}'); return false;">
+                <strong>#{{ $item->ticket_number }}</strong>
+                <span>{{ $item->title }}</span>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- FILTERS --}}
+    <div class="filter-card">
+        <form method="GET" action="{{ route('client.history') }}" id="filterForm">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label">Status</label>
+                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">Semua Status</option>
+                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
+                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam Proses</option>
+                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Resolved</option>
+                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Closed</option>
+                    </select>
+                </div>
+                <div class="filter-group grow">
+                    <label class="filter-label">Search</label>
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" name="search" class="search-input"
+                            placeholder="Cari judul, nomor, atau deskripsi laporan..."
+                            value="{{ request('search') }}"
+                            onkeyup="debounceSubmit()">
+                    </div>
+                </div>
+                <a href="{{ route('client.history') }}" class="btn-reset">
+                    <i class='bx bx-refresh'></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {{-- ITEMS --}}
+    @if($tickets->isEmpty())
+        <div class="state-card">
+            <div class="state-icon"><i class='bx bx-inbox'></i></div>
+            <h3 class="state-title">Riwayat laporan belum tersedia</h3>
+            <p class="state-text">
+                @if(request('search') || request('status'))
+                    Coba ubah filter pencarian Anda.
+                @else
+                    Buat laporan pertama untuk mulai meminta bantuan.
+                @endif
+            </p>
+            @unless(request('search') || request('status'))
+                <a href="{{ route('client.tickets.create') }}" class="btn-create" style="display:inline-flex;">
+                    <i class='bx bx-plus-circle'></i> Buat Laporan
+                </a>
+            @endunless
+        </div>
+    @else
+        <div class="items-list">
+            @foreach($tickets as $ticket)
+            @php
+                $statusLabels = [
+                    'new'              => 'Baru',
+                    'in_progress'      => 'Diproses',
+                    'waiting_response' => 'Menunggu',
+                    'resolved'         => 'Selesai',
+                    'closed'           => 'Ditutup',
+                ];
+                $priorityLabels = [
+                    'low'    => 'Rendah',
+                    'medium' => 'Sedang',
+                    'high'   => 'Tinggi',
+                    'urgent' => 'Mendesak',
+                ];
+                $desc = $ticket->description;
+                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . '…' : $desc;
+            @endphp
+            <a href="{{ route('client.tickets.show', $ticket->id) }}" class="item-card">
+                <div class="item-main">
+                    <div class="item-head">
+                        <div class="item-num">#{{ $ticket->ticket_number }}</div>
+                        <span class="status-badge status-{{ $ticket->status }}">
+                            {{ $statusLabels[$ticket->status] ?? $ticket->status }}
+                        </span>
+                    </div>
+
+                    <div class="item-title">{{ $ticket->title }}</div>
+                    <div class="item-desc">{{ $shortDesc }}</div>
+
+                    <div class="item-meta">
+                        <div class="item-meta-chip">
+                            <i class='bx bx-category'></i>
+                            <span>{{ $ticket->category->name ?? 'N/A' }}</span>
+                        </div>
+                        @if($ticket->priority)
+                        <div class="item-meta-chip">
+                            <i class='bx bx-flag'></i>
+                            <span class="priority-{{ $ticket->priority }}">{{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}</span>
+                        </div>
+                        @endif
+                        <div class="item-meta-chip">
+                            <i class='bx bx-time'></i>
+                            <span>{{ \Carbon\Carbon::parse($ticket->created_at)->locale('id')->diffForHumans() }}</span>
+                        </div>
+                    </div>
+
+                    @if($ticket->assignedVendor)
+                    <div class="item-assignee">
+                        <div class="assignee-avatar">
+                            {{ strtoupper(substr($ticket->assignedVendor->name, 0, 2)) }}
+                        </div>
+                        <span class="assignee-text">Ditangani <strong>{{ $ticket->assignedVendor->name }}</strong></span>
+                    </div>
+                    @endif
+
+                    @if(in_array($ticket->status, ['resolved','closed']))
+                    <div class="item-footer" onclick="event.preventDefault();">
+                        @if($ticket->feedback)
+                            <span class="badge-rated">
+                                <i class='bx bx-star'></i>
+                                Sudah dinilai {{ $ticket->feedback->rating }}/5
+                            </span>
+                        @else
+                            <button class="btn-rate" onclick="openFeedback({{ $ticket->id }}, '{{ addslashes($ticket->title) }}')">
+                                <i class='bx bx-comment'></i> Beri Rating
+                            </button>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+                <div class="item-arrow"><i class='bx bx-chevron-right'></i></div>
+            </a>
+            @endforeach
+        </div>
+
+        {{-- PAGINATION --}}
+        @if($tickets->lastPage() > 1)
+        <div class="pagination-wrap">
+            @if($tickets->onFirstPage())
+                <button class="page-btn" disabled><i class='bx bx-chevron-left'></i> Prev</button>
+            @else
+                <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="page-btn"><i class='bx bx-chevron-left'></i> Prev</a>
+            @endif
+
+            @foreach(range(1, $tickets->lastPage()) as $page)
+                @if(abs($page - $tickets->currentPage()) <= 2)
+                    <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="page-btn {{ $page === $tickets->currentPage() ? 'active' : '' }}">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            @if($tickets->hasMorePages())
+                <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="page-btn">Next <i class='bx bx-chevron-right'></i></a>
+            @else
+                <button class="page-btn" disabled>Next <i class='bx bx-chevron-right'></i></button>
+            @endif
+        </div>
+        @endif
+    @endif
+
+</div>
+
+{{-- FEEDBACK MODAL --}}
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal-box">
+        <div class="modal-title">Beri Rating Layanan</div>
+        <div class="modal-sub" id="feedbackTicketTitle">—</div>
+
+        <form method="POST" id="feedbackForm">
+            @csrf
+            <input type="hidden" name="rating" id="ratingInput" value="0">
+
+            <div class="star-picker" id="starPicker">
+                @for($s = 1; $s <= 5; $s++)
+                    <button type="button" class="star-btn" data-val="{{ $s }}" onclick="selectStar({{ $s }})">★</button>
+                @endfor
+            </div>
+
+            <label class="modal-label">Komentar (opsional)</label>
+            <textarea name="comment" class="modal-textarea" placeholder="Ceritakan pengalaman Anda dengan vendor ini..."></textarea>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeFeedback()">Batal</button>
+                <button type="submit" class="btn-modal-submit">Kirim Rating</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@push('scripts')
+<script>
+let searchTimeout = null;
+function debounceSubmit() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { document.getElementById('filterForm').submit(); }, 500);
+}
+
+function openFeedback(ticketId, title) {
+    document.getElementById('feedbackTicketTitle').textContent = title;
+    document.getElementById('feedbackForm').action = `/client/tickets/${ticketId}/feedback`;
+    document.getElementById('ratingInput').value = 0;
+    document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('feedbackModal').classList.add('open');
+}
+
+function closeFeedback() {
+    document.getElementById('feedbackModal').classList.remove('open');
+}
+
+function selectStar(val) {
+    document.getElementById('ratingInput').value = val;
+    document.querySelectorAll('.star-btn').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.val) <= val);
+    });
+}
+
+// Close modal on overlay click
+document.getElementById('feedbackModal').addEventListener('click', function(e) {
+    if (e.target === this) closeFeedback();
+});
+</script>
+@endpush
+
 @push('styles')
 <style>
 .history-page { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -362,251 +611,4 @@
     .item-arrow { display: none; }
 }
 </style>
-@endpush
-
-@section('content')
-<div class="history-page">
-
-    {{-- PAGE HEADER --}}
-    <div class="page-header-card">
-        <div>
-            <h1 class="page-header-title">Riwayat Laporan</h1>
-            <p class="page-header-sub">Lihat laporan yang sudah selesai, yang sudah diberi rating, dan pelayanan yang masih menunggu penilaian Anda.</p>
-        </div>
-        <a href="{{ route('client.tickets.create') }}" class="btn-create">
-            <i class='bx bx-plus-circle'></i> Buat Laporan
-        </a>
-    </div>
-
-    {{-- PENDING HIGHLIGHT --}}
-    @if($pendingFeedbackItems->count())
-    <div class="pending-highlight">
-        <div class="highlight-head">
-            <span class="highlight-chip">Butuh Penilaian</span>
-            <h2>{{ $pendingFeedbackItems->count() }} pelayanan selesai belum Anda nilai</h2>
-        </div>
-        <div class="highlight-grid">
-            @foreach($pendingFeedbackItems->take(3) as $item)
-            <a href="#" class="highlight-item" onclick="openFeedback({{ $item->id }}, '{{ addslashes($item->title) }}'); return false;">
-                <strong>#{{ $item->ticket_number }}</strong>
-                <span>{{ $item->title }}</span>
-            </a>
-            @endforeach
-        </div>
-    </div>
-    @endif
-
-    {{-- FILTERS --}}
-    <div class="filter-card">
-        <form method="GET" action="{{ route('client.history') }}" id="filterForm">
-            <div class="filter-row">
-                <div class="filter-group">
-                    <label class="filter-label">Status</label>
-                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-                        <option value="">Semua Status</option>
-                        <option value="new"              {{ request('status') === 'new'              ? 'selected' : '' }}>Baru</option>
-                        <option value="in_progress"      {{ request('status') === 'in_progress'      ? 'selected' : '' }}>Dalam Proses</option>
-                        <option value="resolved"         {{ request('status') === 'resolved'         ? 'selected' : '' }}>Resolved</option>
-                        <option value="closed"           {{ request('status') === 'closed'           ? 'selected' : '' }}>Closed</option>
-                    </select>
-                </div>
-                <div class="filter-group grow">
-                    <label class="filter-label">Search</label>
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" name="search" class="search-input"
-                            placeholder="Cari judul, nomor, atau deskripsi laporan..."
-                            value="{{ request('search') }}"
-                            onkeyup="debounceSubmit()">
-                    </div>
-                </div>
-                <a href="{{ route('client.history') }}" class="btn-reset">
-                    <i class='bx bx-refresh'></i> Reset
-                </a>
-            </div>
-        </form>
-    </div>
-
-    {{-- ITEMS --}}
-    @if($tickets->isEmpty())
-        <div class="state-card">
-            <div class="state-icon"><i class='bx bx-inbox'></i></div>
-            <h3 class="state-title">Riwayat laporan belum tersedia</h3>
-            <p class="state-text">
-                @if(request('search') || request('status'))
-                    Coba ubah filter pencarian Anda.
-                @else
-                    Buat laporan pertama untuk mulai meminta bantuan.
-                @endif
-            </p>
-            @unless(request('search') || request('status'))
-                <a href="{{ route('client.tickets.create') }}" class="btn-create" style="display:inline-flex;">
-                    <i class='bx bx-plus-circle'></i> Buat Laporan
-                </a>
-            @endunless
-        </div>
-    @else
-        <div class="items-list">
-            @foreach($tickets as $ticket)
-            @php
-                $statusLabels = [
-                    'new'              => 'Baru',
-                    'in_progress'      => 'Diproses',
-                    'waiting_response' => 'Menunggu',
-                    'resolved'         => 'Selesai',
-                    'closed'           => 'Ditutup',
-                ];
-                $priorityLabels = [
-                    'low'    => 'Rendah',
-                    'medium' => 'Sedang',
-                    'high'   => 'Tinggi',
-                    'urgent' => 'Mendesak',
-                ];
-                $desc = $ticket->description;
-                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . '…' : $desc;
-            @endphp
-            <a href="{{ route('client.tickets.show', $ticket->id) }}" class="item-card">
-                <div class="item-main">
-                    <div class="item-head">
-                        <div class="item-num">#{{ $ticket->ticket_number }}</div>
-                        <span class="status-badge status-{{ $ticket->status }}">
-                            {{ $statusLabels[$ticket->status] ?? $ticket->status }}
-                        </span>
-                    </div>
-
-                    <div class="item-title">{{ $ticket->title }}</div>
-                    <div class="item-desc">{{ $shortDesc }}</div>
-
-                    <div class="item-meta">
-                        <div class="item-meta-chip">
-                            <i class='bx bx-category'></i>
-                            <span>{{ $ticket->category->name ?? 'N/A' }}</span>
-                        </div>
-                        @if($ticket->priority)
-                        <div class="item-meta-chip">
-                            <i class='bx bx-flag'></i>
-                            <span class="priority-{{ $ticket->priority }}">{{ $priorityLabels[$ticket->priority] ?? $ticket->priority }}</span>
-                        </div>
-                        @endif
-                        <div class="item-meta-chip">
-                            <i class='bx bx-time'></i>
-                            <span>{{ \Carbon\Carbon::parse($ticket->created_at)->locale('id')->diffForHumans() }}</span>
-                        </div>
-                    </div>
-
-                    @if($ticket->assignedVendor)
-                    <div class="item-assignee">
-                        <div class="assignee-avatar">
-                            {{ strtoupper(substr($ticket->assignedVendor->name, 0, 2)) }}
-                        </div>
-                        <span class="assignee-text">Ditangani <strong>{{ $ticket->assignedVendor->name }}</strong></span>
-                    </div>
-                    @endif
-
-                    @if(in_array($ticket->status, ['resolved','closed']))
-                    <div class="item-footer" onclick="event.preventDefault();">
-                        @if($ticket->feedback)
-                            <span class="badge-rated">
-                                <i class='bx bx-star'></i>
-                                Sudah dinilai {{ $ticket->feedback->rating }}/5
-                            </span>
-                        @else
-                            <button class="btn-rate" onclick="openFeedback({{ $ticket->id }}, '{{ addslashes($ticket->title) }}')">
-                                <i class='bx bx-comment'></i> Beri Rating
-                            </button>
-                        @endif
-                    </div>
-                    @endif
-                </div>
-                <div class="item-arrow"><i class='bx bx-chevron-right'></i></div>
-            </a>
-            @endforeach
-        </div>
-
-        {{-- PAGINATION --}}
-        @if($tickets->lastPage() > 1)
-        <div class="pagination-wrap">
-            @if($tickets->onFirstPage())
-                <button class="page-btn" disabled><i class='bx bx-chevron-left'></i> Prev</button>
-            @else
-                <a href="{{ $tickets->appends(request()->query())->previousPageUrl() }}" class="page-btn"><i class='bx bx-chevron-left'></i> Prev</a>
-            @endif
-
-            @foreach(range(1, $tickets->lastPage()) as $page)
-                @if(abs($page - $tickets->currentPage()) <= 2)
-                    <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="page-btn {{ $page === $tickets->currentPage() ? 'active' : '' }}">{{ $page }}</a>
-                @endif
-            @endforeach
-
-            @if($tickets->hasMorePages())
-                <a href="{{ $tickets->appends(request()->query())->nextPageUrl() }}" class="page-btn">Next <i class='bx bx-chevron-right'></i></a>
-            @else
-                <button class="page-btn" disabled>Next <i class='bx bx-chevron-right'></i></button>
-            @endif
-        </div>
-        @endif
-    @endif
-
-</div>
-
-{{-- FEEDBACK MODAL --}}
-<div class="modal-overlay" id="feedbackModal">
-    <div class="modal-box">
-        <div class="modal-title">Beri Rating Layanan</div>
-        <div class="modal-sub" id="feedbackTicketTitle">—</div>
-
-        <form method="POST" id="feedbackForm">
-            @csrf
-            <input type="hidden" name="rating" id="ratingInput" value="0">
-
-            <div class="star-picker" id="starPicker">
-                @for($s = 1; $s <= 5; $s++)
-                    <button type="button" class="star-btn" data-val="{{ $s }}" onclick="selectStar({{ $s }})">★</button>
-                @endfor
-            </div>
-
-            <label class="modal-label">Komentar (opsional)</label>
-            <textarea name="comment" class="modal-textarea" placeholder="Ceritakan pengalaman Anda dengan vendor ini..."></textarea>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-modal-cancel" onclick="closeFeedback()">Batal</button>
-                <button type="submit" class="btn-modal-submit">Kirim Rating</button>
-            </div>
-        </form>
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script>
-let searchTimeout = null;
-function debounceSubmit() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => { document.getElementById('filterForm').submit(); }, 500);
-}
-
-function openFeedback(ticketId, title) {
-    document.getElementById('feedbackTicketTitle').textContent = title;
-    document.getElementById('feedbackForm').action = `/client/tickets/${ticketId}/feedback`;
-    document.getElementById('ratingInput').value = 0;
-    document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('feedbackModal').classList.add('open');
-}
-
-function closeFeedback() {
-    document.getElementById('feedbackModal').classList.remove('open');
-}
-
-function selectStar(val) {
-    document.getElementById('ratingInput').value = val;
-    document.querySelectorAll('.star-btn').forEach(b => {
-        b.classList.toggle('selected', parseInt(b.dataset.val) <= val);
-    });
-}
-
-// Close modal on overlay click
-document.getElementById('feedbackModal').addEventListener('click', function(e) {
-    if (e.target === this) closeFeedback();
-});
-</script>
 @endpush

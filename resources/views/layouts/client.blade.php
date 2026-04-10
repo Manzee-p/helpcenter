@@ -233,7 +233,6 @@
         }
     </style>
 
-    @stack('styles')
 </head>
 <body>
 
@@ -438,5 +437,6 @@
 </script>
 
 @stack('scripts')
+@stack('styles')
 </body>
 </html>

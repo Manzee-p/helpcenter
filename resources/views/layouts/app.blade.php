@@ -83,7 +83,6 @@
         }
     </style>
 
-    @stack('styles')
 </head>
 <body>
 <div class="layout-wrapper">
@@ -184,5 +183,6 @@
 </script>
 
 @stack('scripts')
+@stack('styles')
 </body>
 </html>
