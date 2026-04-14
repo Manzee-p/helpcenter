@@ -1,10 +1,10 @@
-<aside id="layout-menu" class="layout-menu">
+﻿<aside id="layout-menu" class="layout-menu">
 
     <!-- Brand -->
     <div class="sidebar-brand">
         <a href="{{ url('/home') }}" class="brand-link">
             <div class="brand-icon"><i class='bx bx-support'></i></div>
-            <span class="brand-name">HelpDesk</span>
+            <span class="brand-name">HelpCenter</span>
         </a>
         <button class="sidebar-close-btn d-md-none" onclick="closeSidebar()">
             <i class='bx bx-x'></i>
@@ -37,13 +37,13 @@
     <nav class="sidebar-nav">
         <ul class="nav-list">
 
-            {{-- ═══ ADMIN MENU ═══ --}}
+            {{-- â•â•â• ADMIN MENU â•â•â• --}}
             @if(Auth::user()->role === 'admin')
 
                 <li class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin.dashboard') }}" class="nav-link">
                         <div class="nav-icon"><i class='bx bx-home-circle'></i></div>
-                        <span>Dasbor</span>
+                        <span>Dashboard</span>
                     </a>
                 </li>
 
@@ -52,6 +52,35 @@
                         <div class="nav-icon"><i class='bx bx-file'></i></div>
                         <span>Semua Tiket</span>
                     </a>
+                </li>
+
+                @php
+                    $kelolaOpen = request()->routeIs('admin.reassign-requests*') || request()->routeIs('admin.ticket-deletion-requests*');
+                @endphp
+                <li class="nav-item nav-dropdown {{ $kelolaOpen ? 'active' : '' }}">
+                    <button
+                        type="button"
+                        class="nav-link nav-dropdown-toggle {{ $kelolaOpen ? 'open' : '' }}"
+                        onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open');"
+                    >
+                        <div class="nav-icon"><i class='bx bx-folder-open'></i></div>
+                        <span>Kelola</span>
+                        <i class='bx bx-chevron-down dd-arrow'></i>
+                    </button>
+                    <ul class="nav-submenu {{ $kelolaOpen ? 'open' : '' }}">
+                        <li class="nav-subitem {{ request()->routeIs('admin.reassign-requests*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reassign-requests.index') }}" class="nav-sublink">
+                                <i class='bx bx-transfer'></i>
+                                <span>Permintaan Penugasan Ulang</span>
+                            </a>
+                        </li>
+                        <li class="nav-subitem {{ request()->routeIs('admin.ticket-deletion-requests*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.ticket-deletion-requests.index') }}" class="nav-sublink">
+                                <i class='bx bx-trash'></i>
+                                <span>Permintaan Hapus</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
                 <li class="nav-section-title"><span>MANAJEMEN</span></li>
@@ -116,7 +145,7 @@
                     </a>
                 </li>
 
-            {{-- ═══ VENDOR MENU ═══ --}}
+            {{-- â•â•â• VENDOR MENU â•â•â• --}}
             @elseif(Auth::user()->role === 'vendor')
 
                 <li class="nav-item {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}">
@@ -158,14 +187,7 @@
                     </a>
                 </li>
 
-                <li class="nav-item {{ request()->routeIs('vendor.settings') ? 'active' : '' }}">
-                    <a href="{{ route('vendor.settings') }}" class="nav-link">
-                        <div class="nav-icon"><i class='bx bx-cog'></i></div>
-                        <span>Pengaturan</span>
-                    </a>
-                </li>
-
-            {{-- ═══ CLIENT MENU ═══ --}}
+            {{-- â•â•â• CLIENT MENU â•â•â• --}}
             @else
 
                 <li class="nav-item {{ request()->routeIs('client.dashboard') ? 'active' : '' }}">
@@ -215,7 +237,7 @@
 </aside>
 
 <style>
-/* ───── SIDEBAR ───── */
+/* SIDEBAR */
 .layout-menu {
     width: var(--sidebar-width);
     height: 100vh;
@@ -394,6 +416,65 @@
     background: var(--gradient);
     color: white;
     box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+}
+
+.nav-dropdown-toggle {
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.dd-arrow {
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--text-light);
+    transition: transform .2s ease;
+}
+
+.nav-dropdown-toggle.open .dd-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-submenu {
+    list-style: none;
+    margin: .25rem 0 0;
+    padding: 0 0 0 2.65rem;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nav-submenu.open {
+    display: flex;
+}
+
+.nav-sublink {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: .83rem;
+    border-radius: 8px;
+    padding: .4rem .55rem;
+    transition: all .2s;
+}
+
+.nav-sublink i {
+    font-size: .95rem;
+}
+
+.nav-sublink:hover {
+    background: rgba(79,70,229,0.06);
+    color: var(--primary);
+}
+
+.nav-subitem.active .nav-sublink {
+    background: rgba(79,70,229,0.1);
+    color: var(--primary);
+    font-weight: 700;
 }
 
 /* Responsive */

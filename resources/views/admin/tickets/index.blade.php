@@ -9,7 +9,7 @@
 @section('content')
 <div class="tickets-wrap">
 
-    {{-- ═══ HERO ═══ --}}
+    {{-- HERO --}}
     <section class="hero-card">
         <div class="hero-copy">
             <span class="hero-kicker">Manajemen Tiket</span>
@@ -17,6 +17,9 @@
             <p>Admin fokus pada pemantauan, penugasan, dan penghapusan tiket tanpa alur membuat tiket baru untuk client.</p>
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <a href="{{ route('admin.reassign-requests.index') }}" class="btn-outline-sm">
+                <i class='bx bx-transfer'></i> Permintaan Penugasan Ulang
+            </a>
             <a href="{{ route('admin.ticket-deletion-requests.index') }}" class="btn-outline-sm">
                 <i class='bx bx-trash-alt'></i> Permintaan Hapus
             </a>
@@ -26,7 +29,7 @@
         </div>
     </section>
 
-    {{-- ═══ STATS ═══ --}}
+    {{-- STATS --}}
     <section class="stats-grid">
         <article class="stat-card">
             <span>Total tiket</span>
@@ -50,7 +53,7 @@
         </article>
     </section>
 
-    {{-- ═══ FILTER ═══ --}}
+    {{-- FILTER --}}
     <section class="filter-card">
         <form method="GET" action="{{ route('admin.tickets.index') }}" id="filter-form">
             <div class="filter-search">
@@ -80,6 +83,7 @@
                     <label>Prioritas</label>
                     <select name="priority" onchange="this.form.submit()">
                         <option value="">Semua prioritas</option>
+                        <option value="unset"  {{ request('priority') === 'unset'  ? 'selected' : '' }}>Belum ditetapkan</option>
                         <option value="low"    {{ request('priority') === 'low'    ? 'selected' : '' }}>Rendah</option>
                         <option value="medium" {{ request('priority') === 'medium' ? 'selected' : '' }}>Sedang</option>
                         <option value="high"   {{ request('priority') === 'high'   ? 'selected' : '' }}>Tinggi</option>
@@ -102,7 +106,7 @@
         </form>
     </section>
 
-    {{-- ═══ CONTENT ═══ --}}
+    {{-- CONTENT --}}
     <section class="content-card">
         <div class="content-head">
             <div>
@@ -114,7 +118,7 @@
         @if($tickets->isEmpty())
             <div class="state-box">Belum ada tiket yang cocok dengan filter saat ini.</div>
         @elseif(request('view') === 'grid')
-            {{-- ── GRID VIEW ── --}}
+            {{-- �-��-� GRID VIEW �-��-� --}}
             <div class="ticket-grid">
                 @foreach($tickets as $ticket)
                 <article class="ticket-card" onclick="window.location='{{ route('admin.tickets.show', $ticket->id) }}'">
@@ -141,7 +145,7 @@
                 @endforeach
             </div>
         @else
-            {{-- ── TABLE VIEW ── --}}
+            {{-- �-��-� TABLE VIEW �-��-� --}}
             <div class="table-shell">
                 <table class="tickets-table">
                     <thead>
@@ -181,7 +185,7 @@
             </div>
         @endif
 
-        {{-- ── PAGINATION ── --}}
+        {{-- �-��-� PAGINATION �-��-� --}}
         @if($tickets->lastPage() > 1)
         <div class="pagination-wrap">
             <button {{ $tickets->onFirstPage() ? 'disabled' : '' }} onclick="goPage({{ $tickets->currentPage() - 1 }})">Sebelumnya</button>
@@ -196,7 +200,7 @@
     </section>
 </div>
 
-{{-- ═══ ASSIGN MODAL ═══ --}}
+{{-- ASSIGN MODAL --}}
 <div id="assign-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:1050; align-items:center; justify-content:center;">
     <div style="background:white; border-radius:24px; padding:1.75rem; width:100%; max-width:480px; margin:1rem; box-shadow:0 25px 60px rgba(0,0,0,0.2); animation: fadeIn 0.2s ease;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
@@ -220,7 +224,7 @@
     </div>
 </div>
 
-{{-- ═══ DELETE FORM ═══ --}}
+{{-- DELETE FORM --}}
 <form id="delete-form" method="POST" style="display:none;">
     @csrf
     @method('DELETE')
@@ -229,27 +233,27 @@
 
 @push('scripts')
 <script>
-// ── View Switch ──
+// �-��-� View Switch �-��-�
 function switchView(mode) {
     document.getElementById('view-input').value = mode;
     document.getElementById('filter-form').submit();
 }
 
-// ── Pagination ──
+// �-��-� Pagination �-��-�
 function goPage(page) {
     const url = new URL(window.location.href);
     url.searchParams.set('page', page);
     window.location = url.toString();
 }
 
-// ── Search Debounce ──
+// �-��-� Search Debounce �-��-�
 let adminTicketsSearchTimer;
 document.getElementById('search-input').addEventListener('input', function() {
     clearTimeout(adminTicketsSearchTimer);
     adminTicketsSearchTimer = setTimeout(() => document.getElementById('filter-form').submit(), 500);
 });
 
-// ── Assign Modal ──
+// �-��-� Assign Modal �-��-�
 let assignTicketId = null;
 function openAssignModal(id, number) {
     assignTicketId = id;
@@ -268,27 +272,33 @@ function submitAssign() {
         Swal.fire({ icon:'warning', title:'Pilih vendor dulu', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
         return;
     }
-    fetch(`/api/tickets/${assignTicketId}`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
-            'Accept': 'application/json',
-        },
-        body: JSON.stringify({ assigned_to: vendorId })
-    })
-    .then(r => r.json())
-    .then(() => {
-        closeAssignModal();
-        Swal.fire({ icon:'success', title:'Vendor berhasil ditugaskan', toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
-        setTimeout(() => location.reload(), 1500);
-    })
-    .catch(() => {
-        Swal.fire({ icon:'error', title:'Gagal menugaskan vendor', toast:true, position:'top-end', showConfirmButton:false, timer:2500 });
-    });
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/admin/tickets/${assignTicketId}/assign`;
+
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = '_token';
+    csrf.value = document.querySelector('meta[name=csrf-token]').content;
+
+    const method = document.createElement('input');
+    method.type = 'hidden';
+    method.name = '_method';
+    method.value = 'PATCH';
+
+    const assignedTo = document.createElement('input');
+    assignedTo.type = 'hidden';
+    assignedTo.name = 'assigned_to';
+    assignedTo.value = vendorId;
+
+    form.appendChild(csrf);
+    form.appendChild(method);
+    form.appendChild(assignedTo);
+    document.body.appendChild(form);
+    form.submit();
 }
 
-// ── Delete Confirm ──
+// �-��-� Delete Confirm �-��-�
 function confirmDelete(id, number) {
     Swal.fire({
         title: 'Hapus tiket?',
@@ -316,10 +326,10 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 
 @push('styles')
 <style>
-/* ───── PAGE WRAP ───── */
+/* PAGE WRAP */
 .tickets-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ───── HERO ───── */
+/* HERO */
 .hero-card {
     display: flex; justify-content: space-between; align-items: center;
     gap: 1.5rem; padding: 1.875rem;
@@ -342,7 +352,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 }
 .hero-copy > p { color: var(--text-muted); font-size: 0.9375rem; max-width: 600px; }
 
-/* ───── STATS ───── */
+/* STATS */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -363,7 +373,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .stat-card--progress { background: linear-gradient(180deg,#eff6ff,#fff); border-color: rgba(59,130,246,0.2); }
 .stat-card--assigned { background: linear-gradient(180deg,#f0fdf4,#fff); border-color: rgba(34,197,94,0.2); }
 
-/* ───── FILTER CARD ───── */
+/* FILTER CARD */
 .filter-card {
     background: white; border: 1px solid var(--border);
     border-radius: 26px; padding: 1.375rem;
@@ -428,7 +438,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 }
 .btn-reset:hover { background: #ffe4e6; }
 
-/* ───── CONTENT CARD ───── */
+/* CONTENT CARD */
 .content-card {
     background: white; border: 1px solid var(--border);
     border-radius: 26px; padding: 1.375rem;
@@ -441,7 +451,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .content-head h5 { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text); }
 .content-head p { margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.85rem; }
 
-/* ───── TABLE ───── */
+/* TABLE */
 .table-shell {
     overflow: auto;
     border: 1px solid var(--border);
@@ -472,7 +482,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .ticket-main strong { color: var(--primary); font-size: 0.8rem; font-weight: 700; }
 .ticket-main span { color: var(--text); font-weight: 600; font-size: 0.875rem; }
 
-/* ───── BADGES ───── */
+/* BADGES */
 .badge {
     display: inline-flex; align-items: center; justify-content: center;
     padding: 0.3rem 0.7rem; border-radius: 999px;
@@ -488,7 +498,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .badge-low          { background: rgba(34,197,94,0.12);   color: #15803d; }
 .badge-none         { background: rgba(148,163,184,0.14); color: #475569; }
 
-/* ───── ACTIONS ───── */
+/* ACTIONS */
 .td-actions { text-align: center; white-space: nowrap; }
 .icon-btn {
     width: 2.25rem; height: 2.25rem;
@@ -502,7 +512,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .icon-btn--danger { background: #fff1f2; color: #e11d48; }
 .icon-btn--danger:hover { background: #ffe4e6; }
 
-/* ───── GRID VIEW ───── */
+/* GRID VIEW */
 .ticket-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
@@ -525,14 +535,14 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .ticket-card__footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .card-actions { display: flex; gap: 0.35rem; }
 
-/* ───── EMPTY / LOADING ───── */
+/* EMPTY / LOADING */
 .state-box {
     border: 1px dashed rgba(148,163,184,0.45);
     border-radius: 18px; padding: 2.5rem;
     text-align: center; color: var(--text-muted); font-size: 0.9rem;
 }
 
-/* ───── PAGINATION ───── */
+/* PAGINATION */
 .pagination-wrap {
     display: flex; justify-content: space-between; align-items: center;
     margin-top: 1.25rem; gap: 1rem; flex-wrap: wrap;
@@ -549,7 +559,7 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 .page-numbers { display: flex; gap: 0.35rem; }
 .page-numbers button.active { background: var(--primary); color: white; border-color: var(--primary); }
 
-/* ───── RESPONSIVE ───── */
+/* RESPONSIVE */
 @media (max-width: 1199px) {
     .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .ticket-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -562,4 +572,6 @@ document.getElementById('assign-modal').addEventListener('click', function(e) {
 }
 </style>
 @endpush
+
+
 

@@ -39,10 +39,7 @@ class ClientController extends Controller
             });
         }
 
-        $tickets = $query
-            ->orderByRaw("CASE WHEN status = 'new' THEN 0 ELSE 1 END")
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
+        $tickets = $query->orderByDesc('created_at')->paginate(12);
 
         // Pending feedback — for the top panel
         $pendingFeedbackTickets = Ticket::where('user_id', $userId)
@@ -444,3 +441,5 @@ class ClientController extends Controller
         return $request->is('api/*') || $request->expectsJson() || $request->wantsJson();
     }
 }
+
+

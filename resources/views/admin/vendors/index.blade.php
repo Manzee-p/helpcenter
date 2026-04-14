@@ -9,7 +9,7 @@
 @section('content')
 <div class="vendor-wrap">
 
-    {{-- â”€â”€ FLASH MESSAGES â”€â”€ --}}
+    {{-- â-€â-€ FLASH MESSAGES â-€â-€ --}}
     @if(session('success'))
         <div class="alert-success-custom"><i class='bx bx-check-circle'></i> {{ session('success') }}</div>
     @endif
@@ -17,7 +17,7 @@
         <div class="alert-danger-custom"><i class='bx bx-error-circle'></i> {{ session('error') }}</div>
     @endif
 
-    {{-- â”€â”€ HERO â”€â”€ --}}
+    {{-- â-€â-€ HERO â-€â-€ --}}
     <div class="vendor-hero">
         <div>
             <h4>Manajemen Vendor</h4>
@@ -28,7 +28,7 @@
         </button>
     </div>
 
-    {{-- â”€â”€ STAT CARDS â”€â”€ --}}
+    {{-- â-€â-€ STAT CARDS â-€â-€ --}}
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-icon stat-icon--primary"><i class='bx bx-group'></i></div>
@@ -48,12 +48,12 @@
         </div>
     </div>
 
-    {{-- â”€â”€ FILTER BAR â”€â”€ --}}
+    {{-- â-€â-€ FILTER BAR â-€â-€ --}}
     <form method="GET" action="{{ route('admin.vendors.index') }}" class="filter-bar">
         <div class="search-wrap">
             <i class='bx bx-search'></i>
             <input type="text" name="search" value="{{ request('search') }}"
-                placeholder="Cari nama, email, atau perusahaanâ€¦">
+                placeholder="Cari nama, email, atau perusahaan-¦">
         </div>
         <select name="is_active" class="filter-select" onchange="this.form.submit()">
             <option value="">Semua Status</option>
@@ -68,7 +68,7 @@
         @endif
     </form>
 
-    {{-- â”€â”€ VENDOR GRID â”€â”€ --}}
+    {{-- â-€â-€ VENDOR GRID â-€â-€ --}}
     @if($vendors->isEmpty())
         <div class="empty-state">
             <i class='bx bx-user-x'></i>
@@ -171,7 +171,7 @@
 </div>
 
 {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     â”€â”€ ADD / EDIT VENDOR MODAL (Custom)
+     â-€â-€ ADD / EDIT VENDOR MODAL (Custom)
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
 <div class="vmodal-overlay" id="vendorModalOverlay" onclick="handleOverlayClick(event, 'vendorModalOverlay')">
     <div class="vmodal-box vmodal-box--lg" id="vendorModalBox">
@@ -267,7 +267,7 @@
 </div>
 
 {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-     â”€â”€ DETAIL VENDOR MODAL (Custom)
+     â-€â-€ DETAIL VENDOR MODAL (Custom)
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
 <div class="vmodal-overlay" id="detailModalOverlay" onclick="handleOverlayClick(event, 'detailModalOverlay')">
     <div class="vmodal-box vmodal-box--xl" id="detailModalBox">
@@ -292,7 +292,7 @@
         <div class="vmodal-body" id="detailBody">
             <div style="text-align:center;padding:3rem;color:#94a3b8;">
                 <div style="width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#6366f1;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 1rem;"></div>
-                <p style="margin:0;font-size:.9rem;">Memuat detail vendorâ€¦</p>
+                <p style="margin:0;font-size:.9rem;">Memuat detail vendor-¦</p>
             </div>
         </div>
 
@@ -316,7 +316,7 @@ const ROUTES = {
 
 @push('scripts')
 <script>
-/* â”€â”€ Overlay helpers â”€â”€ */
+/* â-€â-€ Overlay helpers â-€â-€ */
 function openModal(id) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -346,7 +346,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-/* â”€â”€ Add Modal â”€â”€ */
+/* â-€â-€ Add Modal â-€â-€ */
 function openAddModal() {
     document.getElementById('vendorModalTitle').textContent   = 'Tambah Vendor Baru';
     document.getElementById('vendorModalSubtitle').textContent = 'Isi data vendor untuk menambahkan ke sistem';
@@ -360,7 +360,7 @@ function openAddModal() {
     openModal('vendorModalOverlay');
 }
 
-/* â”€â”€ Edit Modal â”€â”€ */
+/* â-€â-€ Edit Modal â-€â-€ */
 function openEditModal(id) {
     const v = VENDORS_DATA.find(x => x.id == id);
     if (!v) return;
@@ -385,7 +385,7 @@ function openEditModal(id) {
     openModal('vendorModalOverlay');
 }
 
-/* â”€â”€ Clear Form â”€â”€ */
+/* â-€â-€ Clear Form â-€â-€ */
 function clearForm() {
     ['name','email','phone','password','company_name','company_phone','company_address','specialization']
         .forEach(f => {
@@ -394,7 +394,7 @@ function clearForm() {
         });
 }
 
-/* â”€â”€ Detail Modal â”€â”€ */
+/* â-€â-€ Detail Modal â-€â-€ */
 function openDetailModal(id) {
     const fallbackVendor = VENDORS_DATA.find(x => x.id == id);
     if (!fallbackVendor) return;
@@ -498,12 +498,13 @@ function escapeHtml(str) {
 
 function truncateText(text, max) {
     const t = String(text || '');
-    return t.length > max ? `${t.slice(0, max)}â€¦` : t;
+    return t.length > max ? `${t.slice(0, max)}-¦` : t;
 }
 
 function formatStatus(status) {
     const map = {
         new: 'Baru',
+        baru: 'Baru',
         in_progress: 'Diproses',
         waiting_response: 'Menunggu Respons',
         resolved: 'Selesai',
@@ -531,7 +532,7 @@ function timeAgo(dateStr) {
 
 @push('styles')
 <style>
-/* â”€â”€ Google Font â”€â”€ */
+/* â-€â-€ Google Font â-€â-€ */
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -541,7 +542,7 @@ function timeAgo(dateStr) {
 
 .vendor-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* â”€â”€ HERO â”€â”€ */
+/* â-€â-€ HERO â-€â-€ */
 .vendor-hero {
     display: flex; justify-content: space-between; align-items: center;
     gap: 1rem; padding: 1.5rem 1.875rem;
@@ -551,7 +552,7 @@ function timeAgo(dateStr) {
 .vendor-hero h4 { margin: 0 0 .25rem; font-size: 1.375rem; font-weight: 800; color: var(--text); }
 .vendor-hero p  { margin: 0; color: var(--text-muted); font-size: .9375rem; }
 
-/* â”€â”€ ADD VENDOR BUTTON (match kategori style) â”€â”€ */
+/* â-€â-€ ADD VENDOR BUTTON (match kategori style) â-€â-€ */
 .btn-add-vendor {
     display: inline-flex;
     align-items: center;
@@ -576,7 +577,7 @@ function timeAgo(dateStr) {
     color: white;
 }
 
-/* â”€â”€ STAT CARDS â”€â”€ */
+/* â-€â-€ STAT CARDS â-€â-€ */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -601,7 +602,7 @@ function timeAgo(dateStr) {
 .stat-card span  { display: block; color: var(--text-muted); font-size: .85rem; font-weight: 700; }
 .stat-card strong{ display: block; font-size: 1.875rem; font-weight: 800; color: var(--text); line-height: 1; }
 
-/* â”€â”€ FILTER BAR â”€â”€ */
+/* â-€â-€ FILTER BAR â-€â-€ */
 .filter-bar {
     background: white; border: 1px solid var(--border);
     border-radius: 22px; padding: 1.125rem 1.375rem;
@@ -627,7 +628,7 @@ function timeAgo(dateStr) {
 }
 .filter-select:focus { outline: none; border-color: var(--primary); }
 
-/* â”€â”€ VENDOR GRID â”€â”€ */
+/* â-€â-€ VENDOR GRID â-€â-€ */
 .vendor-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
@@ -698,7 +699,7 @@ function timeAgo(dateStr) {
 .btn-icon-sm:hover { background: var(--bg); }
 .btn-icon-sm--danger:hover { background: rgba(239,68,68,.1); color: #dc2626; border-color: rgba(239,68,68,.2); }
 
-/* â”€â”€ PAGINATION â”€â”€ */
+/* â-€â-€ PAGINATION â-€â-€ */
 .page-wrap {
     display: flex; justify-content: center; gap: .5rem;
     flex-wrap: wrap;
@@ -714,14 +715,14 @@ function timeAgo(dateStr) {
     background: var(--primary); color: white; border-color: var(--primary);
 }
 
-/* â”€â”€ EMPTY â”€â”€ */
+/* â-€â-€ EMPTY â-€â-€ */
 .empty-state {
     text-align: center; padding: 3rem; color: var(--text-muted);
     border: 1.5px dashed rgba(148,163,184,.5); border-radius: 22px;
 }
 .empty-state i { font-size: 3rem; color: var(--text-light); display: block; margin-bottom: .75rem; }
 
-/* â”€â”€ ALERT â”€â”€ */
+/* â-€â-€ ALERT â-€â-€ */
 .alert-success-custom {
     padding: .875rem 1.25rem; border-radius: 14px;
     background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.2);
@@ -734,7 +735,7 @@ function timeAgo(dateStr) {
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   â”€â”€ NEW REDESIGNED MODAL STYLES â”€â”€
+   â-€â-€ NEW REDESIGNED MODAL STYLES â-€â-€
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .vmodal-overlay {
     display: none;
@@ -778,7 +779,7 @@ function timeAgo(dateStr) {
 .vmodal-box::-webkit-scrollbar-track { background: transparent; }
 .vmodal-box::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 999px; }
 
-/* â”€â”€ Modal Header â”€â”€ */
+/* â-€â-€ Modal Header â-€â-€ */
 .vmodal-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1.5rem 1.75rem 1.25rem;
@@ -804,7 +805,7 @@ function timeAgo(dateStr) {
 }
 .vmodal-close:hover { background: #fee2e2; border-color: #fca5a5; color: #dc2626; }
 
-/* â”€â”€ Modal Body â”€â”€ */
+/* â-€â-€ Modal Body â-€â-€ */
 .vmodal-body { padding: 1.5rem 1.75rem; }
 #detailBody {
     max-height: calc(88vh - 100px);
@@ -814,7 +815,7 @@ function timeAgo(dateStr) {
 #detailBody::-webkit-scrollbar { width: 8px; }
 #detailBody::-webkit-scrollbar-thumb { background: #d7dce5; border-radius: 10px; }
 
-/* â”€â”€ Section label inside modal â”€â”€ */
+/* â-€â-€ Section label inside modal â-€â-€ */
 .vmodal-section-label {
     font-size: .7rem; font-weight: 800; letter-spacing: .08em;
     text-transform: uppercase; color: #94a3b8;
@@ -825,7 +826,7 @@ function timeAgo(dateStr) {
     margin: 1.375rem 0;
 }
 
-/* â”€â”€ Form fields â”€â”€ */
+/* â-€â-€ Form fields â-€â-€ */
 .vform-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .vform-group { display: flex; flex-direction: column; gap: .4rem; }
 .vform-label {
@@ -848,7 +849,7 @@ function timeAgo(dateStr) {
 .vform-textarea { resize: vertical; min-height: 76px; }
 .vform-hint { font-size: .76rem; color: #94a3b8; margin: 0; }
 
-/* â”€â”€ Modal Footer â”€â”€ */
+/* â-€â-€ Modal Footer â-€â-€ */
 .vmodal-footer {
     padding: 1.125rem 1.75rem;
     border-top: 1px solid #f1f5f9;
@@ -873,7 +874,7 @@ function timeAgo(dateStr) {
 .vbtn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(79,70,229,.36); }
 .vbtn-primary:active { transform: translateY(0); }
 
-/* â”€â”€ DETAIL MODAL specific â”€â”€ */
+/* â-€â-€ DETAIL MODAL specific â-€â-€ */
 .detail-vendor-card {
     display: flex; align-items: center; gap: 1.125rem;
     padding: 1.25rem; border-radius: 18px;
@@ -940,7 +941,7 @@ function timeAgo(dateStr) {
 .done-tickets-list::-webkit-scrollbar { width: 6px; }
 .done-tickets-list::-webkit-scrollbar-thumb { background: #d8dde7; border-radius: 10px; }
 
-/* â”€â”€ RESPONSIVE â”€â”€ */
+/* â-€â-€ RESPONSIVE â-€â-€ */
 @media (max-width: 1199px) {
     .stats-grid, .vendor-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
@@ -955,5 +956,8 @@ function timeAgo(dateStr) {
 }
 </style>
 @endpush
+
+
+
 
 

@@ -105,7 +105,7 @@
                     'urgent' => 'Mendesak',
                 ];
                 $desc = $ticket->description;
-                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . 'â€¦' : $desc;
+                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . '-¦' : $desc;
             @endphp
             <a href="{{ route('client.tickets.show', $ticket->id) }}" class="item-card">
                 <div class="item-main">
@@ -195,7 +195,7 @@
 <div class="modal-overlay" id="feedbackModal">
     <div class="modal-box">
         <div class="modal-title">Beri Rating Layanan</div>
-        <div class="modal-sub" id="feedbackTicketTitle">â€”</div>
+        <div class="modal-sub" id="feedbackTicketTitle">-</div>
 
         <form method="POST" id="feedbackForm">
             @csrf
@@ -203,7 +203,7 @@
 
             <div class="star-picker" id="starPicker">
                 @for($s = 1; $s <= 5; $s++)
-                    <button type="button" class="star-btn" data-val="{{ $s }}" onclick="selectStar({{ $s }})">â˜…</button>
+                    <button type="button" class="star-btn" data-val="{{ $s }}" onclick="selectStar({{ $s }})"><i class='bx bxs-star'></i></button>
                 @endfor
             </div>
 
@@ -257,7 +257,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 <style>
 .history-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* â”€â”€â”€â”€â”€ PAGE HEADER â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PAGE HEADER â-€â-€â-€â-€â-€ */
 .page-header-card {
     display: flex;
     justify-content: space-between;
@@ -288,7 +288,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .btn-create:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(99,102,241,.35); color: white; }
 .btn-create i { font-size: 1.25rem; }
 
-/* â”€â”€â”€â”€â”€ PENDING HIGHLIGHT â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PENDING HIGHLIGHT â-€â-€â-€â-€â-€ */
 .pending-highlight {
     background: white;
     border: 1px solid rgba(245,158,11,.2);
@@ -331,7 +331,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .highlight-item strong { color: #b7791f; font-weight: 800; }
 .highlight-item span   { color: #334155; font-size: .9rem; }
 
-/* â”€â”€â”€â”€â”€ FILTERS â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ FILTERS â-€â-€â-€â-€â-€ */
 .filter-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -387,7 +387,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .btn-reset:hover { border-color: #6366f1; color: #6366f1; }
 
-/* â”€â”€â”€â”€â”€ ITEMS LIST â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ ITEMS LIST â-€â-€â-€â-€â-€ */
 .items-list { display: flex; flex-direction: column; gap: 1rem; }
 
 .item-card {
@@ -492,7 +492,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .status-resolved         { background: rgba(34,197,94,.12);  color: #15803d; }
 .status-closed           { background: rgba(148,163,184,.14);color: #475569; }
 
-/* â”€â”€â”€â”€â”€ STATE CARDS â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ STATE CARDS â-€â-€â-€â-€â-€ */
 .state-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -505,7 +505,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .state-title { font-size: 1.45rem; font-weight: 700; color: #2c3e50; margin-bottom: .75rem; }
 .state-text  { font-size: .95rem; color: #6c757d; margin-bottom: 1.5rem; }
 
-/* â”€â”€â”€â”€â”€ PAGINATION â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PAGINATION â-€â-€â-€â-€â-€ */
 .pagination-wrap {
     display: flex;
     justify-content: center;
@@ -531,7 +531,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .page-btn.active { background: linear-gradient(135deg,#6366f1,#7c3aed); color: white; border-color: transparent; }
 .page-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* â”€â”€â”€â”€â”€ FEEDBACK MODAL â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ FEEDBACK MODAL â-€â-€â-€â-€â-€ */
 .modal-overlay {
     display: none;
     position: fixed; inset: 0;
@@ -562,6 +562,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
     transition: all .15s;
     line-height: 1;
 }
+.star-btn i { font-size: 2.2rem; line-height: 1; }
 .star-btn:hover,
 .star-btn.selected { color: #f59e0b; transform: scale(1.15); }
 .modal-label { font-size: .875rem; font-weight: 700; color: #1e293b; margin-bottom: .5rem; display: block; }
@@ -612,3 +613,6 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 </style>
 @endpush
+
+
+

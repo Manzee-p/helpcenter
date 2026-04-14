@@ -43,8 +43,7 @@ class ClientDashboardController extends Controller
             // ─── Recent Tickets ───
             $recentTickets = Ticket::with(['category', 'assignedVendor', 'feedback'])
                 ->where('user_id', $userId)
-                ->orderByRaw("CASE WHEN status = 'new' THEN 0 ELSE 1 END")
-                ->orderBy('created_at', 'desc')
+                ->orderByDesc('created_at')
                 ->limit(6)
                 ->get();
 
@@ -67,3 +66,5 @@ class ClientDashboardController extends Controller
         }
     }
 }
+
+

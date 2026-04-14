@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Buat Status Baru')
 @section('page_title', 'Buat Status Baru')
@@ -32,7 +32,7 @@
         <form id="createForm" onsubmit="submitForm(event)" novalidate>
             @csrf
 
-            {{-- ── Informasi Dasar ── --}}
+            {{-- â-€â-€ Informasi Dasar â-€â-€ --}}
             <div class="sc-section">
                 <div class="sc-section-head">
                     <i class="bx bx-info-circle"></i>
@@ -65,10 +65,10 @@
                         <label class="sc-label"><i class="bx bx-flag"></i> Tingkat Keparahan <span class="req">*</span></label>
                         <select class="sc-select" id="f_severity" onchange="clearErr('e_severity');updatePreview()" required>
                             <option value="">-- Pilih Tingkat --</option>
-                            <option value="critical">🔴 Kritis</option>
-                            <option value="high">🟠 Tinggi</option>
-                            <option value="medium">🟡 Sedang</option>
-                            <option value="low">🟢 Rendah</option>
+                            <option value="critical">ðŸ-´ Kritis</option>
+                            <option value="high">ðŸŸ  Tinggi</option>
+                            <option value="medium">ðŸŸ¡ Sedang</option>
+                            <option value="low">ðŸŸ¢ Rendah</option>
                         </select>
                         <span class="sc-err sc-alert-hide" id="e_severity"><i class="bx bx-error-circle"></i></span>
                     </div>
@@ -100,7 +100,7 @@
                 </div>
             </div>
 
-            {{-- ── Pengaturan ── --}}
+            {{-- â-€â-€ Pengaturan â-€â-€ --}}
             <div class="sc-section">
                 <div class="sc-section-head">
                     <i class="bx bx-cog"></i>
@@ -137,7 +137,7 @@
                 </div>
             </div>
 
-            {{-- ── Preview ── --}}
+            {{-- â-€â-€ Preview â-€â-€ --}}
             <div class="sc-section">
                 <div class="sc-section-head">
                     <i class="bx bx-show"></i>
@@ -171,7 +171,7 @@
 <script>
 const CSRF = '{{ csrf_token() }}';
 
-// ── Alert ──
+// â-€â-€ Alert â-€â-€
 function showAlert(type, msg) {
     const el = document.getElementById('scAlert');
     document.getElementById('scAlertIcon').className = 'bx ' + (type==='success'?'bx-check-circle':'bx-error-circle');
@@ -182,7 +182,7 @@ function showAlert(type, msg) {
 }
 function hideAlert() { document.getElementById('scAlert').classList.add('sc-alert-hide'); }
 
-// ── Validation ──
+// â-€â-€ Validation â-€â-€
 function clearErr(id) {
     const el = document.getElementById(id);
     if (el) { el.classList.add('sc-alert-hide'); el.querySelector?.('i'); }
@@ -212,7 +212,7 @@ function validateForm() {
     return valid;
 }
 
-// ── Submit ──
+// â-€â-€ Submit â-€â-€
 function submitForm(e) {
     e.preventDefault();
     if (!validateForm()) { showAlert('error','Mohon lengkapi form dengan benar'); return; }
@@ -259,7 +259,7 @@ function submitForm(e) {
     });
 }
 
-// ── Preview ──
+// â-€â-€ Preview â-€â-€
 const catLabels = { power_outage:'Gangguan Listrik', technical_issue:'Masalah Teknis', facility_issue:'Masalah Fasilitas', network_issue:'Gangguan Jaringan', other:'Lainnya' };
 const sevLabels = { critical:'Kritis', high:'Tinggi', medium:'Sedang', low:'Rendah' };
 const sevClass  = { critical:'sev-critical', high:'sev-high', medium:'sev-medium', low:'sev-low' };
@@ -284,7 +284,7 @@ function updatePreview() {
     document.getElementById('pvMeta').innerHTML = metaHtml;
 }
 
-// ── Init ──
+// â-€â-€ Init â-€â-€
 document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -304,16 +304,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 .sc-wrap { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ── Back ── */
+/* â-€â-€ Back â-€â-€ */
 .sc-back { display: inline-flex; align-items: center; gap: .5rem; padding: .75rem 1.25rem; background: white; border: 2px solid var(--sc-border); border-radius: 10px; font-size: .875rem; font-weight: 600; color: #6b7280; cursor: pointer; transition: all .3s; text-decoration: none; }
 .sc-back:hover { background: #f9fafb; border-color: var(--sc-primary); color: var(--sc-primary); transform: translateX(-4px); text-decoration: none; }
 
-/* ── Header ── */
+/* â-€â-€ Header â-€â-€ */
 .sc-header { text-align: center; }
 .sc-header h1 { font-size: 2rem; font-weight: 700; color: #2c3e50; margin: 0 0 .5rem; }
 .sc-header p  { font-size: 1rem; color: #6c757d; margin: 0; }
 
-/* ── Alert ── */
+/* â-€â-€ Alert â-€â-€ */
 .sc-alert { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem; border-radius: 12px; font-size: .9375rem; transition: all .3s; }
 .sc-alert.success { background: linear-gradient(135deg,#d4f4dd,#c3f0cf); color: #059669; border: 1px solid #6ee7b7; }
 .sc-alert.error   { background: linear-gradient(135deg,#fee2e2,#fecaca); color: #dc2626; border: 1px solid #fca5a5; }
@@ -322,17 +322,17 @@ document.addEventListener('DOMContentLoaded', () => {
 .sc-alert-close:hover { opacity: 1; }
 .sc-alert-hide { display: none !important; }
 
-/* ── Form container ── */
+/* â-€â-€ Form container â-€â-€ */
 .sc-form-card { background: white; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 2rem; }
 
-/* ── Section ── */
+/* â-€â-€ Section â-€â-€ */
 .sc-section { margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 2px solid #f3f4f6; }
 .sc-section:last-of-type { border-bottom: none; margin-bottom: 0; }
 .sc-section-head { display: flex; align-items: center; gap: .75rem; margin-bottom: 1.5rem; }
 .sc-section-head i { font-size: 1.75rem; color: var(--sc-primary); }
 .sc-section-head h2 { font-size: 1.25rem; font-weight: 700; color: #2c3e50; margin: 0; }
 
-/* ── Form row & group ── */
+/* â-€â-€ Form row & group â-€â-€ */
 .sc-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
 .sc-row:last-of-type { margin-bottom: 0; }
 .sc-group { display: flex; flex-direction: column; }
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .sc-input-info { display: flex; justify-content: space-between; align-items: center; margin-top: .5rem; }
 .sc-char-count { font-size: .8125rem; color: #9ca3af; font-weight: 500; }
 
-/* ── Toggle ── */
+/* â-€â-€ Toggle â-€â-€ */
 .sc-toggle-group { display: flex; flex-direction: column; gap: 1rem; }
 .sc-toggle-item  { display: flex; align-items: center; gap: .75rem; cursor: pointer; padding: .75rem 1rem; background: #f9fafb; border-radius: 10px; border: 2px solid var(--sc-border); transition: all .3s; }
 .sc-toggle-item:hover { background: #f3f4f6; border-color: #d1d5db; }
@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .sc-toggle-item input:checked + .sc-toggle-slider::before { transform: translateX(22px); }
 .sc-toggle-label { font-size: .9375rem; font-weight: 500; color: #374151; display: flex; align-items: center; gap: .5rem; }
 
-/* ── Preview ── */
+/* â-€â-€ Preview â-€â-€ */
 .sc-preview-card { background: linear-gradient(135deg,#f9fafb,#f3f4f6); border: 2px solid var(--sc-border); border-radius: 16px; padding: 1.75rem; }
 .sc-preview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .sc-preview-badge { padding: .375rem .875rem; background: rgba(102,126,234,.1); color: #667eea; border-radius: 8px; font-size: .75rem; font-weight: 700; text-transform: uppercase; }
@@ -383,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .sev-medium   { background: #dbeafe; color: #1e40af; }
 .sev-low      { background: #f3f4f6; color: #4b5563; }
 
-/* ── Form Actions ── */
+/* â-€â-€ Form Actions â-€â-€ */
 .sc-actions { display: flex; justify-content: flex-end; gap: 1rem; padding-top: 2rem; border-top: 2px solid #f3f4f6; flex-wrap: wrap; }
 .sc-btn { display: inline-flex; align-items: center; gap: .5rem; padding: .875rem 1.75rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all .3s; border: none; font-size: .9375rem; }
 .sc-btn:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
@@ -405,4 +405,5 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 </style>
 @endpush
+
 

@@ -281,3 +281,5 @@ class TicketSeeder extends Seeder
         SlaTracking::create($payload);
     }
 }
+
+

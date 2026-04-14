@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HelpDesk - Solusi Cepat untuk Setiap Masalah</title>
+    <title>HelpCenter - Solusi Cepat untuk Setiap Masalah</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg?v=20260413') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.svg?v=20260413') }}">
 
     <!-- Boxicons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -13,12 +15,12 @@
 </head>
 <body>
 
-    {{-- ═══ NAVBAR ═══ --}}
+    {{-- â•â•â• NAVBAR â•â•â• --}}
     <nav class="navbar" id="navbar">
         <div class="nav-inner">
             <a href="/" class="logo">
                 <div class="logo-icon"><i class='bx bx-support'></i></div>
-                HelpDesk
+                HelpCenter
             </a>
             <div class="nav-links">
                 <a href="{{ route('status') ?? '#' }}" class="nav-link">
@@ -40,7 +42,7 @@
         </div>
     </nav>
 
-    {{-- ═══ HERO ═══ --}}
+    {{-- â•â•â• HERO â•â•â• --}}
     <section class="hero">
         <div class="hero-inner">
             <div class="hero-badge">
@@ -54,7 +56,7 @@
             </h1>
 
             <p class="hero-desc">
-                Platform helpdesk modern yang memudahkan Anda melaporkan masalah,
+                Platform helpcenter modern yang memudahkan Anda melaporkan masalah,
                 melacak progress, dan berkomunikasi dengan tim support secara real-time.
             </p>
 
@@ -95,7 +97,7 @@
         </div>
     </section>
 
-    {{-- ═══ HOW IT WORKS ═══ --}}
+    {{-- â•â•â• HOW IT WORKS â•â•â• --}}
     <section class="how-it-works">
         <div class="section-wrap">
             <div class="section-header">
@@ -128,7 +130,7 @@
         </div>
     </section>
 
-    {{-- ═══ FEATURES ═══ --}}
+    {{-- â•â•â• FEATURES â•â•â• --}}
     <section class="features">
         <div class="section-wrap">
             <div class="section-header">
@@ -162,7 +164,7 @@
         </div>
     </section>
 
-    {{-- ═══ DASHBOARD PREVIEW ═══ --}}
+    {{-- â•â•â• DASHBOARD PREVIEW â•â•â• --}}
     <section class="dashboard-preview">
         <div class="section-wrap">
             <div class="section-header">
@@ -231,12 +233,12 @@
         </div>
     </section>
 
-    {{-- ═══ BENEFITS ═══ --}}
+    {{-- â•â•â• BENEFITS â•â•â• --}}
     <section class="benefits">
         <div class="section-wrap">
             <div class="section-header">
                 <span class="section-eyebrow">Keuntungan</span>
-                <h2 class="section-title">Mengapa Memilih HelpDesk?</h2>
+                <h2 class="section-title">Mengapa Memilih Helpcenter?</h2>
                 <p class="section-sub">Tingkatkan produktivitas dan kepuasan pelanggan Anda</p>
             </div>
 
@@ -260,7 +262,7 @@
         </div>
     </section>
 
-    {{-- ═══ INTEGRATIONS ═══ --}}
+    {{-- â•â•â• INTEGRATIONS â•â•â• --}}
     <section class="integrations">
         <div class="section-wrap">
             <div class="section-header">
@@ -291,7 +293,7 @@
         </div>
     </section>
 
-    {{-- ═══ TESTIMONIALS ═══ --}}
+    {{-- â•â•â• TESTIMONIALS â•â•â• --}}
     <section class="testimonials">
         <div class="section-wrap">
             <div class="section-header">
@@ -328,7 +330,7 @@
         </div>
     </section>
 
-    {{-- ═══ FAQ ═══ --}}
+    {{-- â•â•â• FAQ â•â•â• --}}
     <section class="faq">
         <div class="section-wrap">
             <div class="section-header">
@@ -363,7 +365,7 @@
         </div>
     </section>
 
-    {{-- ═══ CTA ═══ --}}
+    {{-- â•â•â• CTA â•â•â• --}}
     <section class="cta">
         <div class="cta-inner">
             <div class="cta-icon"><i class='bx bx-rocket'></i></div>
@@ -447,7 +449,7 @@
             overflow-x: hidden;
         }
 
-        /* ───── TYPOGRAPHY ───── */
+        /* â-€â-€â-€â-€â-€ TYPOGRAPHY â-€â-€â-€â-€â-€ */
         h1, h2, h3, h4 { font-family: 'Plus Jakarta Sans', sans-serif; }
 
         .gradient-text {
@@ -457,7 +459,7 @@
             background-clip: text;
         }
 
-        /* ───── NAVBAR ───── */
+        /* â-€â-€â-€â-€â-€ NAVBAR â-€â-€â-€â-€â-€ */
         .navbar {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -543,7 +545,7 @@
             box-shadow: 0 8px 20px rgba(79,70,229,0.4);
         }
 
-        /* ───── HERO ───── */
+        /* â-€â-€â-€â-€â-€ HERO â-€â-€â-€â-€â-€ */
         .hero {
             min-height: 100vh;
             display: flex;
@@ -671,7 +673,7 @@
             box-shadow: var(--shadow);
         }
 
-        /* ───── HERO STATS ───── */
+        /* â-€â-€â-€â-€â-€ HERO STATS â-€â-€â-€â-€â-€ */
         .hero-stats {
             display: flex;
             justify-content: center;
@@ -725,7 +727,7 @@
             margin-top: 2px;
         }
 
-        /* ───── SECTIONS ───── */
+        /* â-€â-€â-€â-€â-€ SECTIONS â-€â-€â-€â-€â-€ */
         section { padding: 6rem 2rem; }
 
         .section-wrap {
@@ -766,7 +768,7 @@
             line-height: 1.65;
         }
 
-        /* ───── HOW IT WORKS ───── */
+        /* â-€â-€â-€â-€â-€ HOW IT WORKS â-€â-€â-€â-€â-€ */
         .how-it-works { background: white; }
 
         .steps-grid {
@@ -833,7 +835,7 @@
             line-height: 1.6;
         }
 
-        /* ───── FEATURES ───── */
+        /* â-€â-€â-€â-€â-€ FEATURES â-€â-€â-€â-€â-€ */
         .features { background: var(--bg); }
 
         .features-grid {
@@ -880,7 +882,7 @@
             line-height: 1.65;
         }
 
-        /* ───── DASHBOARD PREVIEW ───── */
+        /* â-€â-€â-€â-€â-€ DASHBOARD PREVIEW â-€â-€â-€â-€â-€ */
         .dashboard-preview { background: white; }
 
         .preview-layout {
@@ -1031,7 +1033,7 @@
             line-height: 1.6;
         }
 
-        /* ───── BENEFITS ───── */
+        /* â-€â-€â-€â-€â-€ BENEFITS â-€â-€â-€â-€â-€ */
         .benefits { background: var(--bg); }
 
         .benefits-grid {
@@ -1071,7 +1073,7 @@
             line-height: 1.7;
         }
 
-        /* ───── INTEGRATIONS ───── */
+        /* â-€â-€â-€â-€â-€ INTEGRATIONS â-€â-€â-€â-€â-€ */
         .integrations { background: white; }
 
         .integrations-grid {
@@ -1111,7 +1113,7 @@
             color: var(--text);
         }
 
-        /* ───── TESTIMONIALS ───── */
+        /* â-€â-€â-€â-€â-€ TESTIMONIALS â-€â-€â-€â-€â-€ */
         .testimonials { background: var(--bg); }
 
         .testimonials-grid {
@@ -1179,7 +1181,7 @@
             color: var(--text-muted);
         }
 
-        /* ───── FAQ ───── */
+        /* â-€â-€â-€â-€â-€ FAQ â-€â-€â-€â-€â-€ */
         .faq { background: white; }
 
         .faq-list {
@@ -1234,7 +1236,7 @@
             background: white;
         }
 
-        /* ───── CTA ───── */
+        /* â-€â-€â-€â-€â-€ CTA â-€â-€â-€â-€â-€ */
         .cta {
             background: var(--gradient);
             padding: 5rem 2rem;
@@ -1292,13 +1294,13 @@
             box-shadow: 0 16px 40px rgba(0,0,0,0.28);
         }
 
-        /* ───── ANIMATIONS ───── */
+        /* â-€â-€â-€â-€â-€ ANIMATIONS â-€â-€â-€â-€â-€ */
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(28px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ───── RESPONSIVE ───── */
+        /* â-€â-€â-€â-€â-€ RESPONSIVE â-€â-€â-€â-€â-€ */
         @media (max-width: 1024px) {
             .preview-layout { grid-template-columns: 1fr; }
         }
@@ -1323,3 +1325,6 @@
 
 </body>
 </html>
+
+
+

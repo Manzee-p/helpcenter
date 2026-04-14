@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Notifikasi')
 @section('page_title', 'Notifikasi')
@@ -9,7 +9,7 @@
 @section('content')
 <div class="notif-page">
 
-    {{-- ── Header ── --}}
+    {{-- â-€â-€ Header â-€â-€ --}}
     <div class="notif-page-header">
         <div>
             <h1 class="notif-page-title">
@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    {{-- ── Stats ── --}}
+    {{-- â-€â-€ Stats â-€â-€ --}}
     <div class="notif-stats">
         <div class="notif-stat-card">
             <div class="ns-icon ns-icon-primary"><i class='bx bx-bell'></i></div>
@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    {{-- ── Filter tabs ── --}}
+    {{-- â-€â-€ Filter tabs â-€â-€ --}}
     <div class="notif-filter">
         <button class="nf-tab active" data-filter="all"    onclick="npSetFilter(this,'all')">Semua Notifikasi</button>
         <button class="nf-tab"        data-filter="unread" onclick="npSetFilter(this,'unread')">
@@ -52,7 +52,7 @@
         <button class="nf-tab"        data-filter="read"   onclick="npSetFilter(this,'read')">Sudah Dibaca</button>
     </div>
 
-    {{-- ── Container ── --}}
+    {{-- â-€â-€ Container â-€â-€ --}}
     <div class="notif-container">
 
         {{-- Loading --}}
@@ -80,11 +80,11 @@
 (function () {
     'use strict';
 
-    /* ── state ── */
+    /* â-€â-€ state â-€â-€ */
     var allNotifs = [];
     var currentFilter = 'all';
 
-    /* ── helpers ── */
+    /* â-€â-€ helpers â-€â-€ */
     var $ = function(id) { return document.getElementById(id); };
     var CS = function() { return document.querySelector('meta[name="csrf-token"]')?.content ?? ''; };
 
@@ -138,7 +138,7 @@
         return '/tickets/' + relatedId;
     }
 
-    /* ── fetch ── */
+    /* â-€â-€ fetch â-€â-€ */
     function apiFetch(url, opts) {
         opts = opts || {};
         return fetch(url, Object.assign({ credentials: 'same-origin' }, opts, {
@@ -150,7 +150,7 @@
         }));
     }
 
-    /* ── render list ── */
+    /* â-€â-€ render list â-€â-€ */
     function filtered() {
         if (currentFilter === 'unread') return allNotifs.filter(function(n) { return !n.read_at && !n.is_read; });
         if (currentFilter === 'read')   return allNotifs.filter(function(n) { return  n.read_at ||  n.is_read; });
@@ -209,7 +209,7 @@
                 '<button class="np-act-btn del btn-del" title="Hapus"><i class="bx bx-trash"></i></button>' +
             '</div>';
 
-        /* click card → navigate */
+        /* click card â†’ navigate */
         div.addEventListener('click', async function(e) {
             if (e.target.closest('.np-actions')) return;
             if (isUnread) await doMarkRead(n, div);
@@ -245,7 +245,7 @@
         return div;
     }
 
-    /* ── API actions ── */
+    /* â-€â-€ API actions â-€â-€ */
     async function doMarkRead(n, div) {
         try {
             var res = await apiFetch('/notifications/' + n.id + '/read', { method: 'POST' });
@@ -268,7 +268,7 @@
         } catch(e) { console.error(e); }
     }
 
-    /* ── mark all ── */
+    /* â-€â-€ mark all â-€â-€ */
     window.npMarkAllRead = async function() {
         try {
             var res = await apiFetch('/notifications/mark-all-read', { method: 'POST' });
@@ -280,7 +280,7 @@
         } catch(e) { console.error(e); }
     };
 
-    /* ── stats ── */
+    /* â-€â-€ stats â-€â-€ */
     function updateStats() {
         var total   = allNotifs.length;
         var unread  = allNotifs.filter(function(n) { return !n.read_at && !n.is_read; }).length;
@@ -296,7 +296,7 @@
         else { badge.style.display = 'none'; }
     }
 
-    /* ── filter ── */
+    /* â-€â-€ filter â-€â-€ */
     window.npSetFilter = function(btn, filter) {
         document.querySelectorAll('.nf-tab').forEach(function(t) { t.classList.remove('active'); });
         btn.classList.add('active');
@@ -304,7 +304,7 @@
         renderList();
     };
 
-    /* ── refresh ── */
+    /* â-€â-€ refresh â-€â-€ */
     window.npRefresh = async function() {
         var icon = $('btn-refresh-icon');
         icon.style.animation = 'np-spin 1s linear infinite';
@@ -312,7 +312,7 @@
         icon.style.animation = '';
     };
 
-    /* ── load ── */
+    /* â-€â-€ load â-€â-€ */
     async function loadNotifications() {
         $('np-loading').style.display = 'flex';
         $('np-empty').style.display   = 'none';
@@ -339,10 +339,10 @@
 
 @push('styles')
 <style>
-/* ── PAGE ── */
+/* â-€â-€ PAGE â-€â-€ */
 .notif-page { max-width: 900px; margin: 0 auto; }
 
-/* ── PAGE HEADER ── */
+/* â-€â-€ PAGE HEADER â-€â-€ */
 .notif-page-header {
     display: flex; justify-content: space-between; align-items: center;
     flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;
@@ -373,7 +373,7 @@
 }
 .np-btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-/* ── STATS ── */
+/* â-€â-€ STATS â-€â-€ */
 .notif-stats {
     display: grid; grid-template-columns: repeat(3,1fr);
     gap: 1.25rem; margin-bottom: 1.75rem;
@@ -395,7 +395,7 @@
 .ns-val { font-size: 1.875rem; font-weight: 800; color: var(--text); line-height: 1; }
 .ns-lbl { font-size: .8125rem; color: var(--text-muted); margin-top: .25rem; }
 
-/* ── FILTER TABS ── */
+/* â-€â-€ FILTER TABS â-€â-€ */
 .notif-filter {
     display: flex; gap: .5rem; background: white;
     padding: .375rem; border-radius: 12px;
@@ -415,13 +415,13 @@
 }
 .nf-tab:not(.active) .nf-badge { background: rgba(79,70,229,.12); color: var(--primary); }
 
-/* ── CONTAINER ── */
+/* â-€â-€ CONTAINER â-€â-€ */
 .notif-container {
     background: white; border-radius: 16px;
     border: 1.5px solid var(--border); overflow: hidden;
 }
 
-/* ── STATES ── */
+/* â-€â-€ STATES â-€â-€ */
 .notif-loading-state, .notif-empty-state {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; padding: 4rem 2rem; gap: 1rem;
@@ -437,7 +437,7 @@
 .notif-empty-state h3 { font-size: 1.25rem; font-weight: 700; color: var(--text); margin: 0; }
 .notif-empty-state p  { margin: 0; font-size: .875rem; }
 
-/* ── NOTIFICATION CARDS ── */
+/* â-€â-€ NOTIFICATION CARDS â-€â-€ */
 .notif-list-wrapper { padding: .5rem; }
 
 .np-card {
@@ -490,7 +490,7 @@
 .np-act-btn.del   { background: rgba(239,68,68,.1);    color: var(--danger); }
 .np-act-btn.del:hover   { background: var(--danger);   color: white; }
 
-/* ── RESPONSIVE ── */
+/* â-€â-€ RESPONSIVE â-€â-€ */
 @media (max-width: 640px) {
     .notif-stats { grid-template-columns: 1fr; }
     .notif-filter { flex-direction: column; }
@@ -500,3 +500,4 @@
 }
 </style>
 @endpush
+

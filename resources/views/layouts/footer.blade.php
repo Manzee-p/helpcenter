@@ -1,4 +1,4 @@
-{{-- ============================================================
+﻿{{-- ============================================================
      resources/views/partials/footer.blade.php
      Include di layout utama: @include('partials.footer')
      ============================================================ --}}
@@ -7,7 +7,7 @@
     <div class="footer-inner">
         <span class="footer-copy">
             &copy; {{ date('Y') }}
-            <a href="#" class="footer-brand">Web Helpdesk</a>
+            <a href="#" class="footer-brand">Web HelpCenter</a>
         </span>
         <div class="footer-links">
             <a href="#" class="footer-link">Dokumentasi</a>
@@ -17,7 +17,7 @@
 </footer>
 
 <style>
-/* ── FOOTER ── */
+/* â-€â-€ FOOTER â-€â-€ */
 .content-footer {
     padding: .875rem 1.5rem;
     background: white;

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Detail Status')
 @section('page_title', 'Detail Status')
@@ -279,4 +279,5 @@ function executeDelete() {
 @media (max-width: 992px) { .sd-wrap { grid-template-columns: 1fr; } }
 </style>
 @endpush
+
 

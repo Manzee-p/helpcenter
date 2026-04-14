@@ -1,4 +1,4 @@
-{{-- ============================================================
+﻿{{-- ============================================================
      resources/views/partials/notifications-dropdown.blade.php
      Dipakai di: layouts/navbar.blade.php
      @include('partials.notifications-dropdown')
@@ -135,7 +135,7 @@
     const $  = id => document.getElementById(id);
     const CS = () => document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-    /* ── helpers ── */
+    /* â-€â-€ helpers â-€â-€ */
     function timeAgo(d) {
         const s = Math.floor((Date.now() - new Date(d)) / 1000);
         if (s < 60)    return 'Baru saja';
@@ -169,7 +169,7 @@
         return '/tickets/' + id;
     }
 
-    /* ── fetch helper: credentials:'same-origin' agar session cookie ikut terkirim ── */
+    /* â-€â-€ fetch helper: credentials:'same-origin' agar session cookie ikut terkirim â-€â-€ */
     function apiFetch(url, opts = {}) {
         return fetch(url, {
             credentials: 'same-origin',
@@ -183,7 +183,7 @@
         });
     }
 
-    /* ── render satu item ── */
+    /* â-€â-€ render satu item â-€â-€ */
     function renderItem(n) {
         const li = document.createElement('li');
         li.className = 'notif-item' + (n.is_read ? '' : ' is-unread');
@@ -206,7 +206,7 @@
                 '</button>' +
             '</div>';
 
-        /* klik item → baca + navigasi */
+        /* klik item â†’ baca + navigasi */
         li.addEventListener('click', async function(e) {
             if (e.target.closest('.notif-actions')) return;
             if (!n.is_read) await doMarkRead(n, li);
@@ -228,7 +228,7 @@
         return li;
     }
 
-    /* ── API: mark read ── */
+    /* â-€â-€ API: mark read â-€â-€ */
     async function doMarkRead(n, li) {
         try {
             const res = await apiFetch('/notifications/' + n.id + '/read', { method: 'POST' });
@@ -241,7 +241,7 @@
         } catch(e) { console.error('markRead:', e); }
     }
 
-    /* ── API: delete ── */
+    /* â-€â-€ API: delete â-€â-€ */
     async function doDelete(n, li) {
         try {
             const res = await apiFetch('/notifications/' + n.id, { method: 'DELETE' });
@@ -257,7 +257,7 @@
         } catch(e) { console.error('delete:', e); }
     }
 
-    /* ── badge count helper ── */
+    /* â-€â-€ badge count helper â-€â-€ */
     function decBadge() {
         var cnt = $('notif-count');
         var cur = Math.max(0, parseInt(cnt ? cnt.textContent : '0') - 1);
@@ -275,7 +275,7 @@
         $('notif-empty').style.display = 'flex';
     }
 
-    /* ── load unread count (dipanggil saat load + polling) ── */
+    /* â-€â-€ load unread count (dipanggil saat load + polling) â-€â-€ */
     async function loadCount() {
         try {
             var res = await apiFetch('/notifications/unread-count');
@@ -295,7 +295,7 @@
         } catch(e) { /* silent */ }
     }
 
-    /* ── load list notifikasi (lazy: sekali buka dropdown) ── */
+    /* â-€â-€ load list notifikasi (lazy: sekali buka dropdown) â-€â-€ */
     var loaded = false;
     var _origToggle = window.toggleDrop;
     window.toggleDrop = function(id) {
@@ -328,7 +328,7 @@
         }
     }
 
-    /* ── mark all read (dipanggil dari tombol header) ── */
+    /* â-€â-€ mark all read (dipanggil dari tombol header) â-€â-€ */
     window.markAllNotifRead = async function() {
         try {
             var res = await apiFetch('/notifications/mark-all-read', { method: 'POST' });
@@ -345,7 +345,7 @@
         } catch(e) { console.error('markAll:', e); }
     };
 
-    /* ── init ── */
+    /* â-€â-€ init â-€â-€ */
     document.addEventListener('DOMContentLoaded', function() {
         loadCount();
         setInterval(loadCount, 30000); // polling tiap 30 detik

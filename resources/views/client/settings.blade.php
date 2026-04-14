@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Pengaturan Akun')
 @section('page_title', 'Pengaturan Akun')
@@ -31,7 +31,7 @@
         </button>
     </div>
 
-    {{-- ══════════════════ TAB: PROFIL ══════════════════ --}}
+    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB: PROFIL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
     <div id="tab-profile" class="tab-content">
         <div class="section-card">
             <div class="card-header">
@@ -62,9 +62,12 @@
                                 <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/jpg,image/gif" hidden onchange="previewAndUploadAvatar(this)">
                             </label>
                             @if(Auth::user()->avatar)
-                            <button class="btn-delete-avatar" onclick="deleteAvatar(this)" id="btnDeleteAvatar">
-                                <i class='bx bx-trash'></i> Hapus
-                            </button>
+                            <form method="POST" action="{{ route('client.settings.avatar.delete') }}" style="margin:0;">
+                                @csrf
+                                <button type="submit" class="btn-delete-avatar" id="btnDeleteAvatar" onclick="return confirm('Hapus foto profil?')">
+                                    <i class='bx bx-trash'></i> Hapus
+                                </button>
+                            </form>
                             @endif
                         </div>
                         <p class="avatar-hint">JPG, PNG atau GIF. Maks 2MB</p>
@@ -171,7 +174,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════ TAB: KEAMANAN ══════════════════ --}}
+    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB: KEAMANAN â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
     <div id="tab-security" class="tab-content" style="display:none">
         <div class="section-card">
             <div class="card-header">
@@ -258,7 +261,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════ TAB: NOTIFIKASI ══════════════════ --}}
+    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB: NOTIFIKASI â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
     <div id="tab-notifications" class="tab-content" style="display:none">
         <div class="section-card">
             <div class="card-header">
@@ -313,7 +316,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════ TAB: PREFERENSI ══════════════════ --}}
+    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB: PREFERENSI â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
     <div id="tab-preferences" class="tab-content" style="display:none">
         <div class="section-card">
             <div class="card-header">
@@ -339,16 +342,16 @@
                     <div class="pref-group">
                         <label><i class='bx bx-globe'></i> Bahasa</label>
                         <select id="prefLang" class="form-control">
-                            <option value="id" selected>🇮🇩 Bahasa Indonesia</option>
-                            <option value="en">🇬🇧 English</option>
+                            <option value="id" selected>ðŸ‡®ðŸ‡© Bahasa Indonesia</option>
+                            <option value="en">ðŸ‡¬ðŸ‡§ English</option>
                         </select>
                     </div>
                     <div class="pref-group">
                         <label><i class='bx bx-time'></i> Zona Waktu</label>
                         <select id="prefTz" class="form-control">
-                            <option value="Asia/Jakarta" selected>WIB — Jakarta (GMT+7)</option>
-                            <option value="Asia/Makassar">WITA — Makassar (GMT+8)</option>
-                            <option value="Asia/Jayapura">WIT — Jayapura (GMT+9)</option>
+                            <option value="Asia/Jakarta" selected>WIB - Jakarta (GMT+7)</option>
+                            <option value="Asia/Makassar">WITA - Makassar (GMT+8)</option>
+                            <option value="Asia/Jayapura">WIT - Jayapura (GMT+9)</option>
                         </select>
                     </div>
                 </div>
@@ -361,7 +364,7 @@
         </div>
     </div>
 
-    {{-- ══════════════════ TAB: BANTUAN / FAQ ══════════════════ --}}
+    {{-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• TAB: BANTUAN / FAQ â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• --}}
     <div id="tab-help" class="tab-content" style="display:none">
         <div class="section-card">
             <div class="card-header">
@@ -377,7 +380,7 @@
                         ['q'=>'Bagaimana cara membuat tiket baru?',
                          'a'=>'Klik tombol "Buat Tiket" di dashboard atau halaman Laporan Saya, lalu isi formulir dengan judul, kategori, dan deskripsi masalah. Tiket akan langsung masuk ke sistem kami.'],
                         ['q'=>'Berapa lama waktu penanganan tiket?',
-                         'a'=>'Waktu penanganan bervariasi tergantung tingkat urgensi. Tiket kritis biasanya ditangani dalam 1×24 jam, sedangkan tiket biasa 2–5 hari kerja.'],
+                         'a'=>'Waktu penanganan bervariasi tergantung tingkat urgensi. Tiket kritis biasanya ditangani dalam 1Ã-24 jam, sedangkan tiket biasa 2--5 hari kerja.'],
                         ['q'=>'Bagaimana cara memberikan rating vendor?',
                          'a'=>'Setelah tiket berstatus "Selesai" atau "Ditutup", buka halaman Belum Dirating dan klik tombol "Beri Rating" pada tiket yang sesuai.'],
                         ['q'=>'Apakah saya bisa melampirkan file ke tiket?',
@@ -407,9 +410,9 @@
 
 @push('scripts')
 <script>
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HELPER: Toast notification
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -423,9 +426,9 @@ function showToast(message, type = 'success') {
     }, 3500);
 }
 
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HELPER: Generic fetch (AJAX)
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function ajaxPost(url, body, isFormData = false) {
     const headers = { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' };
     if (!isFormData) headers['Content-Type'] = 'application/json';
@@ -437,9 +440,9 @@ async function ajaxPost(url, body, isFormData = false) {
     return resp.json();
 }
 
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    TABS
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function switchTab(tab, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -447,9 +450,9 @@ function switchTab(tab, btn) {
     btn.classList.add('active');
 }
 
-/* ════════════════════════════════════════
-   AVATAR — preview + AJAX upload
-════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   AVATAR - preview + AJAX upload
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function previewAndUploadAvatar(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
@@ -485,29 +488,9 @@ async function uploadAvatarOnly(fd) {
     }
 }
 
-async function deleteAvatar(btn) {
-    if (!confirm('Hapus foto profil?')) return;
-    btn.disabled = true;
-    try {
-        const data = await ajaxPost('{{ route("client.settings.avatar.delete") }}', { _method: 'DELETE' });
-        if (data.success) {
-            showToast('Avatar dihapus');
-            const initials = '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}';
-            document.getElementById('avatarRing').innerHTML = `<div class="avatar-placeholder" id="avatarPlaceholder">${initials}</div>`;
-            btn.style.display = 'none';
-        } else {
-            showToast(data.message || 'Gagal menghapus', 'error');
-            btn.disabled = false;
-        }
-    } catch (e) {
-        showToast('Terjadi kesalahan', 'error');
-        btn.disabled = false;
-    }
-}
-
-/* ════════════════════════════════════════
-   PROFILE FORM — AJAX submit
-════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PROFILE FORM - AJAX submit
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function submitProfile(e) {
     e.preventDefault();
     const btn = document.getElementById('profileBtn');
@@ -539,9 +522,9 @@ async function submitProfile(e) {
     }
 }
 
-/* ════════════════════════════════════════
-   PASSWORD FORM — AJAX submit
-════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PASSWORD FORM - AJAX submit
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function submitPassword(e) {
     e.preventDefault();
     const np = document.getElementById('newPwd').value;
@@ -574,9 +557,9 @@ async function submitPassword(e) {
     }
 }
 
-/* ════════════════════════════════════════
-   NOTIFICATIONS — AJAX
-════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   NOTIFICATIONS - AJAX
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 async function submitNotifications(btn) {
     setLoading(btn, true, 'Menyimpan...');
     const settings = {};
@@ -594,9 +577,9 @@ async function submitNotifications(btn) {
     finally { setLoading(btn, false, '<i class=\'bx bx-save\'></i> Simpan Preferensi'); }
 }
 
-/* ════════════════════════════════════════
-   PREFERENCES — AJAX
-════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PREFERENCES - AJAX
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function selectTheme(id, el) {
     document.querySelectorAll('.theme-opt').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
@@ -617,9 +600,9 @@ async function submitPreferences(btn) {
     finally { setLoading(btn, false, '<i class=\'bx bx-save\'></i> Simpan Preferensi'); }
 }
 
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PASSWORD UI helpers
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function togglePwd(id, btn) {
     const inp = document.getElementById(id);
     const icon = btn.querySelector('i');
@@ -666,9 +649,9 @@ function resetPwdUI() {
     document.getElementById('pwdBtn').disabled = true;
 }
 
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FAQ toggle
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function toggleFAQ(i) {
     const item = document.getElementById('faq-' + i);
     const btn  = item.querySelector('.faq-q');
@@ -677,9 +660,9 @@ function toggleFAQ(i) {
     if (!isOpen) { item.classList.add('open'); btn.classList.add('open'); }
 }
 
-/* ════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Loading state helper
-════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function setLoading(btn, loading, label) {
     btn.disabled = loading;
     btn.innerHTML = loading ? `<i class='bx bx-loader-alt bx-spin'></i> ${label}` : label;
@@ -692,12 +675,12 @@ const notifs = @json($notifs ?? []);
 
 @push('styles')
 <style>
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CLIENT SETTINGS PAGE
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .settings-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* ─── TOAST ─── */
+/* â-€â-€â-€ TOAST â-€â-€â-€ */
 .toast-container {
     position: fixed;
     top: 1.25rem;
@@ -727,7 +710,7 @@ const notifs = @json($notifs ?? []);
 .toast-error   { background: #fef2f2; color: #7f1d1d; border: 1px solid #fecaca; }
 .toast i { font-size: 1.2rem; flex-shrink: 0; }
 
-/* ─── TABS ─── */
+/* â-€â-€â-€ TABS â-€â-€â-€ */
 .settings-tabs-wrap {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -751,7 +734,7 @@ const notifs = @json($notifs ?? []);
 .tab-btn.active { background: linear-gradient(135deg, #6366f1, #7c3aed); color: #fff; box-shadow: 0 6px 16px rgba(99,102,241,.25); }
 .tab-btn i { font-size: 1.1rem; }
 
-/* ─── CARD ─── */
+/* â-€â-€â-€ CARD â-€â-€â-€ */
 .section-card {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -770,7 +753,7 @@ const notifs = @json($notifs ?? []);
 .card-header p  { font-size: .875rem; color: #64748b; margin: 0; }
 .card-body { padding: 1.5rem; }
 
-/* ─── AVATAR ─── */
+/* â-€â-€â-€ AVATAR â-€â-€â-€ */
 .avatar-section {
     display: flex; gap: 1.5rem; align-items: flex-start;
     margin-bottom: 2rem; padding-bottom: 2rem;
@@ -814,7 +797,7 @@ const notifs = @json($notifs ?? []);
 .btn-delete-avatar:hover { background: #fecaca; }
 .avatar-hint { font-size: .78rem; color: #94a3b8; margin: 0; }
 
-/* ─── FORM ─── */
+/* â-€â-€â-€ FORM â-€â-€â-€ */
 .settings-form { display: flex; flex-direction: column; gap: 1.25rem; }
 .form-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.25rem; }
 .form-group { display: flex; flex-direction: column; gap: .45rem; }
@@ -832,7 +815,7 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 select.form-control { cursor: pointer; }
 .form-hint { font-size: .78rem; color: #94a3b8; margin: 0; }
 
-/* ─── PASSWORD ─── */
+/* â-€â-€â-€ PASSWORD â-€â-€â-€ */
 .pwd-wrap { position: relative; }
 .pwd-wrap .form-control { padding-right: 3rem; }
 .pwd-toggle {
@@ -853,7 +836,7 @@ select.form-control { cursor: pointer; }
 .msg-ok  { color: #10b981; font-size: .8rem; display: flex; align-items: center; gap: .3rem; }
 .msg-err { color: #ef4444; font-size: .8rem; display: flex; align-items: center; gap: .3rem; }
 
-/* ─── BUTTONS ─── */
+/* â-€â-€â-€ BUTTONS â-€â-€â-€ */
 .form-actions {
     display: flex; gap: .75rem; justify-content: flex-end;
     margin-top: .5rem; padding-top: 1rem; border-top: 1px solid #f0f0f0;
@@ -878,7 +861,7 @@ select.form-control { cursor: pointer; }
 .btn-loading i { animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── NOTIFICATION ─── */
+/* â-€â-€â-€ NOTIFICATION â-€â-€â-€ */
 .notif-list { display: flex; flex-direction: column; gap: 1rem; }
 .notif-item {
     display: flex; align-items: center; gap: 1rem;
@@ -912,7 +895,7 @@ select.form-control { cursor: pointer; }
 .toggle-switch input:checked + label { background: #6366f1; }
 .toggle-switch input:checked + label::before { transform: translateX(20px); }
 
-/* ─── LAST LOGIN ─── */
+/* â-€â-€â-€ LAST LOGIN â-€â-€â-€ */
 .login-info-card {
     display: flex; gap: 1rem; align-items: flex-start;
     padding: 1.25rem; background: #f8fafc;
@@ -923,7 +906,7 @@ select.form-control { cursor: pointer; }
 .login-info-card p  { font-size: .875rem; color: #64748b; margin: 0 0 .25rem; }
 .login-device { font-size: .78rem; color: #94a3b8; }
 
-/* ─── THEME ─── */
+/* â-€â-€â-€ THEME â-€â-€â-€ */
 .theme-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }
 .theme-opt {
     display: flex; flex-direction: column; align-items: center; gap: .6rem;
@@ -939,7 +922,7 @@ select.form-control { cursor: pointer; }
 .pref-group label { font-size: .875rem; font-weight: 700; color: #374151; display: flex; align-items: center; gap: .3rem; }
 .pref-group label i { color: #6366f1; }
 
-/* ─── FAQ ─── */
+/* â-€â-€â-€ FAQ â-€â-€â-€ */
 .faq-list { display: flex; flex-direction: column; gap: .75rem; }
 .faq-item { border: 1px solid #e9ecef; border-radius: 16px; overflow: hidden; }
 .faq-q {
@@ -955,7 +938,7 @@ select.form-control { cursor: pointer; }
 .faq-a p { margin: 0; font-size: .9rem; color: #64748b; line-height: 1.65; }
 .faq-item.open .faq-a { display: block; }
 
-/* ─── RESPONSIVE ─── */
+/* â-€â-€â-€ RESPONSIVE â-€â-€â-€ */
 @media (max-width: 767px) {
     .form-row { grid-template-columns: 1fr; }
     .avatar-section { flex-direction: column; align-items: center; text-align: center; }
@@ -967,3 +950,4 @@ select.form-control { cursor: pointer; }
 }
 </style>
 @endpush
+

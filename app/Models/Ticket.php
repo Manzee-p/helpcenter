@@ -29,6 +29,11 @@ class Ticket extends Model
         'first_response_at',
         'resolved_at',
         'closed_at',
+        'completion_note',
+        'completion_photo_path',
+        'completion_photo_name',
+        'completion_photo_type',
+        'completion_reported_at',
     ];
 
     protected $casts = [
@@ -36,6 +41,7 @@ class Ticket extends Model
         'first_response_at' => 'datetime',
         'resolved_at' => 'datetime',
         'closed_at' => 'datetime',
+        'completion_reported_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -182,4 +188,16 @@ class Ticket extends Model
     {
         return $this->hasOne(\App\Models\TicketDeletionRequest::class, 'ticket_id')->latestOfMany();
     }
+
+    public function reassignRequests()
+    {
+        return $this->hasMany(\App\Models\TicketReassignRequest::class, 'ticket_id');
+    }
+
+    public function latestReassignRequest()
+    {
+        return $this->hasOne(\App\Models\TicketReassignRequest::class, 'ticket_id')->latestOfMany();
+    }
 }
+
+

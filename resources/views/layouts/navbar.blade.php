@@ -1,4 +1,4 @@
-{{-- resources/views/layouts/navbar.blade.php --}}
+﻿{{-- resources/views/layouts/navbar.blade.php --}}
 
 <nav class="layout-navbar" id="layout-navbar">
 
@@ -81,7 +81,7 @@
             </div>
         </li>
 
-        {{-- ── NOTIFIKASI ── include partial yang sudah ada script-nya --}}
+        {{-- â-€â-€ NOTIFIKASI â-€â-€ include partial yang sudah ada script-nya --}}
         <li style="position:relative;">
             @include('layouts.notifications-dropdown')
         </li>
@@ -151,7 +151,7 @@
 </nav>
 
 <style>
-/* ───── NAVBAR ───── */
+/* â-€â-€â-€â-€â-€ NAVBAR â-€â-€â-€â-€â-€ */
 .layout-navbar {
     position: fixed;
     top: 0;
@@ -182,12 +182,19 @@
 }
 .sidebar-toggle-btn:hover { background: var(--bg); color: var(--text); }
 
-.navbar-title { flex: 1; min-width: 0; }
+.navbar-title {
+    flex: 1;
+    min-width: 0;
+    background: linear-gradient(135deg, #eef2ff 0%, #fff7ed 100%);
+    border: 1px solid rgba(79,70,229,0.12);
+    border-radius: 12px;
+    padding: 0.4rem 0.8rem;
+}
 .navbar-title h4 {
-    font-size: 1.125rem; font-weight: 700; color: var(--text);
+    font-size: 1.05rem; font-weight: 800; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.navbar-title p { font-size: 0.75rem; color: var(--text-light); margin-top: 1px; }
+.navbar-title p { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
 
 .navbar-actions {
     display: flex; align-items: center; gap: 0.375rem;
@@ -296,7 +303,7 @@
 }
 .shortcut-item span { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-align: center; }
 
-/* Notifications dropdown — min-width diatur di partial */
+/* Notifications dropdown - min-width diatur di partial */
 .notif-drop { min-width: 340px; }
 
 /* User button */
@@ -372,9 +379,10 @@
 </style>
 
 <script>
-// ─── Generic dropdown toggle ───────────────────────────────────────────────
+// â-€â-€â-€ Generic dropdown toggle â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 function toggleDrop(id) {
     const target    = document.getElementById(id);
+    if (!target) return;
     const isVisible = target.style.display === 'block';
     // tutup semua dulu
     ['user-drop','notif-drop','shortcuts-drop','search-drop'].forEach(d => {
@@ -398,7 +406,7 @@ document.addEventListener('click', function (e) {
     if (sd && sw && !sw.contains(e.target)) sd.style.display = 'none';
 });
 
-// ─── Fullscreen ───────────────────────────────────────────────────────────
+// â-€â-€â-€ Fullscreen â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 function toggleFullscreen() {
     const icon = document.getElementById('fullscreen-icon');
     if (!document.fullscreenElement) {
@@ -410,22 +418,25 @@ function toggleFullscreen() {
     }
 }
 
-// ─── Search ───────────────────────────────────────────────────────────────
+// â-€â-€â-€ Search â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 let navSearchTimer = null;
 
 function showSearchDrop() {
-    document.getElementById('search-drop').style.display = 'block';
+    const searchDrop = document.getElementById('search-drop');
+    if (searchDrop) searchDrop.style.display = 'block';
 }
 
 function handleNavSearch(val) {
     clearTimeout(navSearchTimer);
     const inner = document.getElementById('search-results-inner');
+    const drop = document.getElementById('search-drop');
+    if (!inner || !drop) return;
     if (!val.trim()) {
         inner.innerHTML = `<div class="search-empty"><i class='bx bx-search-alt'></i><span>Ketik untuk mencari...</span></div>`;
         return;
     }
     inner.innerHTML = `<div class="search-empty"><i class='bx bx-loader-alt bx-spin'></i><span>Mencari...</span></div>`;
-    document.getElementById('search-drop').style.display = 'block';
+    drop.style.display = 'block';
 
     navSearchTimer = setTimeout(() => {
         // TODO: ganti dengan AJAX ke endpoint pencarian tiket/user yang sesungguhnya
@@ -436,3 +447,4 @@ function handleNavSearch(val) {
     }, 500);
 }
 </script>
+

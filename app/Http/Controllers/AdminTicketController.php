@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\TicketDeletionRequest;
+use App\Models\TicketReassignRequest;
+use App\Models\VendorReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +30,15 @@ class AdminTicketController extends Controller
 
         // ── Filter Priority ──
         if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
+            if ($request->priority === 'unset') {
+                $query->whereNull('priority');
+            } else {
+                $query->where('priority', $request->priority);
+            }
+        }
+
+        if ($request->get('filter') === 'no_priority') {
+            $query->whereNull('priority');
         }
 
         // ── Search ──
@@ -70,13 +80,26 @@ class AdminTicketController extends Controller
             'category',
             'assignedTo',
             'attachments',
+            'additionalInfos.user',
             'feedback',
             'slaTracking',
+            'latestReassignRequest.vendor',
+            'latestReassignRequest.reviewer',
         ])->findOrFail($id);
 
-        $vendors = User::where('role', 'vendor')->where('is_active', true)->orderBy('name')->get();
+        $vendors = User::where('role', 'vendor')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
 
-        return view('admin.tickets.show', compact('ticket', 'vendors'));
+        $vendorLoads = Ticket::query()
+            ->selectRaw('assigned_to, COUNT(*) as active_count')
+            ->whereNotNull('assigned_to')
+            ->whereIn('status', ['new', 'in_progress', 'waiting_response'])
+            ->groupBy('assigned_to')
+            ->pluck('active_count', 'assigned_to');
+
+        return view('admin.tickets.show', compact('ticket', 'vendors', 'vendorLoads'));
     }
 
     /**
@@ -92,15 +115,104 @@ class AdminTicketController extends Controller
         ]);
 
         $ticket = Ticket::findOrFail($id);
+        $selectedVendorId = (int) $request->assigned_to;
+
+        $activeLoad = Ticket::query()
+            ->where('assigned_to', $selectedVendorId)
+            ->whereIn('status', ['new', 'in_progress', 'waiting_response'])
+            ->when($ticket->assigned_to === $selectedVendorId, fn ($q) => $q->where('id', '!=', $ticket->id))
+            ->count();
+
+        if ($activeLoad >= 5) {
+            return redirect()
+                ->route('admin.tickets.show', $id)
+                ->with('warning', 'Vendor sedang sibuk (maksimal 5 tiket aktif). Pilih vendor lain atau tunggu persetujuan reassign.');
+        }
 
         $ticket->update([
-            'assigned_to' => $request->assigned_to,
+            'assigned_to' => $selectedVendorId,
             'assigned_at' => $ticket->assigned_at ?? now(),
         ]);
 
         return redirect()
             ->route('admin.tickets.show', $id)
             ->with('success', 'Vendor berhasil ditugaskan.');
+    }
+
+    public function reassignRequests(Request $request)
+    {
+        $query = TicketReassignRequest::with(['ticket.user', 'vendor', 'reviewer'])->latest();
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $requests = $query->paginate(15)->withQueryString();
+        return view('admin.tickets.reassign-requests.index', compact('requests'));
+    }
+
+    public function showReassignRequest($id)
+    {
+        $requestItem = TicketReassignRequest::with([
+            'ticket.user', 'ticket.category',
+            'ticket.assignedTo', 'vendor', 'reviewer',
+        ])->findOrFail($id);
+
+        $vendorWorkload = $this->buildVendorWorkload(
+            $requestItem->vendor_id,
+            $requestItem->ticket_id
+        );
+
+        // ✅ TAMBAHKAN INI — untuk AJAX dari popup
+        if (request()->expectsJson()) {
+            return response()->json(['vendorWorkload' => $vendorWorkload]);
+        }
+
+        return view('admin.tickets.reassign-requests.show', compact('requestItem', 'vendorWorkload'));
+    }
+    
+    public function processReassignRequest(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:approve,reject',
+            'admin_note' => 'nullable|string|max:1000',
+        ]);
+
+        $reassignRequest = TicketReassignRequest::with(['ticket', 'vendor'])->findOrFail($id);
+        if ($reassignRequest->status !== 'pending') {
+            return back()->with('warning', 'Permintaan ini sudah diproses.');
+        }
+
+        DB::transaction(function () use ($validated, $reassignRequest) {
+            $approved = $validated['action'] === 'approve';
+            $reassignRequest->update([
+                'status' => $approved ? 'approved' : 'rejected',
+                'reviewed_by' => Auth::id(),
+                'admin_note' => $validated['admin_note'] ?? null,
+                'reviewed_at' => now(),
+            ]);
+
+            if ($approved && $reassignRequest->ticket) {
+                $reassignRequest->ticket->update([
+                    'assigned_to' => null,
+                    'assigned_at' => null,
+                    'status' => 'new',
+                ]);
+            }
+        });
+
+        NotificationController::createNotification(
+            $reassignRequest->vendor_id,
+            'vendor_reassign_request_' . $reassignRequest->status,
+            $reassignRequest->status === 'approved' ? 'Permintaan Reassign Disetujui' : 'Permintaan Reassign Ditolak',
+            $reassignRequest->status === 'approved'
+                ? "Permintaan reassign untuk tiket {$reassignRequest->ticket?->ticket_number} disetujui admin."
+                : "Permintaan reassign untuk tiket {$reassignRequest->ticket?->ticket_number} ditolak admin.",
+            $reassignRequest->ticket_id
+        );
+
+        return redirect()->route('admin.reassign-requests.index')
+            ->with('success', 'Permintaan reassign berhasil diproses.');
     }
 
     /**
@@ -114,25 +226,32 @@ class AdminTicketController extends Controller
 
         $ticket = Ticket::findOrFail($id);
         $oldStatus = $ticket->status;
+        $nextStatus = $request->status;
+
+        if (in_array($nextStatus, ['in_progress', 'waiting_response', 'resolved', 'closed'], true) && empty($ticket->assigned_to)) {
+            return redirect()
+                ->route('admin.tickets.show', $id)
+                ->with('warning', 'Tiket belum ditugaskan ke vendor. Tugaskan vendor terlebih dahulu sebelum mengubah status ini.');
+        }
 
         // Catat first_response_at saat pertama kali in_progress
-        if ($request->status === 'in_progress' && !$ticket->first_response_at) {
+        if ($nextStatus === 'in_progress' && !$ticket->first_response_at) {
             $ticket->first_response_at = now();
             $this->updateSlaResponseTime($ticket);
         }
 
         // Catat resolved_at
-        if (in_array($request->status, ['resolved', 'closed']) && !$ticket->resolved_at) {
+        if (in_array($nextStatus, ['resolved', 'closed'], true) && !$ticket->resolved_at) {
             $ticket->resolved_at = now();
             $this->updateSlaResolutionTime($ticket);
         }
 
         // Catat closed_at
-        if ($request->status === 'closed' && !$ticket->closed_at) {
+        if ($nextStatus === 'closed' && !$ticket->closed_at) {
             $ticket->closed_at = now();
         }
 
-        $ticket->status = $request->status;
+        $ticket->status = $nextStatus;
         $ticket->save();
 
         return redirect()
@@ -232,6 +351,101 @@ class AdminTicketController extends Controller
 
     // ── Private helpers ──
 
+    private function buildVendorWorkload(?int $vendorId, ?int $relatedTicketId = null): array
+    {
+        $empty = [
+            'active_tickets' => 0,
+            'active_tickets_excluding_related' => 0,
+            'total_tickets' => 0,
+            'resolved_tickets' => 0,
+            'total_reports' => 0,
+            'can_take_new_assignment' => true,
+            'assignment_limit' => 5,
+            'progress_percent' => 0,
+            'status_counts' => [
+                'new' => 0,
+                'in_progress' => 0,
+                'waiting_response' => 0,
+                'resolved' => 0,
+                'closed' => 0,
+            ],
+            'active_tickets_list' => collect(),
+        ];
+
+        if (!$vendorId) {
+            return $empty;
+        }
+
+        $activeStatuses = ['new', 'in_progress', 'waiting_response'];
+
+        $totalTickets = Ticket::query()
+            ->where('assigned_to', $vendorId)
+            ->count();
+
+        $resolvedTickets = Ticket::query()
+            ->where('assigned_to', $vendorId)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->count();
+
+        $activeTickets = Ticket::query()
+            ->where('assigned_to', $vendorId)
+            ->whereIn('status', $activeStatuses)
+            ->count();
+
+        $relatedTicketIsActive = false;
+        if ($relatedTicketId) {
+            $relatedTicketIsActive = Ticket::query()
+                ->where('id', $relatedTicketId)
+                ->where('assigned_to', $vendorId)
+                ->whereIn('status', $activeStatuses)
+                ->exists();
+        }
+
+        $activeTicketsExcludingRelated = max($activeTickets - ($relatedTicketIsActive ? 1 : 0), 0);
+
+        $totalReports = VendorReport::query()
+            ->where('vendor_id', $vendorId)
+            ->count();
+
+        $statusCounts = Ticket::query()
+            ->selectRaw('status, COUNT(*) as total')
+            ->where('assigned_to', $vendorId)
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $activeTicketsList = Ticket::query()
+            ->select(['id', 'ticket_number', 'title', 'status'])
+            ->where('assigned_to', $vendorId)
+            ->whereIn('status', $activeStatuses)
+            ->latest('created_at')
+            ->take(10)
+            ->get();
+
+        $assignmentLimit = 5;
+        $progressPercent = $totalTickets > 0
+            ? (int) round(($resolvedTickets / $totalTickets) * 100)
+            : 0;
+
+        return [
+            'active_tickets' => $activeTickets,
+            'active_tickets_excluding_related' => $activeTicketsExcludingRelated,
+            'total_tickets' => $totalTickets,
+            'resolved_tickets' => $resolvedTickets,
+            'total_reports' => $totalReports,
+            'can_take_new_assignment' => $activeTicketsExcludingRelated < $assignmentLimit,
+            'assignment_limit' => $assignmentLimit,
+            'progress_percent' => $progressPercent,
+            'status_counts' => [
+                'new' => (int) ($statusCounts['new'] ?? 0),
+                'in_progress' => (int) ($statusCounts['in_progress'] ?? 0),
+                'waiting_response' => (int) ($statusCounts['waiting_response'] ?? 0),
+                'resolved' => (int) ($statusCounts['resolved'] ?? 0),
+                'closed' => (int) ($statusCounts['closed'] ?? 0),
+            ],
+            'active_tickets_list' => $activeTicketsList,
+        ];
+    }
+
     private function updateSlaResponseTime(Ticket $ticket): void
     {
         $sla = $ticket->slaTracking;
@@ -256,3 +470,5 @@ class AdminTicketController extends Controller
         }
     }
 }
+
+

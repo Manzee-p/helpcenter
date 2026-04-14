@@ -55,6 +55,39 @@ class UserSeeder extends Seeder
                 'specialization' => 'Network, Infrastruktur IT',
             ],
             [
+                'name' => 'Vendor Venue Support',
+                'email' => 'vendor.venue@helpcenter.test',
+                'phone' => '081200000104',
+                'role' => 'vendor',
+                'is_active' => true,
+                'company_name' => 'Venue Care Nusantara',
+                'company_address' => 'Bandung',
+                'company_phone' => '022-500104',
+                'specialization' => 'Venue, Fasilitas Acara',
+            ],
+            [
+                'name' => 'Vendor Logistics Team',
+                'email' => 'vendor.logistics@helpcenter.test',
+                'phone' => '081200000105',
+                'role' => 'vendor',
+                'is_active' => true,
+                'company_name' => 'LogisPro Event',
+                'company_address' => 'Surabaya',
+                'company_phone' => '031-500105',
+                'specialization' => 'Logistik, Distribusi',
+            ],
+            [
+                'name' => 'Vendor Technical Crew',
+                'email' => 'vendor.technical@helpcenter.test',
+                'phone' => '081200000106',
+                'role' => 'vendor',
+                'is_active' => true,
+                'company_name' => 'Tech Crew Indonesia',
+                'company_address' => 'Yogyakarta',
+                'company_phone' => '0274-500106',
+                'specialization' => 'Teknis, Perangkat Event',
+            ],
+            [
                 'name' => 'Rina Pratama',
                 'email' => 'rina@helpcenter.test',
                 'phone' => '081200000201',
@@ -94,6 +127,6 @@ class UserSeeder extends Seeder
             );
         }
 
-        $this->command?->info('UserSeeder selesai: admin, vendor, dan client siap digunakan (password: password).');
+        $this->command?->info('UserSeeder selesai: admin, 6 vendor, dan client siap digunakan (password: password).');
     }
 }

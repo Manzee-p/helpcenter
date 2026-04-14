@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Ticket;
+use App\Models\TicketReassignRequest;
+use App\Models\User;
 use Carbon\Carbon;
 
 class VendorController extends Controller
@@ -17,7 +19,7 @@ class VendorController extends Controller
     public function myTickets(Request $request)
     {
         $vendorId = Auth::id();
-        $query = Ticket::with(['user', 'category'])
+        $query = Ticket::with(['user', 'category', 'latestReassignRequest'])
                        ->where('assigned_to', $vendorId);
 
         if ($request->filled('status')) {
@@ -70,7 +72,7 @@ class VendorController extends Controller
     public function show(Request $request, $id)
     {
         $ticket = Ticket::with([
-            'user', 'category', 'attachments', 'feedback', 'slaTracking'
+            'user', 'category', 'attachments', 'additionalInfos.user', 'feedback', 'slaTracking', 'latestReassignRequest.reviewer'
         ])->where('assigned_to', Auth::id())
           ->findOrFail($id);
 
@@ -91,6 +93,8 @@ class VendorController extends Controller
 
         $request->validate([
             'status' => 'required|in:new,in_progress,waiting_response,resolved,closed',
+            'completion_note' => 'nullable|string|max:1500',
+            'completion_photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $old = $ticket->status;
@@ -99,6 +103,22 @@ class VendorController extends Controller
 
         if ($new === 'resolved' && !$ticket->resolved_at) {
             $ticket->resolved_at = now();
+            $ticket->completion_reported_at = now();
+
+            if ($request->hasFile('completion_photo')) {
+                if ($ticket->completion_photo_path && Storage::disk('public')->exists($ticket->completion_photo_path)) {
+                    Storage::disk('public')->delete($ticket->completion_photo_path);
+                }
+                $file = $request->file('completion_photo');
+                $path = $file->store('vendor-completion-proofs', 'public');
+                $ticket->completion_photo_path = $path;
+                $ticket->completion_photo_name = $file->getClientOriginalName();
+                $ticket->completion_photo_type = $file->getMimeType();
+            }
+
+            if ($request->filled('completion_note')) {
+                $ticket->completion_note = $request->completion_note;
+            }
         }
         if ($new === 'closed' && !$ticket->closed_at) {
             $ticket->closed_at = now();
@@ -143,6 +163,52 @@ class VendorController extends Controller
 
         return redirect()->route('vendor.tickets.show', $ticket->id)
             ->with('success', 'Status tiket berhasil diperbarui.');
+    }
+
+    public function requestReassign(Request $request, $id)
+    {
+        $ticket = Ticket::where('assigned_to', Auth::id())->findOrFail($id);
+        if ($ticket->status !== 'new') {
+            return back()->with('warning', 'Request reassign hanya bisa diajukan saat tiket baru ditugaskan.');
+        }
+        if (in_array($ticket->status, ['resolved', 'closed'], true)) {
+            return back()->with('warning', 'Tiket yang sudah selesai/ditutup tidak bisa diajukan reassign.');
+        }
+
+        $validated = $request->validate([
+            'reason_option' => 'required|in:beban_tinggi,di_luar_spesialisasi,lokasi_tidak_terjangkau,jadwal_bentrok,butuh_peralatan_khusus,lainnya',
+            'reason_detail' => 'required|string|min:10|max:1500',
+        ]);
+
+        $existingPending = TicketReassignRequest::where('ticket_id', $ticket->id)
+            ->where('vendor_id', Auth::id())
+            ->where('status', 'pending')
+            ->exists();
+
+        if ($existingPending) {
+            return back()->with('warning', 'Permintaan reassign untuk tiket ini masih menunggu persetujuan admin.');
+        }
+
+        TicketReassignRequest::create([
+            'ticket_id' => $ticket->id,
+            'vendor_id' => Auth::id(),
+            'reason_option' => $validated['reason_option'],
+            'reason_detail' => $validated['reason_detail'],
+            'status' => 'pending',
+        ]);
+
+        $adminIds = User::where('role', 'admin')->pluck('id');
+        foreach ($adminIds as $adminId) {
+            NotificationController::createNotification(
+                $adminId,
+                'vendor_reassign_request_pending',
+                'Vendor Mengajukan Reassign',
+                "Vendor " . Auth::user()->name . " mengajukan reassign untuk tiket {$ticket->ticket_number}.",
+                $ticket->id
+            );
+        }
+
+        return back()->with('success', 'Permintaan reassign berhasil dikirim. Status: Menunggu Persetujuan Admin.');
     }
 
     // ── Blade: History ──────────────────────────────────────────
@@ -438,3 +504,5 @@ class VendorController extends Controller
         return $request->is('api/*') || $request->expectsJson() || $request->wantsJson();
     }
 }
+
+

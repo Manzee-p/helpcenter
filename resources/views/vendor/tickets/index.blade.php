@@ -32,7 +32,7 @@
         <div class="h-hero-icon"><i class='bx bx-list-check'></i></div>
         <div>
             <h1>Tiket Ditugaskan</h1>
-            <p>Pantau dan kelola tiket aktif yang ditugaskan kepada Anda â€” lengkap dengan status dan prioritas terkini.</p>
+            <p>Pantau dan kelola tiket aktif yang ditugaskan kepada Anda - lengkap dengan status dan prioritas terkini.</p>
         </div>
     </section>
 
@@ -139,7 +139,7 @@
                 </div>
 
             @elseif(request('view')==='grid')
-                {{-- â”€â”€ GRID VIEW â”€â”€ --}}
+                {{-- â-€â-€ GRID VIEW â-€â-€ --}}
                 <div class="ticket-grid">
                     @foreach($tickets as $t)
                     <article class="tg-item">
@@ -147,6 +147,11 @@
                             <span class="tg-num">{{ $t->ticket_number }}</span>
                             <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
                         </div>
+                        @if($t->latestReassignRequest && $t->latestReassignRequest->status === 'pending')
+                            <div style="margin-top:.45rem;">
+                                <span class="badge-pill" style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d;">Menunggu Persetujuan Admin</span>
+                            </div>
+                        @endif
                         <h6 class="tg-title">{{ Str::limit($t->title, 70) }}</h6>
                         <div class="tg-meta">
                             <span><i class='bx bx-user'></i>{{ $t->user->name ?? '-' }}</span>
@@ -164,7 +169,7 @@
                 </div>
 
             @else
-                {{-- â”€â”€ LIST VIEW â”€â”€ --}}
+                {{-- â-€â-€ LIST VIEW â-€â-€ --}}
                 <div class="ticket-list">
                     @foreach($tickets as $t)
                     <div class="t-item">
@@ -180,6 +185,9 @@
                                 <div class="t-badges">
                                     <span class="badge-pill p-{{ $t->priority }}">{{ $priorityLabels[$t->priority] ?? $t->priority }}</span>
                                     <span class="badge-pill s-{{ $t->status }}">{{ $statusLabels[$t->status] ?? $t->status }}</span>
+                                    @if($t->latestReassignRequest && $t->latestReassignRequest->status === 'pending')
+                                        <span class="badge-pill" style="background:#fffbeb;color:#92400e;border:1px solid #fcd34d;">Menunggu Persetujuan Admin</span>
+                                    @endif
                                 </div>
                             </div>
                             <div class="t-meta-row">
@@ -227,7 +235,7 @@
         @if($tickets->lastPage() > 1)
         <div class="tc-footer">
             <div class="pg-info">
-                Menampilkan {{ $tickets->firstItem() }}â€“{{ $tickets->lastItem() }} dari {{ $tickets->total() }}
+                Menampilkan {{ $tickets->firstItem() }}--{{ $tickets->lastItem() }} dari {{ $tickets->total() }}
             </div>
             <div class="pg-controls">
                 @if($tickets->onFirstPage())
@@ -242,7 +250,7 @@
                     @elseif(abs($page - $tickets->currentPage()) <= 2 || $page == 1 || $page == $tickets->lastPage())
                         <a href="{{ $tickets->appends(request()->query())->url($page) }}" class="pg-btn">{{ $page }}</a>
                     @elseif(abs($page - $tickets->currentPage()) == 3)
-                        <button class="pg-btn" disabled style="border:none;opacity:.5">â€¦</button>
+                        <button class="pg-btn" disabled style="border:none;opacity:.5">-¦</button>
                     @endif
                 @endforeach
 
@@ -286,11 +294,11 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 @push('styles')
 <style>
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   VENDOR TICKETS INDEX â€” tema selaras Riwayat Tiket
+   VENDOR TICKETS INDEX - tema selaras Riwayat Tiket
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .tickets-page { display:flex; flex-direction:column; gap:1.5rem; }
 
-/* â”€â”€ HERO â”€â”€ */
+/* â-€â-€ HERO â-€â-€ */
 .h-hero {
     display:grid; grid-template-columns:auto 1fr; gap:1.25rem;
     align-items:center; padding:1.5rem; border-radius:28px;
@@ -308,7 +316,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .h-hero h1 { margin:.35rem 0 .25rem; font-size:clamp(1.5rem,2.5vw,2rem); font-weight:800; color:#0f172a; }
 .h-hero p  { margin:0; color:#64748b; }
 
-/* â”€â”€ SUMMARY CARDS â”€â”€ */
+/* â-€â-€ SUMMARY CARDS â-€â-€ */
 .sum-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1rem; }
 .sum-card {
     display:flex; align-items:center; gap:.9rem;
@@ -329,7 +337,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .sum-label { font-size:.78rem; color:#64748b; }
 .sum-value { font-size:1.2rem; font-weight:800; color:#0f172a; margin:.1rem 0 0; }
 
-/* â”€â”€ FILTER CARD â”€â”€ */
+/* â-€â-€ FILTER CARD â-€â-€ */
 .filter-card {
     background:#fff; border-radius:18px;
     border:1px solid rgba(99,102,241,.1);
@@ -373,7 +381,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 }
 .btn-apply:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,70,229,.15); color:#4338ca; }
 
-/* â”€â”€ VIEW SWITCH â”€â”€ */
+/* â-€â-€ VIEW SWITCH â-€â-€ */
 .view-switch {
     display:inline-flex; background:#f8fafc; border-radius:12px;
     padding:.2rem; border:1px solid rgba(148,163,184,.18);
@@ -385,7 +393,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 }
 .vs-btn.active { background:#fff; color:#0f172a; box-shadow:0 4px 12px rgba(15,23,42,.08); }
 
-/* â”€â”€ TICKETS CARD â”€â”€ */
+/* â-€â-€ TICKETS CARD â-€â-€ */
 .tickets-card {
     background:#fff; border-radius:22px;
     border:1px solid rgba(99,102,241,.1);
@@ -406,7 +414,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 }
 .tc-body { padding:1.35rem; min-height:320px; }
 
-/* â”€â”€ LIST VIEW â”€â”€ */
+/* â-€â-€ LIST VIEW â-€â-€ */
 .ticket-list { display:flex; flex-direction:column; gap:1.1rem; }
 .t-item {
     display:grid; grid-template-columns:auto 1fr auto;
@@ -447,7 +455,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .meta-val { color:#1e293b; font-weight:600; }
 .meta-ago { color:#94a3b8; font-size:.75rem; }
 
-/* â”€â”€ GRID VIEW â”€â”€ */
+/* â-€â-€ GRID VIEW â-€â-€ */
 .ticket-grid {
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem;
 }
@@ -464,7 +472,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .tg-meta span { display:flex; align-items:center; gap:.35rem; }
 .tg-footer { display:flex; justify-content:space-between; align-items:center; gap:.75rem; margin-top:auto; }
 
-/* â”€â”€ AVATAR â”€â”€ */
+/* â-€â-€ AVATAR â-€â-€ */
 .av-xs {
     width:28px; height:28px; border-radius:50%;
     background:linear-gradient(135deg,#6366f1,#7c3aed);
@@ -472,7 +480,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
     font-size:.65rem; font-weight:800; flex-shrink:0;
 }
 
-/* â”€â”€ BADGES â”€â”€ */
+/* â-€â-€ BADGES â-€â-€ */
 .badge-pill { display:inline-flex; align-items:center; padding:.3rem .7rem; border-radius:999px; font-size:.72rem; font-weight:800; }
 .s-new              { background:rgba(245,158,11,.12);  color:#b45309; }
 .s-in_progress      { background:rgba(59,130,246,.12);  color:#1d4ed8; }
@@ -486,7 +494,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .p-urgent,
 .p-critical { background:rgba(239,68,68,.12);   color:#991b1b; }
 
-/* â”€â”€ DETAIL BTN â”€â”€ */
+/* â-€â-€ DETAIL BTN â-€â-€ */
 .btn-detail {
     padding:.45rem 1rem; border:1.5px solid rgba(99,102,241,.3); border-radius:10px;
     font-size:.78rem; font-weight:700; color:#4f46e5; background:#fff;
@@ -495,13 +503,13 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 }
 .btn-detail:hover { background:#eef2ff; color:#4f46e5; transform:translateY(-1px); }
 
-/* â”€â”€ EMPTY / STATE â”€â”€ */
+/* â-€â-€ EMPTY / STATE â-€â-€ */
 .state-box { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:260px; gap:.9rem; text-align:center; color:#64748b; }
 .state-box i { font-size:3rem; color:#cbd5e0; }
 .state-box h5 { color:#475569; font-weight:700; margin:0; }
 .state-box p  { margin:0; color:#94a3b8; }
 
-/* â”€â”€ PAGINATION â”€â”€ */
+/* â-€â-€ PAGINATION â-€â-€ */
 .tc-footer {
     padding:1.1rem 1.35rem;
     background:#f8fafc; border-top:1px solid #e2e8f0;
@@ -520,7 +528,7 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 .pg-btn.active { background:linear-gradient(135deg,#6366f1,#4f46e5); border-color:transparent; color:#fff; }
 .pg-btn:disabled { opacity:.4; cursor:not-allowed; pointer-events:none; }
 
-/* â”€â”€ RESPONSIVE â”€â”€ */
+/* â-€â-€ RESPONSIVE â-€â-€ */
 @media(max-width:1100px){ .ticket-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:768px){
     .sum-grid { grid-template-columns:repeat(2,1fr); }
@@ -535,4 +543,6 @@ if (savedView && savedView !== '{{ request("view","list") }}') {
 }
 </style>
 @endpush
+
+
 

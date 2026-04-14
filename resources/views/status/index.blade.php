@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Status Layanan - HelpDesk</title>
+    <title>Status Layanan - HelpCenter</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg?v=20260413') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.svg?v=20260413') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -31,7 +33,7 @@
             color: var(--text);
         }
 
-        /* ── NAVBAR ── */
+        /* â-€â-€ NAVBAR â-€â-€ */
         .navbar {
             position: sticky; top: 0; z-index: 999;
             background: rgba(248,250,252,0.95);
@@ -74,13 +76,13 @@
         }
         .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.4); }
 
-        /* ── WRAPPER ── */
+        /* â-€â-€ WRAPPER â-€â-€ */
         .page-wrap {
             max-width: 1400px; margin: 0 auto;
             padding: 2rem 2rem 4rem;
         }
 
-        /* ── HERO HEADER ── */
+        /* â-€â-€ HERO HEADER â-€â-€ */
         .hero-section {
             display: flex; justify-content: space-between;
             align-items: flex-start; gap: 2rem;
@@ -123,7 +125,7 @@
         .status-warning { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.4); color: #d97706; }
         .status-critical{ background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.4);  color: #dc2626; }
 
-        /* ── AUTH NOTICE ── */
+        /* â-€â-€ AUTH NOTICE â-€â-€ */
         .auth-notice {
             background: var(--gradient);
             border-radius: 20px; padding: 1.5rem 2rem;
@@ -153,7 +155,7 @@
         }
         .btn-notice-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 
-        /* ── FILTERS ── */
+        /* â-€â-€ FILTERS â-€â-€ */
         .filters-card {
             background: white; border-radius: var(--radius);
             padding: 1.5rem; margin-bottom: 1.5rem;
@@ -197,7 +199,7 @@
             box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
         }
 
-        /* ── EMPTY STATE ── */
+        /* â-€â-€ EMPTY STATE â-€â-€ */
         .empty-state {
             background: white; border-radius: 20px;
             padding: 5rem 2rem; text-align: center;
@@ -212,7 +214,7 @@
             border-radius: 20px; font-size: 0.875rem; color: var(--text-muted);
         }
 
-        /* ── STATUS SECTIONS ── */
+        /* â-€â-€ STATUS SECTIONS â-€â-€ */
         .status-content { display: flex; flex-direction: column; gap: 2rem; }
         .status-section { display: flex; flex-direction: column; gap: 1rem; }
         .section-header {
@@ -229,7 +231,7 @@
             border-radius: 20px; font-size: 0.8125rem; font-weight: 700;
         }
 
-        /* ── STATUS CARDS ── */
+        /* â-€â-€ STATUS CARDS â-€â-€ */
         .status-list {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -306,7 +308,7 @@
             box-shadow: 0 2px 8px rgba(79,70,229,0.3);
         }
 
-        /* ── PAGINATION ── */
+        /* â-€â-€ PAGINATION â-€â-€ */
         .pagination-wrap {
             display: flex; justify-content: center; align-items: center;
             gap: 0.5rem; margin-top: 3rem; flex-wrap: wrap;
@@ -334,7 +336,7 @@
             background: var(--gradient); color: white; border-color: var(--primary);
         }
 
-        /* ── RESPONSIVE ── */
+        /* â-€â-€ RESPONSIVE â-€â-€ */
         @media (max-width: 1024px) {
             .status-list { grid-template-columns: repeat(2, 1fr); }
             .hero-section { flex-direction: column; }
@@ -353,12 +355,12 @@
 </head>
 <body>
 
-{{-- ═══ NAVBAR ═══ --}}
+{{-- â•â•â• NAVBAR â•â•â• --}}
 <nav class="navbar">
     <div class="nav-inner">
         <a href="{{ url('/') }}" class="logo">
             <div class="logo-icon"><i class='bx bx-support'></i></div>
-            HelpDesk
+            HelpCenter
         </a>
         <div class="nav-links">
             <a href="{{ url('/') }}" class="nav-link">
@@ -382,7 +384,7 @@
 
 <div class="page-wrap">
 
-    {{-- ═══ HERO HEADER ═══ --}}
+    {{-- â•â•â• HERO HEADER â•â•â• --}}
     <div class="hero-section">
         <div class="hero-main">
             <h1 class="page-title">Papan Informasi Status Layanan</h1>
@@ -406,7 +408,7 @@
         </div>
     </div>
 
-    {{-- ═══ AUTH NOTICE (untuk guest) ═══ --}}
+    {{-- â•â•â• AUTH NOTICE (untuk guest) â•â•â• --}}
     @guest
     <div class="auth-notice">
         <div class="notice-content">
@@ -422,7 +424,7 @@
     </div>
     @endguest
 
-    {{-- ═══ FILTERS ═══ --}}
+    {{-- â•â•â• FILTERS â•â•â• --}}
     <div class="filters-card">
         <div class="filter-header">
             <h3 class="filter-title">Filter Status</h3>
@@ -462,7 +464,7 @@
         </form>
     </div>
 
-    {{-- ═══ CONTENT ═══ --}}
+    {{-- â•â•â• CONTENT â•â•â• --}}
     @if($statuses->isEmpty())
         {{-- Empty State --}}
         <div class="empty-state">
@@ -602,7 +604,7 @@
 
         </div>
 
-        {{-- ═══ PAGINATION ═══ --}}
+        {{-- â•â•â• PAGINATION â•â•â• --}}
         @if($statuses->lastPage() > 1)
         <div class="pagination-wrap">
             @if($statuses->onFirstPage())
@@ -648,3 +650,6 @@
 
 </body>
 </html>
+
+
+

@@ -15,12 +15,14 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             TicketCategorySeeder::class,
             TicketSeeder::class,
+            TicketTimelineSeeder::class,
             VendorInfoSeeder::class,
             VendorRatingSeeder::class,
             TicketAdditionalInfoSeeder::class,
             NotificationSeeder::class,
             VendorReportSeeder::class,
             StatusBoardSeeder::class,
+            TicketReassignRequestSeeder::class,
         ]);
     }
 }

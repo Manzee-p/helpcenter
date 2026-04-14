@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $status->title }} - Status HelpDesk</title>
+    <title>{{ $status->title }} - Status HelpCenter</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg?v=20260413') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.svg?v=20260413') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -30,7 +32,7 @@
             color: var(--text); min-height: 100vh;
         }
 
-        /* ── NAVBAR ── */
+        /* â-€â-€ NAVBAR â-€â-€ */
         .navbar {
             position: sticky; top: 0; z-index: 999;
             background: rgba(248,250,252,0.95);
@@ -72,13 +74,13 @@
         }
         .btn-login:hover { transform: translateY(-2px); }
 
-        /* ── PAGE WRAP ── */
+        /* â-€â-€ PAGE WRAP â-€â-€ */
         .page-wrap {
             max-width: 1200px; margin: 0 auto;
             padding: 2rem 2rem 4rem;
         }
 
-        /* ── NAV BAR (back button) ── */
+        /* â-€â-€ NAV BAR (back button) â-€â-€ */
         .nav-bar {
             display: flex; justify-content: space-between;
             align-items: center; margin-bottom: 1.5rem;
@@ -110,7 +112,7 @@
             transform: translateY(-2px);
         }
 
-        /* ── AUTH NOTICE ── */
+        /* â-€â-€ AUTH NOTICE â-€â-€ */
         .auth-notice {
             background: var(--gradient);
             border-radius: 20px; padding: 1.5rem 2rem;
@@ -138,7 +140,7 @@
         }
         .btn-notice-login:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 
-        /* ── MAIN CARD ── */
+        /* â-€â-€ MAIN CARD â-€â-€ */
         .main-card {
             background: white; border-radius: var(--radius);
             padding: 2rem; margin-bottom: 1.5rem;
@@ -213,7 +215,7 @@
         .cs-resolved { background: rgba(16,185,129,0.06); border-color: #10b981; color: #059669; }
         .cs-resolved .cs-icon { background: rgba(16,185,129,0.15); }
 
-        /* ── CONTENT BOXES ── */
+        /* â-€â-€ CONTENT BOXES â-€â-€ */
         .content-section { display: flex; flex-direction: column; gap: 1.25rem; }
         .content-box {
             background: white; border-radius: var(--radius);
@@ -242,7 +244,7 @@
             color: #374151; white-space: pre-wrap;
         }
 
-        /* ── TIMELINE ── */
+        /* â-€â-€ TIMELINE â-€â-€ */
         .no-updates {
             text-align: center; padding: 2.5rem; color: #9ca3af;
         }
@@ -296,7 +298,7 @@
         .type-update        { background: rgba(59,130,246,0.1); color: #2563eb; }
         .type-resolved      { background: rgba(16,185,129,0.1); color: #059669; }
 
-        /* ── RESPONSIVE ── */
+        /* â-€â-€ RESPONSIVE â-€â-€ */
         @media (max-width: 768px) {
             .page-wrap { padding: 1.5rem 1rem 3rem; }
             .nav-bar { flex-direction: column; gap: 1rem; align-items: stretch; }
@@ -315,12 +317,12 @@
 </head>
 <body>
 
-{{-- ═══ NAVBAR ═══ --}}
+{{-- â•â•â• NAVBAR â•â•â• --}}
 <nav class="navbar">
     <div class="nav-inner">
         <a href="{{ url('/') }}" class="logo">
             <div class="logo-icon"><i class='bx bx-support'></i></div>
-            HelpDesk
+            HelpCenter
         </a>
         <div class="nav-links">
             <a href="{{ url('/') }}" class="nav-link"><i class='bx bx-home'></i><span>Home</span></a>
@@ -364,7 +366,7 @@
     </div>
     @endguest
 
-    {{-- ═══ MAIN CARD ═══ --}}
+    {{-- â•â•â• MAIN CARD â•â•â• --}}
     <div class="main-card">
 
         {{-- Badges --}}
@@ -446,7 +448,7 @@
         </div>
     </div>
 
-    {{-- ═══ CONTENT SECTION ═══ --}}
+    {{-- â•â•â• CONTENT SECTION â•â•â• --}}
     <div class="content-section">
 
         {{-- Description --}}
@@ -517,3 +519,6 @@
 
 </body>
 </html>
+
+
+

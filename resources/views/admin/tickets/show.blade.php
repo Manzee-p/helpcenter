@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Tiket — ' . $ticket->ticket_number)
+@section('title', 'Detail Tiket ' . $ticket->ticket_number)
 @section('page_title', 'Detail Tiket')
 @section('breadcrumb', 'Home / Tiket / ' . $ticket->ticket_number)
 
@@ -9,7 +9,7 @@
 @section('content')
 <div class="ticket-detail-wrap">
 
-    {{-- ═══ TOP BAR ═══ --}}
+    {{-- TOP BAR --}}
     <div class="top-bar">
         <div class="top-bar-left">
             <a href="{{ route('admin.tickets.index') }}" class="btn-back">
@@ -30,10 +30,10 @@
         </div>
     </div>
 
-    {{-- ═══ DETAIL GRID ═══ --}}
+    {{-- DETAIL GRID --}}
     <div class="detail-grid">
 
-        {{-- ─── LEFT COLUMN ─── --}}
+        {{-- �-��-��-� LEFT COLUMN �-��-��-� --}}
         <div>
             {{-- Main Ticket Card --}}
             <div class="d-card">
@@ -94,10 +94,26 @@
                         <span class="sec-label">Lampiran</span>
                         <div class="attachments-wrap">
                             @foreach($ticket->attachments as $attachment)
-                            <a href="{{ asset('storage/' . $attachment->file_path) }}" target="_blank" class="attach-btn">
+                            <a href="{{ route('attachments.ticket.view', $attachment->id) }}" target="_blank" class="attach-btn">
                                 <i class='bx bx-paperclip'></i> {{ $attachment->file_name }}
                             </a>
                             @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    @if($ticket->completion_photo_path || $ticket->completion_note)
+                    <div style="margin-bottom:1.25rem;">
+                        <span class="sec-label">Bukti Penyelesaian Vendor</span>
+                        <div class="desc-text" style="background:#f0fdf4;border-color:#bbf7d0;">
+                            @if($ticket->completion_note)
+                                <p style="margin:0 0 .6rem;color:#166534;">{{ $ticket->completion_note }}</p>
+                            @endif
+                            @if($ticket->completion_photo_path)
+                                <a href="{{ route('attachments.completion-proof.view', $ticket->id) }}" target="_blank" class="attach-btn" style="background:#fff;">
+                                    <i class='bx bx-image'></i> {{ $ticket->completion_photo_name ?? 'Lihat Bukti Foto' }}
+                                </a>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -116,7 +132,7 @@
                                     @endif
                                 </div>
                             </div>
-                            @if($ticket->assigned_at)
+                            @if($ticket->assigned_to && $ticket->assigned_at)
                             <div class="timeline-item">
                                 <div class="timeline-dot dot-info"><i class='bx bx-user-check' style="font-size:9px;"></i></div>
                                 <div class="timeline-body">
@@ -125,7 +141,7 @@
                                 </div>
                             </div>
                             @endif
-                            @if($ticket->first_response_at)
+                            @if($ticket->assigned_to && $ticket->first_response_at)
                             <div class="timeline-item">
                                 <div class="timeline-dot dot-warning"><i class='bx bx-message' style="font-size:9px;"></i></div>
                                 <div class="timeline-body">
@@ -166,20 +182,20 @@
                     <div class="activity-grid">
                         <div class="act-stat">
                             <div class="act-icon icon-created"><i class='bx bx-calendar-plus'></i></div>
-                            <div><div class="act-label">Tanggal Dibuat</div><div class="act-value">{{ $ticket->created_at?->format('d M Y') ?? '—' }}</div></div>
+                            <div><div class="act-label">Tanggal Dibuat</div><div class="act-value">{{ $ticket->created_at?->format('d M Y') ?? "" }}</div></div>
                         </div>
                         <div class="act-stat">
                             <div class="act-icon icon-category"><i class='bx bx-category'></i></div>
-                            <div><div class="act-label">Kategori</div><div class="act-value">{{ $ticket->category?->name ?? '—' }}</div></div>
+                            <div><div class="act-label">Kategori</div><div class="act-value">{{ $ticket->category?->name ?? "" }}</div></div>
                         </div>
                         <div class="act-stat">
                             <div class="act-icon icon-priority"><i class='bx bx-flag'></i></div>
-                            <div><div class="act-label">Prioritas</div><div class="act-value">{{ $ticket->priority_label ?? '—' }}</div></div>
+                            <div><div class="act-label">Prioritas</div><div class="act-value">{{ $ticket->priority_label ?? "" }}</div></div>
                         </div>
                         @if($ticket->urgency_level)
                         <div class="act-stat">
                             <div class="act-icon icon-urgency"><i class='bx bx-error-circle'></i></div>
-                            <div><div class="act-label">Urgensi Klien</div><div class="act-value">{{ $ticket->urgency_label ?? '—' }}</div></div>
+                            <div><div class="act-label">Urgensi Klien</div><div class="act-value">{{ $ticket->urgency_label ?? "" }}</div></div>
                         </div>
                         @endif
                         @if($ticket->slaTracking)
@@ -235,8 +251,10 @@
                 <div class="d-card__body">
                     @php
                         $isAssigned = !empty($ticket->assigned_to);
-                        $hasFirstResponse = !empty($ticket->first_response_at);
+                        $hasFirstResponse = $isAssigned && !empty($ticket->first_response_at);
                         $isResolved = in_array($ticket->status, ['resolved', 'closed'], true);
+                        $hasAdditionalInfos = ($ticket->additionalInfos?->count() ?? 0) > 0;
+                        $showCommunicationFollowup = $ticket->status === 'waiting_response' || $hasAdditionalInfos;
                     @endphp
                     <div class="followup-list">
                         <div class="followup-item {{ $isAssigned ? 'done' : '' }}">
@@ -253,6 +271,15 @@
                                 <small>{{ $hasFirstResponse ? 'Vendor sudah memberi respon awal.' : 'Menunggu respon awal dari vendor.' }}</small>
                             </div>
                         </div>
+                        @if($showCommunicationFollowup)
+                        <div class="followup-item {{ $hasAdditionalInfos ? 'done' : '' }}">
+                            <i class='bx {{ $hasAdditionalInfos ? 'bx-check-circle' : 'bx-radio-circle' }}'></i>
+                            <div>
+                                <strong>Komunikasi ke user</strong>
+                                <small>{{ $hasAdditionalInfos ? 'Informasi tambahan dari klien sudah diterima.' : 'Vendor sedang menunggu informasi tambahan dari klien.' }}</small>
+                            </div>
+                        </div>
+                        @endif
                         <div class="followup-item {{ $isResolved ? 'done' : '' }}">
                             <i class='bx {{ $isResolved ? 'bx-check-circle' : 'bx-radio-circle' }}'></i>
                             <div>
@@ -277,7 +304,7 @@
             </div>
         </div>
 
-        {{-- ─── RIGHT COLUMN ─── --}}
+        {{-- �-��-��-� RIGHT COLUMN �-��-��-� --}}
         <div>
 
             {{-- Client Info --}}
@@ -331,6 +358,33 @@
                 </div>
             </div>
 
+            @if($ticket->latestReassignRequest && $ticket->latestReassignRequest->status === 'pending')
+            <div class="d-card" style="margin-top:1rem;">
+                <div class="d-card__head">
+                    <h6><i class='bx bx-transfer-alt' style="color:#d97706;"></i> Permintaan Penugasan Ulang Vendor</h6>
+                </div>
+                <div class="d-card__body">
+                    <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem;">
+                        Vendor: <strong style="color:var(--text);">{{ $ticket->latestReassignRequest->vendor->name ?? '-' }}</strong>
+                    </div>
+                    <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.5rem;">
+                        Alasan: <strong style="color:var(--text);">{{ str_replace('_', ' ', $ticket->latestReassignRequest->reason_option) }}</strong>
+                    </div>
+                    <div style="font-size:.84rem;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:.6rem;margin-bottom:.7rem;">
+                        {{ $ticket->latestReassignRequest->reason_detail }}
+                    </div>
+                    <form method="POST" action="{{ route('admin.reassign-requests.process', $ticket->latestReassignRequest->id) }}">
+                        @csrf
+                        <textarea name="admin_note" rows="2" placeholder="Catatan admin (opsional)" style="width:100%;border:1px solid var(--border);border-radius:10px;padding:.6rem;margin-bottom:.6rem;"></textarea>
+                        <div style="display:flex;gap:.5rem;">
+                            <button type="submit" name="action" value="approve" class="btn-assign" style="flex:1;justify-content:center;">Setujui</button>
+                            <button type="submit" name="action" value="reject" class="btn-delete" style="flex:1;justify-content:center;">Tolak</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
+
             {{-- Klasifikasi & Status --}}
             <div class="d-card" style="margin-top:1rem;">
                 <div class="d-card__head">
@@ -348,11 +402,11 @@
                             <button class="btn-edit-xs" onclick="openModal('priority-modal')"><i class='bx bx-edit-alt'></i> Ubah</button>
                             @endif
                         </div>
-                        <span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ $ticket->priority_label ?? '—' }}</span>
+                        <span class="badge badge-{{ $ticket->priority ?? 'none' }}">{{ $ticket->priority_label ?? "" }}</span>
                         @if($ticket->urgency_level)
                         <div style="margin-top:0.5rem; padding:0.5rem; background:var(--bg); border-radius:8px;">
                             <small style="color:var(--text-muted); font-size:0.72rem; font-weight:700; display:block; margin-bottom:0.2rem;">Urgensi Klien:</small>
-                            <span class="badge" style="background:rgba(6,182,212,0.1);color:#0891b2;">{{ $ticket->urgency_label ?? '—' }}</span>
+                            <span class="badge" style="background:rgba(6,182,212,0.1);color:#0891b2;">{{ $ticket->urgency_label ?? "" }}</span>
                         </div>
                         @endif
                     </div>
@@ -431,7 +485,7 @@
 
 </div>
 
-{{-- ═══ ASSIGN MODAL ═══ --}}
+{{-- ASSIGN MODAL --}}
 <div id="assign-modal" class="modal-backdrop">
     <div class="modal-box">
         <div class="modal-head">
@@ -441,29 +495,51 @@
         <p style="color:var(--text-muted); margin-bottom:1.25rem; font-size:0.9rem;">
             Pilih vendor untuk menangani tiket <strong>{{ $ticket->ticket_number }}</strong>
         </p>
+        <input type="text" id="vendor-search" placeholder="Cari vendor..." style="width:100%;margin-bottom:.8rem;border:1px solid var(--border);border-radius:10px;padding:.6rem .7rem;">
+        <div id="vendor-load-list" style="max-height:140px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:.5rem;margin-bottom:.8rem;background:var(--bg);">
+            @foreach($vendors as $vendor)
+                @php
+                    $activeCount = (int) ($vendorLoads[$vendor->id] ?? 0);
+                    if ($ticket->assigned_to === $vendor->id && $activeCount > 0) {
+                        $activeCount--;
+                    }
+                @endphp
+                <div class="vendor-load-item" data-name="{{ strtolower($vendor->name) }}" style="display:flex;justify-content:space-between;gap:.5rem;padding:.35rem .45rem;border-radius:8px;{{ $activeCount >= 5 ? 'background:#fff1f2;' : '' }}">
+                    <span style="font-size:.82rem;color:var(--text);">{{ $vendor->name }}</span>
+                    <span style="font-size:.75rem;font-weight:700;{{ $activeCount >= 5 ? 'color:#b91c1c;' : 'color:#475569;' }}">{{ $activeCount }}/5 tiket aktif</span>
+                </div>
+            @endforeach
+        </div>
         <form method="POST" action="{{ route('admin.tickets.assign', $ticket->id) }}">
             @csrf
             @method('PATCH')
             <div class="modal-field">
                 <label>Vendor</label>
-                <select name="assigned_to" required>
+                <select name="assigned_to" id="assign-vendor-select" required>
                     <option value="">-- Pilih vendor --</option>
                     @foreach($vendors as $vendor)
-                        <option value="{{ $vendor->id }}" {{ $ticket->assigned_to === $vendor->id ? 'selected' : '' }}>
-                            {{ $vendor->name }}
+                        @php
+                            $activeCount = (int) ($vendorLoads[$vendor->id] ?? 0);
+                            if ($ticket->assigned_to === $vendor->id && $activeCount > 0) {
+                                $activeCount--;
+                            }
+                        @endphp
+                        <option value="{{ $vendor->id }}" data-active-count="{{ $activeCount }}" {{ $ticket->assigned_to === $vendor->id ? 'selected' : '' }}>
+                            {{ $vendor->name }} ({{ $activeCount }}/5 aktif)
                         </option>
                     @endforeach
                 </select>
+                <small id="vendor-busy-warning" style="display:none;color:#b91c1c;font-weight:700;margin-top:.45rem;">Vendor sedang sibuk (maksimal 5 tiket aktif).</small>
             </div>
             <div class="modal-foot">
                 <button type="button" class="btn-back" onclick="closeModal('assign-modal')">Batal</button>
-                <button type="submit" class="btn-assign">Tugaskan</button>
+                <button type="submit" class="btn-assign" id="assign-submit-btn">Tugaskan</button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- ═══ STATUS MODAL ═══ --}}
+{{-- STATUS MODAL --}}
 <div id="status-modal" class="modal-backdrop">
     <div class="modal-box">
         <div class="modal-head">
@@ -491,7 +567,7 @@
     </div>
 </div>
 
-{{-- ═══ PRIORITY MODAL ═══ --}}
+{{-- PRIORITY MODAL --}}
 <div id="priority-modal" class="modal-backdrop">
     <div class="modal-box">
         <div class="modal-head">
@@ -555,19 +631,49 @@ function confirmDelete() {
 function exportTicket() {
     Swal.fire({ icon:'info', title:'Segera Hadir', text:'Fitur ekspor sedang dalam pengembangan.', confirmButtonColor:'#4f46e5' });
 }
+
+const vendorSearchInput = document.getElementById('vendor-search');
+if (vendorSearchInput) {
+    vendorSearchInput.addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        document.querySelectorAll('#vendor-load-list .vendor-load-item').forEach(function (item) {
+            const name = item.getAttribute('data-name') || '';
+            item.style.display = name.includes(q) ? '' : 'none';
+        });
+    });
+}
+
+const assignVendorSelect = document.getElementById('assign-vendor-select');
+const vendorBusyWarning = document.getElementById('vendor-busy-warning');
+const assignSubmitBtn = document.getElementById('assign-submit-btn');
+if (assignVendorSelect && vendorBusyWarning) {
+    const checkBusy = () => {
+        const opt = assignVendorSelect.options[assignVendorSelect.selectedIndex];
+        const activeCount = parseInt(opt?.getAttribute('data-active-count') || '0', 10);
+        const isBusy = activeCount >= 5;
+        vendorBusyWarning.style.display = isBusy ? 'block' : 'none';
+        if (assignSubmitBtn) {
+            assignSubmitBtn.disabled = isBusy;
+            assignSubmitBtn.style.opacity = isBusy ? '0.6' : '1';
+            assignSubmitBtn.style.cursor = isBusy ? 'not-allowed' : 'pointer';
+        }
+    };
+    assignVendorSelect.addEventListener('change', checkBusy);
+    checkBusy();
+}
 </script>
 @endpush
 
 @push('styles')
 <style>
-/* ───── WRAPPER ───── */
+    
 .ticket-detail-wrap {
     display: flex; flex-direction: column; gap: 1.25rem;
     animation: fadeIn 0.25s ease-out;
 }
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
-/* ───── TOP BAR ───── */
+/*TOP BAR*/
 .top-bar {
     display: flex; justify-content: space-between; align-items: center;
     gap: 1rem; flex-wrap: wrap;
@@ -577,7 +683,7 @@ function exportTicket() {
 
 .breadcrumb-text { color: var(--text-muted); font-size: 0.875rem; }
 
-/* ───── BUTTONS ───── */
+/*BUTTONS*/
 .btn-back {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.6rem 1rem; border: 1px solid var(--border);
@@ -606,7 +712,7 @@ function exportTicket() {
 }
 .btn-delete:hover { background: #ffe4e6; }
 
-/* ───── LAYOUT ───── */
+/*LAYOUT*/
 .detail-grid {
     display: grid;
     grid-template-columns: 1fr 320px;
@@ -614,7 +720,7 @@ function exportTicket() {
     align-items: start;
 }
 
-/* ───── CARDS ───── */
+/*CARDS*/
 .d-card {
     background: white; border: 1px solid var(--border);
     border-radius: 24px; overflow: hidden;
@@ -650,7 +756,7 @@ function exportTicket() {
 .ticket-hero-header .ticket-num i { font-size: 1.1rem; }
 .ticket-hero-badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
-/* ───── BADGES ───── */
+/*BADGES*/
 .badge {
     display: inline-flex; align-items: center; justify-content: center;
     padding: 0.3rem 0.75rem; border-radius: 999px;
@@ -672,7 +778,7 @@ function exportTicket() {
 .badge-low          { background: rgba(34,197,94,0.12);   color: #15803d; }
 .badge-none         { background: rgba(148,163,184,0.14); color: #475569; }
 
-/* ───── EVENT INFO BOX ───── */
+/*EVENT INFO BOX*/
 .event-box {
     background: #f0f8ff; border: 1px solid #bee3f8;
     border-radius: 12px; padding: 0.875rem 1rem;
@@ -684,21 +790,21 @@ function exportTicket() {
 .event-item small { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.1rem; }
 .event-item span  { font-size: 0.875rem; font-weight: 600; color: var(--text); }
 
-/* ───── SECTION LABEL ───── */
+/*SECTION LABEL*/
 .sec-label {
     display: block; margin-bottom: 0.5rem;
     font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.06em; color: var(--text-muted);
 }
 
-/* ───── DESCRIPTION ───── */
+/*DESCRIPTION*/
 .desc-text {
     color: var(--text-muted); line-height: 1.7; font-size: 0.9rem;
     padding: 0.875rem; background: var(--bg); border-radius: 12px;
     border: 1px solid var(--border);
 }
 
-/* ───── ATTACHMENTS ───── */
+/*ATTACHMENTS*/
 .attachments-wrap { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .attach-btn {
     display: inline-flex; align-items: center; gap: 0.4rem;
@@ -710,7 +816,7 @@ function exportTicket() {
 }
 .attach-btn:hover { background: #eef2ff; color: var(--primary); border-color: rgba(79,70,229,0.3); }
 
-/* ───── TIMELINE ───── */
+/*TIMELINE*/
 .timeline { position: relative; padding-left: 1.75rem; }
 .timeline::before {
     content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px;
@@ -732,7 +838,7 @@ function exportTicket() {
 .timeline-body strong { color: var(--text); font-weight: 700; }
 .timeline-body small { color: var(--text-muted); display: block; margin-top: 2px; }
 
-/* ───── ACTIVITY GRID ───── */
+/*ACTIVITY GRID*/
 .activity-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -772,7 +878,7 @@ function exportTicket() {
 .step { font-size: 0.68rem; color: #94a3b8; font-weight: 600; }
 .step.done { color: var(--primary); font-weight: 800; }
 
-/* ───── SIDEBAR CARDS ───── */
+/*SIDEBAR CARDS*/
 .side-avatar {
     width: 40px; height: 40px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -868,7 +974,7 @@ function exportTicket() {
     flex-wrap: wrap;
 }
 
-/* ───── MODALS ───── */
+/*MODALS*/
 .modal-backdrop {
     display: none; position: fixed; inset: 0;
     background: rgba(15,23,42,0.5); z-index: 1050;
@@ -895,7 +1001,7 @@ function exportTicket() {
 .modal-field select:focus, .modal-field textarea:focus { border-color: var(--primary); background: white; }
 .modal-foot { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.25rem; }
 
-/* ───── RESPONSIVE ───── */
+/*RESPONSIVE*/
 @media (max-width: 1199px) {
     .detail-grid { grid-template-columns: 1fr 280px; }
     .activity-grid { grid-template-columns: repeat(2, 1fr); }
@@ -911,3 +1017,7 @@ function exportTicket() {
 }
 </style>
 @endpush
+
+
+
+

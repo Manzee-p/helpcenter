@@ -122,6 +122,10 @@ class AdminSettingsController extends Controller
             
             Log::info('✅ [ADMIN] Profile update SUCCESSFUL');
             
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('success', 'Profil berhasil diperbarui');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Profil berhasil diperbarui',
@@ -173,6 +177,10 @@ class AdminSettingsController extends Controller
             
             Log::info('✅ [ADMIN] Avatar deleted successfully');
             
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('success', 'Avatar berhasil dihapus');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Avatar berhasil dihapus',
@@ -188,6 +196,9 @@ class AdminSettingsController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('❌ [ADMIN] Delete avatar error: ' . $e->getMessage());
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('error', 'Failed to delete avatar');
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete avatar'

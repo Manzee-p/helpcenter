@@ -99,6 +99,10 @@ class ClientSettingsController extends Controller
 
             $fresh = DB::table('users')->where('id', $user->id)->first();
 
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('success', 'Profil berhasil diperbarui');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Profil berhasil diperbarui',
@@ -143,10 +147,17 @@ class ClientSettingsController extends Controller
                 'updated_at' => now(),
             ]);
 
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('success', 'Avatar berhasil dihapus');
+            }
+
             return response()->json(['success' => true, 'message' => 'Avatar berhasil dihapus']);
 
         } catch (\Exception $e) {
             Log::error('❌ [CLIENT] deleteAvatar error: ' . $e->getMessage());
+            if (!$request->expectsJson()) {
+                return redirect()->back()->with('error', 'Gagal menghapus avatar');
+            }
             return response()->json(['success' => false, 'message' => 'Gagal menghapus avatar'], 500);
         }
     }

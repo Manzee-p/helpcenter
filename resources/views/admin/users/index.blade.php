@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Manajemen User')
 @section('page_title', 'Manajemen User')
@@ -9,7 +9,7 @@
 @section('content')
 <div class="users-wrap">
 
-    {{-- ── FLASH ── --}}
+    {{-- â-€â-€ FLASH â-€â-€ --}}
     @if(session('success'))
     <div class="flash flash-success"><i class='bx bx-check-circle'></i> {{ session('success') }}</div>
     @endif
@@ -17,7 +17,7 @@
     <div class="flash flash-error"><i class='bx bx-error-circle'></i> {{ session('error') }}</div>
     @endif
 
-    {{-- ═══ HERO ═══ --}}
+    {{-- â•â•â• HERO â•â•â• --}}
     <section class="hero-card">
         <div class="hero-copy">
             <span class="hero-kicker"><i class='bx bx-user-circle'></i> Manajemen User</span>
@@ -29,7 +29,7 @@
         </button>
     </section>
 
-    {{-- ═══ STATS ═══ --}}
+    {{-- â•â•â• STATS â•â•â• --}}
     <section class="stats-grid">
         <article class="stat-card">
             <div class="stat-info">
@@ -61,7 +61,7 @@
         </article>
     </section>
 
-    {{-- ═══ TABLE CARD ═══ --}}
+    {{-- â•â•â• TABLE CARD â•â•â• --}}
     <div class="table-card">
         {{-- Head / Filter --}}
         <div class="table-card__head">
@@ -196,7 +196,7 @@
             @if($users->lastPage() > 1)
             <div class="pagination-wrap">
                 <span class="pagination-info">
-                    Menampilkan {{ $users->firstItem() }}–{{ $users->lastItem() }} dari {{ $users->total() }} pengguna
+                    Menampilkan {{ $users->firstItem() }}--{{ $users->lastItem() }} dari {{ $users->total() }} pengguna
                 </span>
                 <div style="display:flex; gap:0.35rem; align-items:center;">
                     <button class="page-btn" {{ $users->onFirstPage() ? 'disabled' : '' }} onclick="goPage({{ $users->currentPage() - 1 }})">
@@ -218,7 +218,7 @@
 
 </div>
 
-{{-- ═══ ADD / EDIT USER MODAL ═══ --}}
+{{-- â•â•â• ADD / EDIT USER MODAL â•â•â• --}}
 <div id="user-modal" class="modal-backdrop">
     <div class="modal-box">
         <div class="modal-head">
@@ -268,28 +268,28 @@
     </div>
 </div>
 
-{{-- ═══ HIDDEN FORMS ═══ --}}
+{{-- â•â•â• HIDDEN FORMS â•â•â• --}}
 <form id="delete-form"        method="POST" style="display:none;"><input type="hidden" name="_method" value="DELETE">@csrf</form>
 <form id="toggle-status-form" method="POST" style="display:none;">@csrf</form>
 @endsection
 
 @push('scripts')
 <script>
-// ── Pagination ──
+// â-€â-€ Pagination â-€â-€
 function goPage(page) {
     const url = new URL(window.location.href);
     url.searchParams.set('page', page);
     window.location = url.toString();
 }
 
-// ── Search debounce ──
+// â-€â-€ Search debounce â-€â-€
 let st;
 document.getElementById('search-input').addEventListener('input', function() {
     clearTimeout(st);
     st = setTimeout(() => document.getElementById('filter-form').submit(), 500);
 });
 
-// ── Dropdown toggle ──
+// â-€â-€ Dropdown toggle â-€â-€
 let activeDropdown = null;
 function toggleDropdown(id) {
     const el = document.getElementById('dropdown-' + id);
@@ -304,14 +304,14 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ── Modal helpers ──
+// â-€â-€ Modal helpers â-€â-€
 function openModal(id)  { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 document.querySelectorAll('.modal-backdrop').forEach(el => {
     el.addEventListener('click', function(e) { if (e.target === this) closeModal(this.id); });
 });
 
-// ── Add mode ──
+// â-€â-€ Add mode â-€â-€
 function setAddMode() {
     document.getElementById('modal-title').textContent = 'Tambahkan User Baru';
     document.getElementById('user-form').action = '{{ route("admin.users.store") }}';
@@ -326,7 +326,7 @@ function setAddMode() {
     document.getElementById('password-field').style.display = '';
 }
 
-// ── Edit mode ──
+// â-€â-€ Edit mode â-€â-€
 function openEditModal(id, name, email, phone, role) {
     document.getElementById('modal-title').textContent = 'Edit User';
     document.getElementById('user-form').action = `/admin/users/${id}`;
@@ -343,7 +343,7 @@ function openEditModal(id, name, email, phone, role) {
     document.querySelectorAll('.dropdown-menu.open').forEach(d => d.classList.remove('open'));
 }
 
-// ── Toggle Status ──
+// â-€â-€ Toggle Status â-€â-€
 function confirmToggleStatus(id, name, isActive) {
     document.querySelectorAll('.dropdown-menu.open').forEach(d => d.classList.remove('open'));
     const action = isActive ? 'Menonaktifkan' : 'Mengaktifkan';
@@ -365,7 +365,7 @@ function confirmToggleStatus(id, name, isActive) {
     });
 }
 
-// ── Delete ──
+// â-€â-€ Delete â-€â-€
 function confirmDelete(id, name) {
     document.querySelectorAll('.dropdown-menu.open').forEach(d => d.classList.remove('open'));
     Swal.fire({
@@ -389,11 +389,11 @@ function confirmDelete(id, name) {
 
 @push('styles')
 <style>
-/* ───── PAGE WRAP ───── */
+/* â-€â-€â-€â-€â-€ PAGE WRAP â-€â-€â-€â-€â-€ */
 .users-wrap { display: flex; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.25s ease; }
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
-/* ───── HERO ───── */
+/* â-€â-€â-€â-€â-€ HERO â-€â-€â-€â-€â-€ */
 .hero-card {
     display: flex; justify-content: space-between; align-items: center;
     gap: 1.5rem; padding: 1.875rem;
@@ -416,7 +416,7 @@ function confirmDelete(id, name) {
 }
 .hero-copy p { color: var(--text-muted); font-size: 0.9375rem; max-width: 580px; margin: 0; }
 
-/* ───── STATS ───── */
+/* â-€â-€â-€â-€â-€ STATS â-€â-€â-€â-€â-€ */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -441,7 +441,7 @@ function confirmDelete(id, name) {
 .stat-icon--info     { background: #e0f7fa; color: #0891b2; }
 .stat-icon--success  { background: #f0fdf4; color: #16a34a; }
 
-/* ───── TABLE CARD ───── */
+/* â-€â-€â-€â-€â-€ TABLE CARD â-€â-€â-€â-€â-€ */
 .table-card {
     background: white; border: 1px solid var(--border);
     border-radius: 26px; overflow: hidden;
@@ -455,7 +455,7 @@ function confirmDelete(id, name) {
 .table-card__head h5 { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--text); }
 .table-card__filters { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
 
-/* ───── FILTER INPUTS ───── */
+/* â-€â-€â-€â-€â-€ FILTER INPUTS â-€â-€â-€â-€â-€ */
 .search-wrap { position: relative; }
 .search-wrap i {
     position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%);
@@ -477,7 +477,7 @@ function confirmDelete(id, name) {
 }
 .filter-select:focus { border-color: var(--primary); background: white; }
 
-/* ───── TABLE ───── */
+/* â-€â-€â-€â-€â-€ TABLE â-€â-€â-€â-€â-€ */
 .table-shell { overflow-x: auto; }
 .users-table { width: 100%; border-collapse: collapse; }
 .users-table th {
@@ -497,7 +497,7 @@ function confirmDelete(id, name) {
 .users-table tbody tr { transition: background 0.15s; }
 .users-table tbody tr:hover { background: #f8fafc; }
 
-/* ───── USER CELL ───── */
+/* â-€â-€â-€â-€â-€ USER CELL â-€â-€â-€â-€â-€ */
 .user-cell { display: flex; align-items: center; gap: 0.875rem; }
 .u-avatar {
     width: 42px; height: 42px; border-radius: 50%;
@@ -511,12 +511,12 @@ function confirmDelete(id, name) {
 .u-name     { font-weight: 700; color: var(--text); font-size: 0.875rem; display: block; }
 .u-id       { font-size: 0.75rem; color: var(--text-light); }
 
-/* ───── CONTACT CELL ───── */
+/* â-€â-€â-€â-€â-€ CONTACT CELL â-€â-€â-€â-€â-€ */
 .contact-cell { display: grid; gap: 0.25rem; }
 .contact-cell span { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: var(--text-muted); }
 .contact-cell i { font-size: 0.875rem; color: var(--text-light); }
 
-/* ───── BADGES ───── */
+/* â-€â-€â-€â-€â-€ BADGES â-€â-€â-€â-€â-€ */
 .badge {
     display: inline-flex; align-items: center; gap: 0.3rem;
     padding: 0.35rem 0.75rem; border-radius: 999px;
@@ -528,7 +528,7 @@ function confirmDelete(id, name) {
 .badge-active  { background: rgba(22,163,74,0.1); color: #16a34a; }
 .badge-inactive{ background: rgba(100,116,139,0.1); color: #475569; }
 
-/* ───── ACTIONS DROPDOWN ───── */
+/* â-€â-€â-€â-€â-€ ACTIONS DROPDOWN â-€â-€â-€â-€â-€ */
 .td-actions { text-align: center; position: relative; }
 .dropdown-wrap { position: relative; display: inline-block; }
 .btn-dots {
@@ -562,14 +562,14 @@ function confirmDelete(id, name) {
 .dropdown-item.danger:hover { background: #fff1f2; }
 .dropdown-divider { height: 1px; background: var(--border); margin: 0.25rem 0; }
 
-/* ───── EMPTY / LOADING ───── */
+/* â-€â-€â-€â-€â-€ EMPTY / LOADING â-€â-€â-€â-€â-€ */
 .state-box {
     padding: 3.5rem 1.5rem; text-align: center;
     color: var(--text-muted);
 }
 .state-box i { font-size: 3rem; color: var(--text-light); display: block; margin-bottom: 0.75rem; }
 
-/* ───── PAGINATION ───── */
+/* â-€â-€â-€â-€â-€ PAGINATION â-€â-€â-€â-€â-€ */
 .pagination-wrap {
     display: flex; justify-content: space-between; align-items: center;
     padding: 1.125rem 1.375rem; border-top: 1px solid var(--border);
@@ -591,7 +591,7 @@ function confirmDelete(id, name) {
 .page-numbers button.active { background: var(--primary); color: white; border-color: var(--primary); }
 .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ───── MODALS ───── */
+/* â-€â-€â-€â-€â-€ MODALS â-€â-€â-€â-€â-€ */
 .modal-backdrop {
     display: none; position: fixed; inset: 0;
     background: rgba(15,23,42,0.5); z-index: 1050;
@@ -626,7 +626,7 @@ function confirmDelete(id, name) {
 
 .modal-foot { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
 
-/* ───── BUTTONS ───── */
+/* â-€â-€â-€â-€â-€ BUTTONS â-€â-€â-€â-€â-€ */
 .btn-primary-sm {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.7rem 1.25rem; background: var(--gradient);
@@ -648,7 +648,7 @@ function confirmDelete(id, name) {
 .btn-secondary-sm:hover { background: #f1f5f9; color: var(--text); }
 .btn-saving { opacity: 0.75; cursor: not-allowed; }
 
-/* ───── FLASH ───── */
+/* â-€â-€â-€â-€â-€ FLASH â-€â-€â-€â-€â-€ */
 .flash {
     padding: 0.875rem 1.25rem; border-radius: 14px;
     display: flex; align-items: center; gap: 0.625rem;
@@ -657,7 +657,7 @@ function confirmDelete(id, name) {
 .flash-success { background: #f0fdf4; color: #16a34a; border: 1px solid rgba(22,163,74,0.2); }
 .flash-error   { background: #fff1f2; color: #e11d48; border: 1px solid rgba(225,29,72,0.2); }
 
-/* ───── RESPONSIVE ───── */
+/* â-€â-€â-€â-€â-€ RESPONSIVE â-€â-€â-€â-€â-€ */
 @media (max-width: 1199px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -675,3 +675,4 @@ function confirmDelete(id, name) {
 }
 </style>
 @endpush
+

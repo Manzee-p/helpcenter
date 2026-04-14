@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Laporan Sistem')
 @section('page_title', 'Laporan Sistem')
@@ -9,13 +9,13 @@
 @section('content')
 <div class="reports-wrap">
 
-    {{-- ── HERO ── --}}
+    {{-- â-€â-€ HERO â-€â-€ --}}
     <div class="reports-hero">
         <h4>Laporan Sistem</h4>
         <p>Ringkasan performa tiket, kepuasan vendor, dan tren penyelesaian dalam tampilan yang lebih rapi.</p>
     </div>
 
-    {{-- ── FILTER ── --}}
+    {{-- â-€â-€ FILTER â-€â-€ --}}
     <form method="GET" action="{{ route('admin.reports') }}" class="filter-card" id="reportsFilterForm">
         <div class="filter-row">
             <div>
@@ -48,14 +48,14 @@
 
     @if($reportData)
 
-    {{-- ── SUMMARY CARDS ── --}}
+    {{-- â-€â-€ SUMMARY CARDS â-€â-€ --}}
     <div class="summary-grid">
         <div class="sum-card">
             <div>
                 <p>Total Tiket</p>
                 <h3>{{ $reportData['summary']['total_tickets'] ?? 0 }}</h3>
                 <small class="text-muted">
-                    {{ \Carbon\Carbon::parse(request('start_date', now()->subMonths(6)))->isoFormat('D MMM YYYY') }} —
+                    {{ \Carbon\Carbon::parse(request('start_date', now()->subMonths(6)))->isoFormat('D MMM YYYY') }} -
                     {{ \Carbon\Carbon::parse(request('end_date', now()))->isoFormat('D MMM YYYY') }}
                 </small>
             </div>
@@ -79,7 +79,7 @@
         </div>
     </div>
 
-    {{-- ── MAIN GRID ── --}}
+    {{-- â-€â-€ MAIN GRID â-€â-€ --}}
     <div class="main-grid">
 
         {{-- Vendor Satisfaction --}}
@@ -219,7 +219,7 @@
 
     </div>
 
-    {{-- ── WARNING SUMMARY ── --}}
+    {{-- â-€â-€ WARNING SUMMARY â-€â-€ --}}
     <div class="panel-card">
         <div class="panel-header">
             <h5>Ringkasan Peringatan Vendor</h5>
@@ -256,7 +256,6 @@
 </div>
 @endsection
 
-@push('scripts')
 <script>
 function filterTrend(btn, filter) {
     document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
@@ -303,13 +302,11 @@ function filterTrend(btn, filter) {
     });
 })();
 </script>
-@endpush
 
-@push('styles')
 <style>
 .reports-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ── HERO ── */
+/* â-€â-€ HERO â-€â-€ */
 .reports-hero {
     padding: 1.5rem 1.875rem;
     background: white; border: 1px solid var(--border);
@@ -318,7 +315,7 @@ function filterTrend(btn, filter) {
 .reports-hero h4 { margin: 0 0 .25rem; font-size: 1.375rem; font-weight: 800; color: var(--text); }
 .reports-hero p  { margin: 0; color: var(--text-muted); font-size: .9375rem; max-width: 760px; }
 
-/* ── FILTER CARD ── */
+/* â-€â-€ FILTER CARD â-€â-€ */
 .filter-card {
     background: white; border: 1px solid var(--border);
     border-radius: 22px; padding: 1.25rem 1.5rem;
@@ -342,7 +339,7 @@ function filterTrend(btn, filter) {
 }
 .btn-filter:hover { transform: translateY(-2px); }
 
-/* ── SUMMARY GRID ── */
+/* â-€â-€ SUMMARY GRID â-€â-€ */
 .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
 .sum-card {
     background: white; border: 1px solid var(--border);
@@ -362,10 +359,10 @@ function filterTrend(btn, filter) {
 .sum-icon--success { background: rgba(34,197,94,.1);  color: #16a34a; }
 .sum-icon--info    { background: rgba(59,130,246,.1); color: #1d4ed8; }
 
-/* ── MAIN GRID ── */
+/* â-€â-€ MAIN GRID â-€â-€ */
 .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
-/* ── PANEL CARD ── */
+/* â-€â-€ PANEL CARD â-€â-€ */
 .panel-card {
     background: white; border: 1px solid var(--border);
     border-radius: 26px; box-shadow: var(--shadow-sm); overflow: hidden;
@@ -379,7 +376,7 @@ function filterTrend(btn, filter) {
 .panel-body::-webkit-scrollbar { width: 6px; }
 .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-/* ── VENDOR SATISFACTION ── */
+/* â-€â-€ VENDOR SATISFACTION â-€â-€ */
 .vendor-sat-item {
     display: flex; justify-content: space-between; align-items: center;
     padding: .875rem 0; border-bottom: 1px solid var(--border); gap: 1rem;
@@ -399,7 +396,7 @@ function filterTrend(btn, filter) {
 .vendor-sat-score strong { display: block; font-weight: 800; font-size: 1.05rem; color: var(--text); text-align: right; }
 .vendor-sat-score small  { color: var(--text-muted); font-size: .78rem; }
 
-/* ── RESOLUTION TREND ── */
+/* â-€â-€ RESOLUTION TREND â-€â-€ */
 .trend-filter-pills { display: flex; flex-wrap: wrap; gap: .5rem; }
 .pill-btn {
     padding: .4rem .875rem; border-radius: 999px;
@@ -432,7 +429,7 @@ function filterTrend(btn, filter) {
 .tsum-box small  { color: var(--text-muted); font-size: .78rem; display: block; margin: .25rem 0; }
 .tsum-box strong { font-size: 1.05rem; font-weight: 800; display: block; }
 
-/* ── WARNING SUMMARY ── */
+/* â-€â-€ WARNING SUMMARY â-€â-€ */
 .warn-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
 .warn-box {
     padding: 1.25rem; border-radius: 18px;
@@ -441,13 +438,13 @@ function filterTrend(btn, filter) {
 .warn-box small  { color: var(--text-muted); font-size: .85rem; display: block; font-weight: 700; }
 .warn-box strong { font-size: 2rem; font-weight: 800; display: block; margin-top: .4rem; color: var(--text); }
 
-/* ── EMPTY ── */
+/* â-€â-€ EMPTY â-€â-€ */
 .empty-state {
     text-align: center; padding: 3rem; color: var(--text-muted);
 }
 .empty-state i { font-size: 3rem; color: var(--text-light); display: block; margin-bottom: .75rem; }
 
-/* ── RESPONSIVE ── */
+/* â-€â-€ RESPONSIVE â-€â-€ */
 @media (max-width: 1199px) {
     .filter-row { grid-template-columns: 1fr 1fr; }
     .summary-grid, .main-grid { grid-template-columns: 1fr; }
@@ -458,5 +455,3 @@ function filterTrend(btn, filter) {
     .trend-summary-row { grid-template-columns: repeat(3,1fr); }
 }
 </style>
-@endpush
-

@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Belum Dirating')
 @section('page_title', 'Belum Dirating')
@@ -25,7 +25,7 @@
     {{-- HERO --}}
     <div class="pr-hero">
         <div class="pr-hero-text">
-            <h1>⭐ Belum Dirating</h1>
+            <h1>â­ Belum Dirating</h1>
             <p>Tiket yang sudah selesai tetapi masih menunggu penilaian dari Anda.</p>
         </div>
         <a href="{{ route('client.pending-ratings') }}" class="btn-refresh">
@@ -160,7 +160,7 @@
             @csrf
             <div class="star-group" id="starGroup">
                 @for($i = 1; $i <= 5; $i++)
-                <button type="button" class="star-btn" data-value="{{ $i }}" onclick="setRating({{ $i }})">★</button>
+                <button type="button" class="star-btn" data-value="{{ $i }}" onclick="setRating({{ $i }})"><i class='bx bxs-star'></i></button>
                 @endfor
             </div>
             <div class="star-label" id="starLabel">Pilih bintang untuk memberi rating</div>
@@ -217,12 +217,12 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 
 @push('styles')
 <style>
-/* ══════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PENDING RATINGS PAGE
-══════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .pending-ratings-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* ───── HERO ───── */
+/* â-€â-€â-€â-€â-€ HERO â-€â-€â-€â-€â-€ */
 .pr-hero {
     display: flex;
     justify-content: space-between;
@@ -278,7 +278,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .btn-refresh:hover { background: rgba(255,255,255,.18); color: #fff; transform: translateY(-1px); }
 
-/* ───── STAT CARDS ───── */
+/* â-€â-€â-€â-€â-€ STAT CARDS â-€â-€â-€â-€â-€ */
 .pr-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -310,7 +310,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .stat-info span { font-size: .82rem; font-weight: 600; color: #64748b; }
 .stat-info strong { display: block; font-size: 1.85rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
 
-/* ───── PROGRESS BAR ───── */
+/* â-€â-€â-€â-€â-€ PROGRESS BAR â-€â-€â-€â-€â-€ */
 .progress-wrap {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -337,7 +337,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .progress-pct { font-size: 1rem; font-weight: 800; color: #4f46e5; white-space: nowrap; }
 
-/* ───── TABLE CARD ───── */
+/* â-€â-€â-€â-€â-€ TABLE CARD â-€â-€â-€â-€â-€ */
 .table-card {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -445,7 +445,7 @@ table.pr-table { width: 100%; border-collapse: collapse; }
 }
 .btn-rate:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99,102,241,.3); }
 
-/* ───── EMPTY STATE ───── */
+/* â-€â-€â-€â-€â-€ EMPTY STATE â-€â-€â-€â-€â-€ */
 .empty-state {
     padding: 4rem 2rem;
     text-align: center;
@@ -454,7 +454,7 @@ table.pr-table { width: 100%; border-collapse: collapse; }
 .empty-title { font-size: 1.3rem; font-weight: 700; color: #1f2937; margin-bottom: .5rem; }
 .empty-text { color: #64748b; }
 
-/* ───── MODAL ───── */
+/* â-€â-€â-€â-€â-€ MODAL â-€â-€â-€â-€â-€ */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -515,6 +515,7 @@ table.pr-table { width: 100%; border-collapse: collapse; }
     transition: color .15s, transform .15s;
     line-height: 1;
 }
+.star-btn i { font-size: 2.5rem; line-height: 1; }
 .star-btn.active, .star-btn:hover { color: #f59e0b; transform: scale(1.15); }
 .star-label { text-align: center; font-size: .88rem; font-weight: 600; color: #64748b; margin-bottom: 1rem; min-height: 1.2em; }
 
@@ -569,3 +570,4 @@ table.pr-table { width: 100%; border-collapse: collapse; }
 }
 </style>
 @endpush
+

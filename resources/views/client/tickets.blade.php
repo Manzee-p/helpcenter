@@ -28,7 +28,7 @@
                 <span class="panel-chip">Pelayanan Belum Dinilai</span>
                 <h2>{{ $pendingFeedbackTickets->count() }} laporan selesai menunggu rating</h2>
             </div>
-            <a href="{{ route('client.history') }}" class="link-inline">Buka riwayat â†’</a>
+            <a href="{{ route('client.history') }}" class="link-inline">Buka riwayat &rarr;</a>
         </div>
         <div class="pending-grid">
             @foreach($pendingFeedbackTickets->take(3) as $t)
@@ -195,7 +195,7 @@ function debounceSubmit() {
 <style>
 .tickets-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* â”€â”€â”€â”€â”€ PAGE HEADER â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PAGE HEADER â-€â-€â-€â-€â-€ */
 .page-header-card {
     display: flex;
     justify-content: space-between;
@@ -226,7 +226,7 @@ function debounceSubmit() {
 .btn-create:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(99,102,241,.35); color: white; }
 .btn-create i { font-size: 1.25rem; }
 
-/* â”€â”€â”€â”€â”€ PENDING FEEDBACK PANEL â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PENDING FEEDBACK PANEL â-€â-€â-€â-€â-€ */
 .pending-panel {
     background: white;
     border: 1px solid rgba(245,158,11,.2);
@@ -285,7 +285,7 @@ function debounceSubmit() {
     white-space: nowrap;
 }
 
-/* â”€â”€â”€â”€â”€ FILTERS â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ FILTERS â-€â-€â-€â-€â-€ */
 .filters-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -323,7 +323,7 @@ function debounceSubmit() {
 .filter-select:focus,
 .filter-search:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
 
-/* â”€â”€â”€â”€â”€ TICKETS GRID â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ TICKETS GRID â-€â-€â-€â-€â-€ */
 .tickets-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
@@ -435,7 +435,7 @@ function debounceSubmit() {
 .status-resolved         { background: rgba(34,197,94,.12);  color: #15803d; }
 .status-closed           { background: rgba(148,163,184,.14);color: #475569; }
 
-/* â”€â”€â”€â”€â”€ EMPTY / LOADING â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ EMPTY / LOADING â-€â-€â-€â-€â-€ */
 .state-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -448,7 +448,7 @@ function debounceSubmit() {
 .state-title { font-size: 1.45rem; font-weight: 700; color: #2c3e50; margin-bottom: .75rem; }
 .state-text  { font-size: .95rem; color: #6c757d; margin-bottom: 1.5rem; }
 
-/* â”€â”€â”€â”€â”€ PAGINATION â”€â”€â”€â”€â”€ */
+/* â-€â-€â-€â-€â-€ PAGINATION â-€â-€â-€â-€â-€ */
 .pagination-wrap {
     display: flex;
     justify-content: center;
@@ -487,4 +487,7 @@ function debounceSubmit() {
 }
 </style>
 @endpush
+
+
+
 

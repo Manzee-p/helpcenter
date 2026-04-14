@@ -80,3 +80,5 @@ class VendorReportSeeder extends Seeder
         $this->command?->info('VendorReportSeeder selesai: laporan bulanan vendor (6 bulan) diperbarui.');
     }
 }
+
+

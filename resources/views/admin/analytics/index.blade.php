@@ -8,25 +8,25 @@
 
 @section('content')
 
-{{-- ── Inject PHP → JS hanya kalau ada data ── --}}
+{{-- Inject PHP → JS hanya kalau ada data --}}
 @if($hasData)
 <script>
-    const ANALYTICS_DATA = @json($analytics);
+    window.ANALYTICS_DATA = @json($analytics);
 </script>
 @endif
 
 <div class="analytics-wrap">
 
-    {{-- ═══ HERO ═══ --}}
+    {{--HERO--}}
     <section class="analytics-hero">
         <div>
             <span class="hero-kicker">Analitik Tiket</span>
-            <h3>Pantau performa HelpDesk secara menyeluruh</h3>
+            <h3>Pantau performa HelpCenter secara menyeluruh</h3>
             <p>Volume tiket, tren status, kategori teratas, dan kecepatan penyelesaian dalam satu tampilan.</p>
         </div>
     </section>
 
-    {{-- ═══ FILTER ═══ --}}
+    {{--FILTER--}}
     <form method="GET" action="{{ route('admin.analytics') }}" id="analyticsFilterForm">
         <div class="filter-card">
             <div class="analytics-filter-grid">
@@ -54,7 +54,7 @@
 
     @if($hasData)
 
-    {{-- ═══ SUMMARY CARDS ═══ --}}
+    {{--SUMMARY CARDS--}}
     <section class="summary-grid">
         <article class="summary-card">
             <span class="sc-label">Total Tiket</span>
@@ -81,7 +81,7 @@
         </article>
     </section>
 
-    {{-- ═══ CHART ROW ═══ --}}
+    {{--CHART ROW--}}
     <div class="chart-row">
 
         {{-- Kiri: Status Doughnut --}}
@@ -110,6 +110,13 @@
                         'resolved'         => ['hex'=>'#71dd37','bg'=>'rgba(113,221,55,0.12)', 'icon'=>'bx bx-check-circle', 'desc'=>'Sudah diselesaikan'],
                         'closed'           => ['hex'=>'#8592a3','bg'=>'rgba(133,146,163,0.12)','icon'=>'bx bx-x-circle',    'desc'=>'Ditutup'],
                     ];
+                    $statusNames = [
+                        'new' => 'Baru',
+                        'in_progress' => 'Sedang Ditangani',
+                        'waiting_response' => 'Menunggu Respons',
+                        'resolved' => 'Selesai',
+                        'closed' => 'Ditutup',
+                    ];
                 @endphp
 
                 <div class="status-list">
@@ -125,7 +132,7 @@
                                 <i class="{{ $cfg['icon'] }}" style="color:{{ $cfg['hex'] }}"></i>
                             </div>
                             <div class="si-text">
-                                <h6>{{ str_replace('_',' ',$sk) }}</h6>
+                                <h6>{{ $statusNames[$sk] ?? str_replace('_',' ',$sk) }}</h6>
                                 <small>{{ $cfg['desc'] }}</small>
                             </div>
                         </div>
@@ -166,7 +173,7 @@
 
     </div>
 
-    {{-- ═══ CATEGORY BAR ═══ --}}
+    {{--CATEGORY BAR--}}
     <div class="panel-card">
         <div class="panel-head">
             <div>
@@ -179,7 +186,7 @@
         </div>
     </div>
 
-    {{-- ═══ EXPORT ═══ --}}
+    {{--EXPORT--}}
     <div class="export-center">
         <button class="btn-outline-sm" onclick="exportReport()">
             <i class='bx bx-download'></i> Ekspor Ringkasan
@@ -198,27 +205,46 @@
 
 </div>
 @endsection
-
-@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-(function () {
-    'use strict';
-    if (typeof ANALYTICS_DATA === 'undefined') return;
 
-    const D = ANALYTICS_DATA;
+let statusChartInstance = null;
+let monthlyChartInstance = null;
+let categoryChartInstance = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+    'use strict';
+
+    if (window.__analyticsLoaded) return;
+    window.__analyticsLoaded = true;
+
+    if (!window.ANALYTICS_DATA) return;
+
+    const D = window.ANALYTICS_DATA;
     const MID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     const fmtM = ym => { const p = ym.split('-'); return MID[+p[1]-1]+' '+p[0]; };
 
-    /* 1 ── STATUS DOUGHNUT */
-    const SHX = { new:'#696cff', in_progress:'#03c3ec', waiting_response:'#ffab00', resolved:'#71dd37', closed:'#8592a3' };
+    /* 1 STATUS DOUGHNUT */
+    const SHX = { new:'#696cff', baru:'#696cff', in_progress:'#03c3ec', waiting_response:'#ffab00', resolved:'#71dd37', closed:'#8592a3' };
+    const STATUS_NAMES = {
+        new: 'Baru',
+        baru: 'Baru',
+        in_progress: 'Sedang Ditangani',
+        waiting_response: 'Menunggu Respons',
+        resolved: 'Selesai',
+        closed: 'Ditutup',
+    };
     const sd  = D.tickets_by_status || [];
     const sc  = document.getElementById('statusChart');
     if (sd.length && sc) {
-        new Chart(sc.getContext('2d'), {
+        if (statusChartInstance) {
+            statusChartInstance.destroy();
+        }
+
+        statusChartInstance = new Chart(sc.getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: sd.map(s => s.status.replace(/_/g,' ').toUpperCase()),
+                labels: sd.map(s => STATUS_NAMES[s.status] || s.status.replace(/_/g,' ')),
                 datasets: [{ data: sd.map(s=>s.count), backgroundColor: sd.map(s=>SHX[s.status]||'#8592a3'), borderWidth:0, cutout:'75%' }]
             },
             options: {
@@ -231,13 +257,17 @@
         });
     }
 
-    /* 2 ── MONTHLY LINE */
+    /* 2 MONTHLY LINE */
     const mo  = D.monthly_tickets || {};
     const mks = Object.keys(mo).sort();
     const mct = mks.map(m=>mo[m]);
     const mc  = document.getElementById('monthlyChart');
     if (mks.length && mc) {
-        new Chart(mc.getContext('2d'), {
+        if (monthlyChartInstance) {
+            monthlyChartInstance.destroy();
+        }
+
+        monthlyChartInstance = new Chart(mc.getContext('2d'), {
             type:'line',
             data:{
                 labels: mks.map(fmtM),
@@ -255,13 +285,17 @@
         });
     }
 
-    /* 3 ── CATEGORY BAR */
+    /* 3 CATEGORY BAR */
     const cd  = D.tickets_by_category || {};
     const cl  = Object.keys(cd);
     const cv  = Object.values(cd);
     const cc  = document.getElementById('categoryChart');
     if (cl.length && cc) {
-        new Chart(cc.getContext('2d'), {
+        if (categoryChartInstance) {
+            categoryChartInstance.destroy();
+        }
+
+            categoryChartInstance = new Chart(cc.getContext('2d'), {
             type:'bar',
             data:{ labels:cl, datasets:[{ label:'Jumlah Tiket', data:cv, backgroundColor:'#696cff', borderRadius:8, maxBarThickness:28 }] },
             options:{
@@ -275,7 +309,7 @@
         });
     }
 
-    /* 4 ── EXPORT */
+    /* 4 EXPORT */
     window.exportReport = function () {
         typeof Swal !== 'undefined'
             ? Swal.fire({ icon:'info', title:'Fitur Ekspor', text:'Fitur ekspor analitik akan tersedia pada pembaruan berikutnya.', confirmButtonColor:'#696cff' })
@@ -309,176 +343,173 @@
     }
 })();
 </script>
-@endpush
 
-@push('styles')
 <style>
-/* ═══════════════════════════════════════════
-   ANALYTICS PAGE — tema seragam dgn dashboard
-═══════════════════════════════════════════ */
-.analytics-wrap { display: flex; flex-direction: column; gap: 1.5rem; overflow-x: hidden; }
 
-/* ───── HERO ───── */
-.analytics-hero {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 1rem; padding: 1.25rem 1.375rem;
-    background: linear-gradient(135deg, #eef2ff 0%, #fff7ed 100%);
-    border: 1px solid rgba(79,70,229,0.12);
-    border-radius: 20px;
-    box-shadow: 0 6px 18px rgba(79,70,229,0.07);
-}
-.hero-kicker {
-    display: inline-flex; align-items: center;
-    padding: 0.35rem 0.8rem; border-radius: 999px;
-    background: rgba(79,70,229,0.12); color: var(--primary);
-    font-weight: 800; font-size: 0.75rem;
-    letter-spacing: 0.06em; text-transform: uppercase;
-}
-.analytics-hero h3 {
-    margin: 0.625rem 0 0.35rem;
-    font-size: clamp(1.15rem, 2vw, 1.55rem);
-    font-weight: 800; color: var(--text);
-}
-.analytics-hero > div > p { color: var(--text-muted); font-size: 0.9rem; margin: 0; max-width: 620px; }
+    .analytics-wrap { display: flex; flex-direction: column; gap: 1.5rem; overflow-x: hidden; }
 
-/* ───── FILTER CARD ───── */
-.filter-card {
-    background: white; border: 1px solid var(--border);
-    border-radius: 18px; padding: 1rem; box-shadow: var(--shadow-sm);
-}
-.analytics-filter-grid {
-    display: grid;
-    grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto;
-    gap: 0.75rem;
-    align-items: end;
-}
-.filter-field { min-width: 0; }
-.filter-actions {
-    display: flex;
-    gap: 0.5rem;
-    align-items: end;
-    justify-content: flex-end;
-}
-.filter-card .f-label {
-    font-weight: 700; font-size: 0.8rem; color: var(--text-muted);
-    margin-bottom: 0.3rem; display: block;
-}
-.filter-card .f-input {
-    border-radius: 12px; border: 1px solid var(--border);
-    font-size: 0.86rem; padding: 0.52rem 0.75rem; width: 100%;
-    outline: none; transition: border-color 0.2s; font-family: inherit;
-}
-.filter-card .f-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
-.btn-filter-submit { min-width: 220px; justify-content: center; }
+    /* HERO */
+    .analytics-hero {
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 1rem; padding: 1.25rem 1.375rem;
+        background: linear-gradient(135deg, #eef2ff 0%, #fff7ed 100%);
+        border: 1px solid rgba(79,70,229,0.12);
+        border-radius: 20px;
+        box-shadow: 0 6px 18px rgba(79,70,229,0.07);
+    }
+    .hero-kicker {
+        display: inline-flex; align-items: center;
+        padding: 0.35rem 0.8rem; border-radius: 999px;
+        background: rgba(79,70,229,0.12); color: var(--primary);
+        font-weight: 800; font-size: 0.75rem;
+        letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .analytics-hero h3 {
+        margin: 0.625rem 0 0.35rem;
+        font-size: clamp(1.15rem, 2vw, 1.55rem);
+        font-weight: 800; color: var(--text);
+    }
+    .analytics-hero > div > p { color: var(--text-muted); font-size: 0.9rem; margin: 0; max-width: 620px; }
 
-/* ───── SUMMARY CARDS ───── */
-.summary-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; }
-.summary-card {
-    background: white; border: 1px solid var(--border);
-    border-radius: 18px; padding: 1rem;
-    display: grid; gap: 0.35rem;
-    box-shadow: var(--shadow-sm); transition: all 0.25s;
-}
-.summary-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.summary-card > .sc-label  { color: var(--text-muted); font-weight: 700; font-size: 0.82rem; }
-.summary-card > .sc-value  { font-size: 1.7rem; font-weight: 800; color: var(--text); line-height: 1; }
-.summary-card > .sc-sub    { color: #94a3b8; font-size: 0.8rem; }
-.sc-orange { background: linear-gradient(180deg,#fff7ed,#fff); border-color: rgba(249,115,22,0.2); }
-.sc-green  { background: linear-gradient(180deg,#f0fdf4,#fff); border-color: rgba(34,197,94,0.2); }
-.sc-yellow { background: linear-gradient(180deg,#fefce8,#fff); border-color: rgba(234,179,8,0.2); }
+    /* FILTER CARD */
+    .filter-card {
+        background: white; border: 1px solid var(--border);
+        border-radius: 18px; padding: 1rem; box-shadow: var(--shadow-sm);
+    }
+    .analytics-filter-grid {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto;
+        gap: 0.75rem;
+        align-items: end;
+    }
+    .filter-field { min-width: 0; }
+    .filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: end;
+        justify-content: flex-end;
+    }
+    .filter-card .f-label {
+        font-weight: 700; font-size: 0.8rem; color: var(--text-muted);
+        margin-bottom: 0.3rem; display: block;
+    }
+    .filter-card .f-input {
+        border-radius: 12px; border: 1px solid var(--border);
+        font-size: 0.86rem; padding: 0.52rem 0.75rem; width: 100%;
+        outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .filter-card .f-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+    .btn-filter-submit { min-width: 220px; justify-content: center; }
 
-/* ───── PANEL CARD (sama dgn dashboard) ───── */
-.panel-card {
-    background: white; border: 1px solid var(--border);
-    border-radius: 20px; padding: 1rem; box-shadow: var(--shadow-sm);
-    min-width: 0;
-    overflow: hidden;
-}
-.panel-head {
-    display: flex; justify-content: space-between; gap: 1rem;
-    align-items: flex-start; margin-bottom: 0.8rem;
-}
-.panel-head h5 { margin: 0; font-size: 0.98rem; font-weight: 800; color: var(--text); }
-.panel-head p  { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.82rem; }
+    /* SUMMARY CARDS */
+    .summary-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1rem; }
+    .summary-card {
+        background: white; border: 1px solid var(--border);
+        border-radius: 18px; padding: 1rem;
+        display: grid; gap: 0.35rem;
+        box-shadow: var(--shadow-sm); transition: all 0.25s;
+    }
+    .summary-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+    .summary-card > .sc-label  { color: var(--text-muted); font-weight: 700; font-size: 0.82rem; }
+    .summary-card > .sc-value  { font-size: 1.7rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .summary-card > .sc-sub    { color: #94a3b8; font-size: 0.8rem; }
+    .sc-orange { background: linear-gradient(180deg,#fff7ed,#fff); border-color: rgba(249,115,22,0.2); }
+    .sc-green  { background: linear-gradient(180deg,#f0fdf4,#fff); border-color: rgba(34,197,94,0.2); }
+    .sc-yellow { background: linear-gradient(180deg,#fefce8,#fff); border-color: rgba(234,179,8,0.2); }
 
-/* ───── CHART ROW ───── */
-.chart-row { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 1rem; }
-.chart-row > .panel-card { min-width: 0; }
+    /* PANEL CARD (sama dgn dashboard) */
+    .panel-card {
+        background: white; border: 1px solid var(--border);
+        border-radius: 20px; padding: 1rem; box-shadow: var(--shadow-sm);
+        min-width: 0;
+        overflow: hidden;
+    }
+    .panel-head {
+        display: flex; justify-content: space-between; gap: 1rem;
+        align-items: flex-start; margin-bottom: 0.8rem;
+    }
+    .panel-head h5 { margin: 0; font-size: 0.98rem; font-weight: 800; color: var(--text); }
+    .panel-head p  { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.82rem; }
 
-/* Doughnut */
-.status-inner { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; }
-.doughnut-wrap { position: relative; width: 150px; height: 150px; flex-shrink: 0; }
-.doughnut-center {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%,-50%); text-align: center; pointer-events: none;
-}
-.doughnut-center h4    { font-size: 1.5rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
-.doughnut-center small { font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 0.2rem; }
+    /* CHART ROW */
+    .chart-row { display: grid; grid-template-columns: minmax(0,5fr) minmax(0,7fr); gap: 1rem; }
+    .chart-row > .panel-card { min-width: 0; }
 
-/* Status legend list */
-.status-list  { display: flex; flex-direction: column; gap: 0.625rem; }
-.status-item  { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.si-left      { display: flex; align-items: center; gap: 0.625rem; }
-.si-icon-box  { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.075rem; }
-.si-text h6   { font-size: 0.875rem; font-weight: 700; color: var(--text); margin: 0; text-transform: capitalize; }
-.si-text small{ font-size: 0.73rem; color: var(--text-muted); }
-.si-count     { font-size: 1rem; font-weight: 800; color: var(--text); white-space: nowrap; }
+    /* Doughnut */
+    .status-inner { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem; align-items: center; }
+    .doughnut-wrap { position: relative; width: 150px; height: 150px; flex-shrink: 0; }
+    .doughnut-center {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%,-50%); text-align: center; pointer-events: none;
+    }
+    .doughnut-center h4    { font-size: 1.5rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
+    .doughnut-center small { font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 0.2rem; }
 
-/* Monthly meta */
-.monthly-meta { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.875rem; flex-wrap: wrap; }
-.mm-item h3   { font-size: 1.75rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
-.mm-item h4   { font-size: 1.375rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
-.mm-item small{ font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.2rem; }
-.trend-badge       { display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 800; font-size: 0.9rem; }
-.trend-badge.up    { color: #16a34a; }
-.trend-badge.down  { color: #dc2626; }
+    /* Status legend list */
+    .status-list  { display: flex; flex-direction: column; gap: 0.625rem; }
+    .status-item  { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .si-left      { display: flex; align-items: center; gap: 0.625rem; }
+    .si-icon-box  { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.075rem; }
+    .si-text h6   { font-size: 0.875rem; font-weight: 700; color: var(--text); margin: 0; text-transform: capitalize; }
+    .si-text small{ font-size: 0.73rem; color: var(--text-muted); }
+    .si-count     { font-size: 1rem; font-weight: 800; color: var(--text); white-space: nowrap; }
 
-/* Category chart */
-.cat-chart-wrap { position: relative; height: 260px; overflow: hidden; max-width: 100%; }
-.cat-chart-wrap canvas { display: block; max-width: 100% !important; }
+    /* Monthly meta */
+    .monthly-meta { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 0.875rem; flex-wrap: wrap; }
+    .mm-item h3   { font-size: 1.75rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
+    .mm-item h4   { font-size: 1.375rem; font-weight: 800; color: var(--text); margin: 0; line-height: 1; }
+    .mm-item small{ font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 0.2rem; }
+    .trend-badge       { display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 800; font-size: 0.9rem; }
+    .trend-badge.up    { color: #16a34a; }
+    .trend-badge.down  { color: #dc2626; }
 
-/* ───── BUTTONS ───── */
-.btn-primary-sm {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.62rem 1rem; background: var(--gradient); color: white;
-    border: none; border-radius: 10px; font-weight: 700; font-size: 0.84rem;
-    text-decoration: none; cursor: pointer;
-    transition: all 0.25s; box-shadow: var(--shadow-colored);
-}
-.btn-primary-sm:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(79,70,229,0.3); color: white; }
-.btn-primary-sm.w-full { width: 100%; justify-content: center; }
-.btn-outline-sm {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.62rem 1rem; background: transparent; color: var(--primary);
-    border: 1.5px solid var(--primary); border-radius: 10px; font-weight: 700;
-    font-size: 0.84rem; cursor: pointer; transition: all 0.25s;
-}
-.btn-outline-sm:hover { background: var(--primary); color: white; }
+    /* Category chart */
+    .cat-chart-wrap { position: relative; height: 260px; overflow: hidden; max-width: 100%; }
+    .cat-chart-wrap canvas { display: block; max-width: 100% !important; }
 
-/* ───── EMPTY ───── */
-.empty-state {
-    border: 1px dashed rgba(148,163,184,0.5); border-radius: 18px;
-    padding: 3rem; color: var(--text-muted); text-align: center;
-}
-.empty-state i { font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 0.75rem; }
-.export-center { display: flex; justify-content: center; padding: 0.5rem 0; }
+    /* BUTTONS */
+    .btn-primary-sm {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.62rem 1rem; background: var(--gradient); color: white;
+        border: none; border-radius: 10px; font-weight: 700; font-size: 0.84rem;
+        text-decoration: none; cursor: pointer;
+        transition: all 0.25s; box-shadow: var(--shadow-colored);
+    }
+    .btn-primary-sm:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(79,70,229,0.3); color: white; }
+    .btn-primary-sm.w-full { width: 100%; justify-content: center; }
+    .btn-outline-sm {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.62rem 1rem; background: transparent; color: var(--primary);
+        border: 1.5px solid var(--primary); border-radius: 10px; font-weight: 700;
+        font-size: 0.84rem; cursor: pointer; transition: all 0.25s;
+    }
+    .btn-outline-sm:hover { background: var(--primary); color: white; }
 
-/* ───── RESPONSIVE ───── */
-@media (max-width: 1199px) {
-    .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-    .chart-row    { grid-template-columns: 1fr; }
-    .analytics-filter-grid { grid-template-columns: 1fr 1fr; }
-    .filter-actions { grid-column: span 2; justify-content: flex-start; }
-}
-@media (max-width: 767px) {
-    .analytics-hero { flex-direction: column; align-items: flex-start; padding: 1rem; border-radius: 16px; }
-    .summary-grid   { grid-template-columns: 1fr; }
-    .status-inner   { grid-template-columns: 1fr; justify-items: center; }
-    .doughnut-wrap  { width: 150px; height: 150px; }
-    .monthly-meta   { gap: 0.75rem; }
-    .analytics-filter-grid { grid-template-columns: 1fr; }
-    .filter-actions { grid-column: auto; width: 100%; }
-    .btn-filter-submit, .filter-actions .btn-outline-sm { width: 100%; justify-content: center; }
-}
+    /* EMPTY */
+    .empty-state {
+        border: 1px dashed rgba(148,163,184,0.5); border-radius: 18px;
+        padding: 3rem; color: var(--text-muted); text-align: center;
+    }
+    .empty-state i { font-size: 2.5rem; opacity: 0.3; display: block; margin-bottom: 0.75rem; }
+    .export-center { display: flex; justify-content: center; padding: 0.5rem 0; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1199px) {
+        .summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+        .chart-row    { grid-template-columns: 1fr; }
+        .analytics-filter-grid { grid-template-columns: 1fr 1fr; }
+        .filter-actions { grid-column: span 2; justify-content: flex-start; }
+    }
+    @media (max-width: 767px) {
+        .analytics-hero { flex-direction: column; align-items: flex-start; padding: 1rem; border-radius: 16px; }
+        .summary-grid   { grid-template-columns: 1fr; }
+        .status-inner   { grid-template-columns: 1fr; justify-items: center; }
+        .doughnut-wrap  { width: 150px; height: 150px; }
+        .monthly-meta   { gap: 0.75rem; }
+        .analytics-filter-grid { grid-template-columns: 1fr; }
+        .filter-actions { grid-column: auto; width: 100%; }
+        .btn-filter-submit, .filter-actions .btn-outline-sm { width: 100%; justify-content: center; }
+    }
 </style>
-@endpush
+
+

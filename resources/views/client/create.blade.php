@@ -1,4 +1,4 @@
-@extends('layouts.client')
+﻿@extends('layouts.client')
 
 @section('title', 'Buat Tiket Baru')
 @section('page_title', 'Buat Tiket')
@@ -16,7 +16,7 @@
 
     <div class="ct-card">
 
-        {{-- ── HEADER ── --}}
+        {{-- â-€â-€ HEADER â-€â-€ --}}
         <div class="ct-head">
             <div class="ct-head-inner">
                 <div class="ct-head-icon"><i class='bx bx-file-blank'></i></div>
@@ -27,7 +27,7 @@
             </div>
         </div>
 
-        {{-- ── FORM ── --}}
+        {{-- â-€â-€ FORM â-€â-€ --}}
         <form method="POST" action="{{ route('client.tickets.store') }}"
               enctype="multipart/form-data" class="ct-body" id="ctForm">
             @csrf
@@ -136,7 +136,7 @@
             <div class="ct-field">
                 <div class="upload-head">
                     <div class="upload-title"><i class='bx bx-paperclip'></i> Lampiran Foto / File</div>
-                    <span class="upload-limit">Maks 5 file · 5 MB/file</span>
+                    <span class="upload-limit">Maks 5 file Â· 5 MB/file</span>
                 </div>
 
                 {{-- Hidden real input; JS akan clone & append sebelum submit --}}
@@ -176,7 +176,7 @@
 
         </form>
 
-        {{-- ── ACTIONS (outside form, linked via form="ctForm") ── --}}
+        {{-- â-€â-€ ACTIONS (outside form, linked via form="ctForm") â-€â-€ --}}
         <div class="ct-actions">
             <a href="{{ route('client.dashboard') }}" class="btn-cancel">
                 <i class='bx bx-x'></i> Batal
@@ -192,10 +192,10 @@
 
 @push('scripts')
 <script>
-/* ─── State ─── */
+/* â-€â-€â-€ State â-€â-€â-€ */
 let selectedFiles = [];
 
-/* ─── Urgency ─── */
+/* â-€â-€â-€ Urgency â-€â-€â-€ */
 function selUrg(val) {
     document.querySelectorAll('.urg-btn').forEach(b =>
         b.classList.remove('active')
@@ -205,7 +205,7 @@ function selUrg(val) {
     document.getElementById('urgVal').value = val;
 }
 
-/* ─── Event collapsible ─── */
+/* â-€â-€â-€ Event collapsible â-€â-€â-€ */
 function toggleEvent() {
     const d = document.getElementById('evDetails');
     const a = document.getElementById('evArrow');
@@ -214,13 +214,13 @@ function toggleEvent() {
     a.classList.toggle('open', !isOpen);
 }
 
-/* ─── Char counter ─── */
+/* â-€â-€â-€ Char counter â-€â-€â-€ */
 function updateChar() {
     document.getElementById('charNum').textContent =
         document.getElementById('descTA').value.length;
 }
 
-/* ─── Helpers ─── */
+/* â-€â-€â-€ Helpers â-€â-€â-€ */
 function fmtSize(bytes) {
     if (bytes < 1024)        return bytes + ' B';
     if (bytes < 1048576)     return (bytes / 1024).toFixed(1) + ' KB';
@@ -236,7 +236,7 @@ function hideFileErr() {
     document.getElementById('fileErr').style.display = 'none';
 }
 
-/* ─── Handle dropped/selected files ─── */
+/* â-€â-€â-€ Handle dropped/selected files â-€â-€â-€ */
 function handleFiles(incoming) {
     hideFileErr();
     const arr = Array.from(incoming);
@@ -269,7 +269,7 @@ function handleFiles(incoming) {
     showProgress(arr.length);
 }
 
-/* ─── Sync File objects ke hidden inputs agar terkirim ke server ─── */
+/* â-€â-€â-€ Sync File objects ke hidden inputs agar terkirim ke server â-€â-€â-€ */
 function syncHiddenInputs() {
     /* Pendekatan: render DataTransfer ke single multi-input */
     const container = document.getElementById('fileInputsContainer');
@@ -294,14 +294,14 @@ function syncHiddenInputs() {
     }
 }
 
-/* ─── Animated progress bar ─── */
+/* â-€â-€â-€ Animated progress bar â-€â-€â-€ */
 function showProgress(count) {
     const pw  = document.getElementById('progressWrap');
     const pf  = document.getElementById('progressFill');
     const pl  = document.getElementById('progressLabel');
     pw.style.display = 'block';
     pf.style.width   = '0%';
-    pl.textContent   = 'Memproses ' + count + ' file…';
+    pl.textContent   = 'Memproses ' + count + ' file-¦';
     let p = 0;
     const iv = setInterval(() => {
         p += Math.random() * 35;
@@ -315,7 +315,7 @@ function showProgress(count) {
     }, 70);
 }
 
-/* ─── Render file preview list ─── */
+/* â-€â-€â-€ Render file preview list â-€â-€â-€ */
 function renderFileList() {
     const list = document.getElementById('fileList');
     list.innerHTML = '';
@@ -376,7 +376,7 @@ function escHtml(str) {
     }[c]));
 }
 
-/* ─── Fallback: gunakan FormData jika DataTransfer tidak kompatibel ─── */
+/* â-€â-€â-€ Fallback: gunakan FormData jika DataTransfer tidak kompatibel â-€â-€â-€ */
 document.getElementById('ctForm').addEventListener('submit', function(e) {
     /* Jika browser tidak mendukung dt.files assignment, intercept & kirim via fetch */
     const testInp = document.querySelector('#fileInputsContainer input');
@@ -393,7 +393,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Mengirim…";
+    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Mengirim-¦";
     
     fetch(this.action, { method: 'POST', body: fd })
         .then(r => { if (r.redirected) window.location.href = r.url; else return r.text(); })
@@ -401,7 +401,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
         .catch(() => { btn.disabled = false; btn.innerHTML = "<i class='bx bx-paper-plane'></i> Kirim Tiket"; });
 });
 
-/* ─── Restore urgency on validation fail ─── */
+/* â-€â-€â-€ Restore urgency on validation fail â-€â-€â-€ */
 @if(old('urgency_level'))
     selUrg('{{ old('urgency_level') }}');
 @endif
@@ -414,7 +414,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 
 .ct-wrap { max-width: 820px; margin: 0 auto; padding: 1.5rem; }
 
-/* ── BACK BUTTON ── */
+/* â-€â-€ BACK BUTTON â-€â-€ */
 .btn-back {
     display: inline-flex; align-items: center; gap: .6rem;
     padding: .65rem 1rem;
@@ -427,7 +427,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .btn-back:hover { border-color: #6366f1; color: #6366f1; transform: translateX(-3px); }
 .btn-back i { font-size: 1.1rem; }
 
-/* ── CARD ── */
+/* â-€â-€ CARD â-€â-€ */
 .ct-card {
     background: #fff;
     border-radius: 20px;
@@ -436,7 +436,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
     overflow: hidden;
 }
 
-/* ── HEADER ── */
+/* â-€â-€ HEADER â-€â-€ */
 .ct-head {
     padding: 1.75rem 2rem;
     background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
@@ -459,10 +459,10 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .ct-head h2 { color: #fff; font-size: 1.3rem; font-weight: 700; margin-bottom: .25rem; }
 .ct-head p  { color: rgba(255,255,255,.85); font-size: .875rem; margin: 0; }
 
-/* ── BODY ── */
+/* â-€â-€ BODY â-€â-€ */
 .ct-body { padding: 1.75rem 2rem; }
 
-/* ── FIELD ── */
+/* â-€â-€ FIELD â-€â-€ */
 .ct-field { margin-bottom: 1.5rem; }
 .ct-label {
     display: flex; align-items: center; gap: .4rem;
@@ -505,14 +505,14 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .ct-textarea.is-err { border-color: #ef4444; background: #fef2f2; }
 .char-row { display: flex; justify-content: flex-end; font-size: .75rem; color: #9ca3af; margin-top: .35rem; }
 
-/* ── ERROR ── */
+/* â-€â-€ ERROR â-€â-€ */
 .field-err {
     display: none; align-items: center; gap: .35rem;
     color: #ef4444; font-size: .8rem; font-weight: 600; margin-top: .4rem;
 }
 .field-err i { font-size: .95rem; }
 
-/* ── URGENCY INFO ── */
+/* â-€â-€ URGENCY INFO â-€â-€ */
 .urg-note {
     display: flex; gap: .75rem;
     padding: .875rem 1rem;
@@ -522,7 +522,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 }
 .urg-note i { font-size: 1.2rem; color: #92400e; flex-shrink: 0; margin-top: .1rem; }
 
-/* ── URGENCY GRID ── */
+/* â-€â-€ URGENCY GRID â-€â-€ */
 .urg-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -563,10 +563,10 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .urg-btn.urg-critical.active .urg-name,
 .urg-btn.urg-critical.active .urg-desc { color: #991b1b; }
 
-/* ── DIVIDER ── */
+/* â-€â-€ DIVIDER â-€â-€ */
 .ct-divider { height: 1px; background: #f0f0f0; margin: 1.5rem 0; }
 
-/* ── COLLAPSIBLE EVENT ── */
+/* â-€â-€ COLLAPSIBLE EVENT â-€â-€ */
 .coll-trigger {
     display: flex; justify-content: space-between; align-items: center;
     padding: .75rem 1rem; margin: 0 -1rem;
@@ -586,7 +586,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 }
 .event-grid input { padding: .75rem 1rem; font-size: .9rem; }
 
-/* ── UPLOAD ── */
+/* â-€â-€ UPLOAD â-€â-€ */
 .upload-head {
     display: flex; justify-content: space-between;
     align-items: center; margin-bottom: 1rem;
@@ -618,7 +618,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .drop-zone h6 { font-size: .95rem; font-weight: 700; color: #1e293b; margin-bottom: .3rem; }
 .drop-zone p  { font-size: .8rem; color: #64748b; margin: 0; }
 
-/* ── PROGRESS ── */
+/* â-€â-€ PROGRESS â-€â-€ */
 .upload-progress {
     display: flex; align-items: center; gap: .75rem;
     margin-top: .75rem; font-size: .8rem; color: #64748b;
@@ -626,7 +626,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .progress-bar  { flex: 1; height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #7c3aed); transition: width .25s; }
 
-/* ── FILE LIST ── */
+/* â-€â-€ FILE LIST â-€â-€ */
 .file-list { margin-top: .875rem; display: flex; flex-direction: column; gap: .5rem; }
 .file-item {
     display: flex; align-items: center; gap: .75rem;
@@ -656,7 +656,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 }
 .file-rm:hover { background: #fee2e2; color: #ef4444; }
 
-/* ── ACTIONS ── */
+/* â-€â-€ ACTIONS â-€â-€ */
 .ct-actions {
     display: flex; gap: .875rem; justify-content: flex-end;
     padding: 1.25rem 2rem 1.75rem;
@@ -685,7 +685,7 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(99,102,241,.45); }
 .btn-submit:disabled { opacity: .65; cursor: not-allowed; transform: none; }
 
-/* ── RESPONSIVE ── */
+/* â-€â-€ RESPONSIVE â-€â-€ */
 @media (max-width: 768px) {
     .ct-wrap   { padding: 1rem; }
     .ct-head   { padding: 1.25rem; }
@@ -701,4 +701,5 @@ document.getElementById('ctForm').addEventListener('submit', function(e) {
 }
 </style>
 @endpush
+
 

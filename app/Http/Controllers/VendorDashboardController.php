@@ -108,7 +108,7 @@ class VendorDashboardController extends Controller
         $trendData = $this->buildTrend($vendorId, 'monthly');
 
         $donutData = [
-            'labels' => ['New','In Progress','Waiting Response','Resolved','Closed'],
+            'labels' => ['Baru','In Progress','Waiting Response','Resolved','Closed'],
             'values' => [
                 $performance['tickets_by_status']['new'] ?? 0,
                 $performance['tickets_by_status']['in_progress'] ?? 0,
@@ -156,3 +156,4 @@ class VendorDashboardController extends Controller
         return $items;
     }
 }
+

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Manajemen Kategori')
 @section('page_title', 'Manajemen Kategori')
@@ -9,7 +9,7 @@
 @section('content')
 <div class="categories-wrap">
 
-    {{-- ═══ FLASH MESSAGES ═══ --}}
+    {{-- FLASH MESSAGES --}}
     @if(session('success'))
     <div class="flash-success">
         <i class='bx bx-check-circle'></i>
@@ -24,7 +24,7 @@
     </div>
     @endif
 
-    {{-- ═══ HERO ═══ --}}
+    {{-- HERO --}}
     <section class="cat-hero">
         <div class="cat-hero-text">
             <h4>Manajemen Kategori</h4>
@@ -35,7 +35,7 @@
         </button>
     </section>
 
-    {{-- ═══ CATEGORY LIST ═══ --}}
+    {{-- CATEGORY LIST --}}
     <article class="cat-card">
         @if($categories->isEmpty())
             <div class="cat-empty">
@@ -86,7 +86,7 @@
                             @if(($category->tickets_count ?? 0) > 0)
                                 <button
                                     class="cat-btn-icon cat-btn-delete"
-                                    title="Tidak bisa dihapus — ada tiket aktif"
+                                    title="Tidak bisa dihapus - ada tiket aktif"
                                     disabled
                                 >
                                     <i class='bx bx-trash'></i>
@@ -111,9 +111,8 @@
 
 </div>
 
-{{-- ════════════════════════════════════════════
-     MODAL: ADD / EDIT CATEGORY
-════════════════════════════════════════════ --}}
+{{--â•â•
+     MODAL: ADD / EDIT CATEGORYâ•â• --}}
 <div class="cat-modal-backdrop" id="categoryModalBackdrop">
     <div class="cat-modal" id="categoryModal" role="dialog" aria-modal="true">
 
@@ -188,9 +187,8 @@
     </div>
 </div>
 
-{{-- ════════════════════════════════════════════
-     MODAL: DELETE CONFIRMATION
-════════════════════════════════════════════ --}}
+{{--â•â•
+     MODAL: DELETE CONFIRMATIONâ•â• --}}
 <div class="cat-modal-backdrop" id="deleteModalBackdrop">
     <div class="cat-modal cat-delete-modal" role="dialog" aria-modal="true">
 
@@ -206,7 +204,7 @@
 
         <div class="cat-delete-warning">
             <p>Anda yakin ingin menghapus kategori berikut?</p>
-            <div class="cat-delete-detail" id="deleteTargetName">—</div>
+            <div class="cat-delete-detail" id="deleteTargetName">-</div>
         </div>
 
         <div class="cat-modal-footer">
@@ -226,15 +224,14 @@
 
 @push('scripts')
 <script>
-/* ═══════════════════════════════════════════
+/*â•
    CATEGORY MODAL CONTROLLER
-   Vanilla JS — no framework dependency
-═══════════════════════════════════════════ */
+   Vanilla JS - no framework dependencyâ• */
 
 const backdrop    = document.getElementById('categoryModalBackdrop')
 const delBackdrop = document.getElementById('deleteModalBackdrop')
 
-/* ── Helpers ── */
+/* â-€â-€ Helpers â-€â-€ */
 function showBackdrop(el) {
     el.classList.add('show')
     document.body.style.overflow = 'hidden'
@@ -245,7 +242,7 @@ function hideBackdrop(el) {
     document.body.style.overflow = ''
 }
 
-/* ── Add Modal ── */
+/* â-€â-€ Add Modal â-€â-€ */
 function openAddModal() {
     document.getElementById('modalTitle').textContent    = 'Tambah Kategori Baru'
     document.getElementById('modalSubtitle').textContent = 'Buat kategori untuk mengorganisir tiket'
@@ -263,7 +260,7 @@ function openAddModal() {
     setTimeout(() => document.getElementById('catName').focus(), 300)
 }
 
-/* ── Edit Modal ── */
+/* â-€â-€ Edit Modal â-€â-€ */
 function openEditModal(id, name, description, isActive) {
     document.getElementById('modalTitle').textContent    = 'Edit Kategori'
     document.getElementById('modalSubtitle').textContent = 'Perbarui informasi kategori'
@@ -281,12 +278,12 @@ function openEditModal(id, name, description, isActive) {
     setTimeout(() => document.getElementById('catName').focus(), 300)
 }
 
-/* ── Close ── */
+/* â-€â-€ Close â-€â-€ */
 function closeModal() {
     hideBackdrop(backdrop)
 }
 
-/* ── Delete Modal ── */
+/* â-€â-€ Delete Modal â-€â-€ */
 function openDeleteModal(id, name) {
     document.getElementById('deleteTargetName').textContent = name
     document.getElementById('deleteForm').action = `/admin/categories/${id}`
@@ -297,7 +294,7 @@ function closeDeleteModal() {
     hideBackdrop(delBackdrop)
 }
 
-/* ── Close on backdrop click ── */
+/* â-€â-€ Close on backdrop click â-€â-€ */
 backdrop.addEventListener('click', function(e) {
     if (e.target === backdrop) closeModal()
 })
@@ -306,7 +303,7 @@ delBackdrop.addEventListener('click', function(e) {
     if (e.target === delBackdrop) closeDeleteModal()
 })
 
-/* ── Close on Escape ── */
+/* â-€â-€ Close on Escape â-€â-€ */
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeModal()
@@ -314,7 +311,7 @@ document.addEventListener('keydown', function(e) {
     }
 })
 
-/* ── Form submit: show loading state ── */
+/* â-€â-€ Form submit: show loading state â-€â-€ */
 document.getElementById('categoryForm').addEventListener('submit', function() {
     const btn  = document.getElementById('saveBtn')
     const text = document.getElementById('saveBtnText')
@@ -327,12 +324,11 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
 
 @push('styles')
 <style>
-/* ═══════════════════════════════════════════
-   CATEGORIES PAGE — BLADE VERSION
-   Converted from Vue.js component
-═══════════════════════════════════════════ */
+/*â•
+   CATEGORIES PAGE - BLADE VERSION
+   Converted from Vue.js componentâ• */
 
-/* ── Variables (inherited from global or defined locally) ── */
+/* â-€â-€ Variables (inherited from global or defined locally) â-€â-€ */
 :root {
     --cat-primary: #4f46e5;
     --cat-primary-light: #eef2ff;
@@ -360,7 +356,7 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     gap: 1.5rem;
 }
 
-/* ── Hero Section ── */
+/* â-€â-€ Hero Section â-€â-€ */
 .cat-hero {
     display: flex;
     justify-content: space-between;
@@ -422,7 +418,7 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     color: white;
 }
 
-/* ── Flash Messages ── */
+/* â-€â-€ Flash Messages â-€â-€ */
 .flash-success,
 .flash-error {
     display: flex;
@@ -446,7 +442,7 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
-/* ── Card ── */
+/* â-€â-€ Card â-€â-€ */
 .cat-card {
     background: #ffffff;
     border-radius: var(--cat-radius);
@@ -455,7 +451,7 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     overflow: hidden;
 }
 
-/* ── Empty State ── */
+/* â-€â-€ Empty State â-€â-€ */
 .cat-empty {
     display: flex;
     flex-direction: column;
@@ -484,7 +480,7 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     color: var(--cat-text-light);
 }
 
-/* ── Category List ── */
+/* â-€â-€ Category List â-€â-€ */
 .category-list {
     display: flex;
     flex-direction: column;
@@ -661,9 +657,8 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
     cursor: not-allowed;
 }
 
-/* ═══════════════════════════════════════════
-   MODAL STYLES
-═══════════════════════════════════════════ */
+/*â•
+   MODAL STYLESâ• */
 .cat-modal-backdrop {
     position: fixed;
     inset: 0;
@@ -1009,3 +1004,4 @@ document.getElementById('categoryForm').addEventListener('submit', function() {
 }
 </style>
 @endpush
+
