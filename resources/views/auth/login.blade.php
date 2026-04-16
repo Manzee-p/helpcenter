@@ -183,43 +183,7 @@
                         Masuk dengan Google
                     </button>
 
-                    <!-- Demo Credentials -->
-                    <div class="demo-section">
-                        <div class="demo-header">
-                            <i class='bx bx-info-circle'></i>
-                            Demo Credentials
-                        </div>
-                        <div class="demo-grid">
-                            <div class="demo-item" onclick="fillCredentials('admin@helpcenter.test')" title="Klik untuk isi otomatis">
-                                <div class="demo-badge admin"><i class='bx bx-user-circle'></i></div>
-                                <div class="demo-info">
-                                    <div class="demo-role">Admin</div>
-                                    <div class="demo-email">admin@helpcenter.com</div>
-                                </div>
-                                <span class="demo-click">Klik isi</span>
-                            </div>
-                            <div class="demo-item" onclick="fillCredentials('vendor.sound@helpcenter.test')" title="Klik untuk isi otomatis">
-                                <div class="demo-badge vendor"><i class='bx bx-wrench'></i></div>
-                                <div class="demo-info">
-                                    <div class="demo-role">Vendor</div>
-                                    <div class="demo-email">vendor.sound@helpcenter.test</div>
-                                </div>
-                                <span class="demo-click">Klik isi</span>
-                            </div>
-                            <div class="demo-item" onclick="fillCredentials('rina@helpcenter.test')" title="Klik untuk isi otomatis">
-                                <div class="demo-badge client"><i class='bx bx-user'></i></div>
-                                <div class="demo-info">
-                                    <div class="demo-role">Client</div>
-                                    <div class="demo-email">rina@helpcenter.test</div>
-                                </div>
-                                <span class="demo-click">Klik isi</span>
-                            </div>
-                        </div>
-                        <div class="demo-password">
-                            <i class='bx bx-lock-alt'></i>
-                            Password default: <strong>password</strong>
-                        </div>
-                    </div>
+                    
 
                 </div><!-- /.card-body -->
             </div><!-- /.card -->
