@@ -215,9 +215,9 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 
 @push('styles')
 <style>
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* 
    PENDING RATINGS PAGE
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+ */
 .pending-ratings-page {
     display: flex;
     flex-direction: column;
@@ -226,18 +226,17 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
     padding-top: 0;
 }
 
-/* â-€â-€â-€â-€â-€ HERO â-€â-€â-€â-€â-€ */
+/* HERO */
 .pr-hero {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
-    padding: 1.75rem 2rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    padding: 1.75rem;
+    background: white;
+    border: 1px solid rgba(148,163,184,.12);
     border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(15,23,42,.2);
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 18px 36px rgba(15,23,42,.05);
 }
 .pr-hero::before {
     content: '';
@@ -258,12 +257,9 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
     pointer-events: none;
 }
 .pr-hero-text h1 {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    font-weight: 800;
-    color: #fff;
-    margin: 0 0 .4rem;
+    font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 800; color: #1f2937; margin: 0 0 .45rem;
 }
-.pr-hero-text p { color: rgba(255,255,255,.65); margin: 0; }
+.pr-hero-text p { color: rgba(17, 4, 4, 0.65); margin: 0; }
 .btn-refresh {
     display: inline-flex;
     align-items: center;
@@ -282,7 +278,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .btn-refresh:hover { background: rgba(255,255,255,.18); color: #fff; transform: translateY(-1px); }
 
-/* â-€â-€â-€â-€â-€ STAT CARDS â-€â-€â-€â-€â-€ */
+/* STAT CARDS */
 .pr-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0,1fr));
@@ -314,7 +310,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .stat-info span { font-size: .82rem; font-weight: 600; color: #64748b; }
 .stat-info strong { display: block; font-size: 1.85rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
 
-/* â-€â-€â-€â-€â-€ PROGRESS BAR â-€â-€â-€â-€â-€ */
+/* PROGRESS BAR */
 .progress-wrap {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -341,7 +337,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .progress-pct { font-size: 1rem; font-weight: 800; color: #4f46e5; white-space: nowrap; }
 
-/* â-€â-€â-€â-€â-€ TABLE CARD â-€â-€â-€â-€â-€ */
+/* TABLE CARD */
 .table-card {
     background: #fff;
     border: 1px solid rgba(148,163,184,.12);
@@ -449,7 +445,7 @@ table.pr-table { width: 100%; border-collapse: collapse; }
 }
 .btn-rate:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99,102,241,.3); }
 
-/* â-€â-€â-€â-€â-€ EMPTY STATE â-€â-€â-€â-€â-€ */
+/* EMPTY STATE */
 .empty-state {
     padding: 4rem 2rem;
     text-align: center;
@@ -458,7 +454,7 @@ table.pr-table { width: 100%; border-collapse: collapse; }
 .empty-title { font-size: 1.3rem; font-weight: 700; color: #1f2937; margin-bottom: .5rem; }
 .empty-text { color: #64748b; }
 
-/* â-€â-€â-€â-€â-€ MODAL â-€â-€â-€â-€â-€ */
+/* MODAL */
 .modal-overlay {
     position: fixed;
     inset: 0;
