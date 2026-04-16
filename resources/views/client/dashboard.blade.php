@@ -115,7 +115,7 @@
                             'urgent' => 'Mendesak',
                         ];
                         $desc = $ticket->description;
-                        $shortDesc = mb_strlen($desc) > 110 ? mb_substr($desc, 0, 110) . '-¶' : $desc;
+                        $shortDesc = mb_strlen($desc) > 110 ? mb_substr($desc, 0, 110) . '-ÔøΩ' : $desc;
                     @endphp
                     <a href="{{ route('client.tickets.index') }}" class="ticket-row">
                         <div class="ticket-row__main">
@@ -151,42 +151,6 @@
             @endif
         </article>
 
-        {{-- Quick Actions --}}
-        <article class="content-card">
-            <div class="section-head">
-                <div>
-                    <span class="section-kicker">Aksi Cepat</span>
-                    <h2>Yang bisa Anda lakukan</h2>
-                </div>
-            </div>
-
-            <div class="quick-actions">
-                <a href="{{ route('client.tickets.create') }}" class="quick-action">
-                    <i class='bx bx-plus-circle'></i>
-                    <div>
-                        <strong>Buat tiket baru</strong>
-                        <small>Kirim permintaan bantuan baru ke tim.</small>
-                    </div>
-                </a>
-
-                <a href="{{ route('client.tickets.index') }}" class="quick-action">
-                    <i class='bx bx-folder-open'></i>
-                    <div>
-                        <strong>Laporan saya</strong>
-                        <small>Lihat seluruh tiket aktif Anda.</small>
-                    </div>
-                </a>
-
-                <a href="{{ route('client.history') }}" class="quick-action">
-                    <i class='bx bx-star'></i>
-                    <div>
-                        <strong>Beri rating vendor</strong>
-                        <small>Periksa tiket selesai yang belum dinilai.</small>
-                    </div>
-                </a>
-            </div>
-        </article>
-
     </section>
 
 </div>
@@ -199,7 +163,7 @@
 ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê */
 .client-dashboard { display: flex; flex-direction: column; gap: 1.5rem; }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä HERO ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* HERO */
 .dashboard-hero {
     display: grid;
     grid-template-columns: minmax(0, 1.45fr) minmax(280px, .75fr);
@@ -276,7 +240,7 @@
 .focus-link { color: #4f46e5; font-weight: 700; text-decoration: none; font-size: .875rem; }
 .focus-link:hover { text-decoration: underline; }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä SUMMARY GRID ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* SUMMARY GRID */
 .summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -300,7 +264,7 @@
 .summary-card--done   { background: linear-gradient(180deg, #f0fdf4, #fff); border-color: rgba(34,197,94,.2); }
 .summary-card--rating { background: linear-gradient(180deg, #fff7ed, #fff); border-color: rgba(249,115,22,.2); }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä PENDING STRIP ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* PENDING STRIP */
 .pending-strip {
     background: #fff;
     border: 1px solid rgba(99,102,241,.1);
@@ -350,10 +314,11 @@
 .pending-item p { margin: .4rem 0; color: #0f172a; font-weight: 700; }
 .pending-item small { color: #64748b; font-size: .8rem; }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä CONTENT GRID ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* CONTENT GRID */
+/* CONTENT GRID */
 .content-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(280px, .75fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 .content-card {
@@ -364,7 +329,7 @@
     padding: 1.35rem;
 }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä TICKET LIST ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* TICKET LIST */
 .ticket-list { display: grid; gap: .9rem; }
 .ticket-row {
     background: #fff;
@@ -399,7 +364,7 @@
     font-size: .85rem;
 }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä CHIPS / PILLS ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* CHIPS / PILLS */
 .meta-pill {
     display: inline-flex;
     align-items: center;
@@ -444,7 +409,7 @@
 .priority-urgent,
 .priority-critical { background: rgba(239,68,68,.12);   color: #b91c1c; }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä QUICK ACTIONS ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* QUICK ACTIONS */
 .quick-actions { display: grid; gap: .9rem; }
 .quick-action {
     background: #fff;
@@ -463,7 +428,7 @@
 .quick-action strong { display: block; color: #0f172a; font-weight: 800; }
 .quick-action small { color: #64748b; }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä EMPTY STATE ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* EMPTY STATE */
 .empty-state {
     border: 1px dashed rgba(148,163,184,.5);
     border-radius: 20px;
@@ -473,7 +438,7 @@
     font-size: .9rem;
 }
 
-/* ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä RESPONSIVE ‚-Ä‚-Ä‚-Ä‚-Ä‚-Ä */
+/* RESPONSIVE */
 @media (max-width: 1199px) {
     .summary-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     .pending-list { grid-template-columns: repeat(2, minmax(0,1fr)); }

@@ -115,9 +115,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/login-history', [AdminSettingsController::class, 'getLoginHistory'])->name('login-history');
             Route::get('/sessions', [AdminSettingsController::class, 'getSessions'])->name('sessions');
             Route::get('/activity-logs', [AdminSettingsController::class, 'getActivityLogs'])->name('activity-logs');
-            Route::post('/notifications', [AdminSettingsController::class, 'saveNotifications'])->name('notifications');
-            Route::post('/preferences', [AdminSettingsController::class, 'savePreferences'])->name('preferences');
-            Route::get('/export-data', [AdminSettingsController::class, 'exportData'])->name('export-data');
         });
     });
 
@@ -136,9 +133,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/login-history', [VendorSettingsController::class, 'getLoginHistory'])->name('login-history');
             Route::get('/sessions', [VendorSettingsController::class, 'getSessions'])->name('sessions');
             Route::get('/activity-logs', [VendorSettingsController::class, 'getActivityLogs'])->name('activity-logs');
-            Route::post('/notifications', [VendorSettingsController::class, 'saveNotifications'])->name('notifications');
-            Route::post('/preferences', [VendorSettingsController::class, 'savePreferences'])->name('preferences');
-            Route::get('/export-data', [VendorSettingsController::class, 'exportData'])->name('export-data');
         });
         Route::get('/tickets/{ticket}', [VendorController::class, 'show'])->name('tickets.show');
         Route::patch('/tickets/{ticket}/status', [VendorController::class, 'updateTicketStatus'])->name('tickets.update-status');
@@ -171,7 +165,5 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/profile', [ClientSettingsController::class, 'updateProfile'])->name('settings.profile');
         Route::post('/settings/avatar/delete', [ClientSettingsController::class, 'deleteAvatar'])->name('settings.avatar.delete');
         Route::post('/settings/password', [ClientSettingsController::class, 'changePassword'])->name('settings.password');
-        Route::post('/settings/notifications', [ClientSettingsController::class, 'saveNotifications'])->name('settings.notifications');
-        Route::post('/settings/preferences', [ClientSettingsController::class, 'savePreferences'])->name('settings.preferences');
     });
 });

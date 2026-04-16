@@ -15,7 +15,7 @@
 </head>
 <body>
 
-    {{-- â•â•â• NAVBAR â•â•â• --}}
+    {{-- NAVBAR --}}
     <nav class="navbar" id="navbar">
         <div class="nav-inner">
             <a href="/" class="logo">
@@ -42,7 +42,7 @@
         </div>
     </nav>
 
-    {{-- â•â•â• HERO â•â•â• --}}
+    {{-- HERO --}}
     <section class="hero">
         <div class="hero-inner">
             <div class="hero-badge">
@@ -97,7 +97,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• HOW IT WORKS â•â•â• --}}
+    {{-- HOW IT WORKS --}}
     <section class="how-it-works">
         <div class="section-wrap">
             <div class="section-header">
@@ -130,7 +130,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• FEATURES â•â•â• --}}
+    {{-- FEATURES --}}
     <section class="features">
         <div class="section-wrap">
             <div class="section-header">
@@ -146,7 +146,7 @@
                     ['icon' => 'bx bx-conversation', 'title' => 'Komunikasi Mudah', 'desc' => 'Chat langsung dengan teknisi dan vendor untuk solusi cepat', 'color' => 'linear-gradient(135deg,#4facfe,#00f2fe)'],
                     ['icon' => 'bx bx-history', 'title' => 'Riwayat Lengkap', 'desc' => 'Akses semua riwayat tiket dan komunikasi kapan saja', 'color' => 'linear-gradient(135deg,#43e97b,#38f9d7)'],
                     ['icon' => 'bx bx-mobile', 'title' => 'Mobile Friendly', 'desc' => 'Akses dari mana saja, kapan saja melalui smartphone Anda', 'color' => 'linear-gradient(135deg,#fa709a,#fee140)'],
-                    ['icon' => 'bx bx-shield-check', 'title' => 'Aman & Terpercaya', 'desc' => 'Data Anda dijamin aman dengan enkripsi tingkat enterprise', 'color' => 'linear-gradient(135deg,#30cfd0,#330867)'],
+                    ['icon' => 'bx bx-shield', 'title' => 'Aman & Terpercaya', 'desc' => 'Data Anda dijamin aman dengan enkripsi tingkat enterprise', 'color' => 'linear-gradient(135deg,#30cfd0,#330867)'],
                 ];
             @endphp
 
@@ -164,7 +164,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• DASHBOARD PREVIEW â•â•â• --}}
+    {{-- DASHBOARD PREVIEW --}}
     <section class="dashboard-preview">
         <div class="section-wrap">
             <div class="section-header">
@@ -174,37 +174,9 @@
             </div>
 
             <div class="preview-layout">
-                <div class="mockup-wrap">
-                    <div class="mockup-bar">
-                        <div class="mockup-dots">
-                            <span></span><span></span><span></span>
-                        </div>
-                        <div class="mockup-addr">dashboard</div>
-                    </div>
-                    <div class="mockup-body">
-                        <div class="mock-side">
-                            <div class="mock-nav-dot active"></div>
-                            <div class="mock-nav-dot"></div>
-                            <div class="mock-nav-dot"></div>
-                            <div class="mock-nav-dot"></div>
-                        </div>
-                        <div class="mock-content">
-                            <div class="mock-topbar"></div>
-                            <div class="mock-cards-row">
-                                <div class="mock-stat"></div>
-                                <div class="mock-stat"></div>
-                                <div class="mock-stat"></div>
-                                <div class="mock-stat"></div>
-                            </div>
-                            <div class="mock-rows">
-                                <div class="mock-row"></div>
-                                <div class="mock-row"></div>
-                                <div class="mock-row"></div>
-                                <div class="mock-row"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+                <!-- INI YANG DIPERBAIKI -->
+                <div class="mock-content preview-img"></div>
 
                 <div class="preview-features">
                     <div class="pf-item">
@@ -229,11 +201,12 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
 
-    {{-- â•â•â• BENEFITS â•â•â• --}}
+    {{-- BENEFITS --}}
     <section class="benefits">
         <div class="section-wrap">
             <div class="section-header">
@@ -262,38 +235,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• INTEGRATIONS â•â•â• --}}
-    <section class="integrations">
-        <div class="section-wrap">
-            <div class="section-header">
-                <span class="section-eyebrow">Integrasi</span>
-                <h2 class="section-title">Terintegrasi dengan Tools Favorit</h2>
-                <p class="section-sub">Hubungkan dengan aplikasi yang sudah Anda gunakan</p>
-            </div>
-
-            @php
-                $integrations = [
-                    ['name' => 'Slack', 'icon' => 'bx bxl-slack'],
-                    ['name' => 'Google', 'icon' => 'bx bxl-google'],
-                    ['name' => 'Microsoft', 'icon' => 'bx bxl-microsoft'],
-                    ['name' => 'Trello', 'icon' => 'bx bxl-trello'],
-                    ['name' => 'Gmail', 'icon' => 'bx bx-envelope'],
-                    ['name' => 'Zoom', 'icon' => 'bx bx-video'],
-                ];
-            @endphp
-
-            <div class="integrations-grid">
-                @foreach($integrations as $int)
-                <div class="integration-card">
-                    <i class='{{ $int['icon'] }}'></i>
-                    <span>{{ $int['name'] }}</span>
-                </div>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
-    {{-- â•â•â• TESTIMONIALS â•â•â• --}}
+    {{-- TESTIMONIALS --}}
     <section class="testimonials">
         <div class="section-wrap">
             <div class="section-header">
@@ -330,7 +272,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• FAQ â•â•â• --}}
+    {{-- FAQ --}}
     <section class="faq">
         <div class="section-wrap">
             <div class="section-header">
@@ -365,7 +307,7 @@
         </div>
     </section>
 
-    {{-- â•â•â• CTA â•â•â• --}}
+    {{-- CTA --}}
     <section class="cta">
         <div class="cta-inner">
             <div class="cta-icon"><i class='bx bx-rocket'></i></div>
@@ -1320,6 +1262,25 @@
             .cta h2 { font-size: 2rem; }
 
             .mock-cards-row { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .preview-img {
+            padding: 0 !important;
+            min-height: 340px;
+            border-radius: 16px;
+            overflow: hidden;
+
+            background-image: url('{{ asset('assets/img/mockup.png') }}');
+            background-size: cover;
+            background-position: top center;
+            background-repeat: no-repeat;
+
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .preview-img:hover {
+            transform: scale(1.02);
         }
     </style>
 

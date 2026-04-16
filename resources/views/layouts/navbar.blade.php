@@ -1,6 +1,4 @@
-﻿{{-- resources/views/layouts/navbar.blade.php --}}
-
-<nav class="layout-navbar" id="layout-navbar">
+﻿<nav class="layout-navbar" id="layout-navbar">
 
     <!-- Mobile toggle -->
     <button class="sidebar-toggle-btn d-md-none" onclick="toggleSidebar()">
@@ -81,19 +79,19 @@
             </div>
         </li>
 
-        {{-- â-€â-€ NOTIFIKASI â-€â-€ include partial yang sudah ada script-nya --}}
-        <li style="position:relative;">
+        {{-- NOTIFIKASI --}}
+        <li style="position:relative; display:flex; align-items:center;">
             @include('layouts.notifications-dropdown')
         </li>
 
         <!-- User dropdown -->
         <li style="position:relative;">
             <button class="user-btn" onclick="toggleDrop('user-drop')">
-                <div class="user-av">
+                <div class="user-av" id="navbarAvatarWrap">
                     @if(Auth::user()->avatar)
-                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="user-av-img" />
+                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="user-av-img" id="navbarAvatarImg" />
                     @else
-                        <span>{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                        <span id="navbarAvatarInitial">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
                     @endif
                     <span class="online-dot"></span>
                 </div>
@@ -110,13 +108,12 @@
             </button>
 
             <div class="nav-drop user-drop" id="user-drop" style="display:none;">
-                <!-- User info header -->
                 <div class="user-drop-header">
-                    <div class="user-av-lg">
+                    <div class="user-av-lg" id="userDropAvatarWrap">
                         @if(Auth::user()->avatar)
-                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" />
+                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" id="userDropAvatarImg" />
                         @else
-                            <span>{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                            <span id="userDropAvatarInitial">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
                         @endif
                         <span class="online-dot-lg"></span>
                     </div>
@@ -151,7 +148,7 @@
 </nav>
 
 <style>
-/* â-€â-€â-€â-€â-€ NAVBAR â-€â-€â-€â-€â-€ */
+/* ─── NAVBAR ─────────────────────────────────────────── */
 .layout-navbar {
     position: fixed;
     top: 0;
@@ -168,10 +165,7 @@
     box-shadow: var(--shadow-sm);
     transition: left 0.3s ease;
 }
-
-@media (max-width: 991px) {
-    .layout-navbar { left: 0; }
-}
+@media (max-width: 991px) { .layout-navbar { left: 0; } }
 
 .sidebar-toggle-btn {
     background: none; border: none; cursor: pointer;
@@ -183,25 +177,21 @@
 .sidebar-toggle-btn:hover { background: var(--bg); color: var(--text); }
 
 .navbar-title {
-    flex: 1;
-    min-width: 0;
+    flex: 1; min-width: 0;
     background: linear-gradient(135deg, #eef2ff 0%, #fff7ed 100%);
     border: 1px solid rgba(79,70,229,0.12);
     border-radius: 12px;
     padding: 0.4rem 0.8rem;
 }
-.navbar-title h4 {
-    font-size: 1.05rem; font-weight: 800; color: var(--text);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.navbar-title p { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
+.navbar-title h4 { font-size: 1.05rem; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.navbar-title p  { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
 
 .navbar-actions {
     display: flex; align-items: center; gap: 0.375rem;
     list-style: none; margin: 0; flex-shrink: 0;
 }
 
-/* Action button */
+/* ─── ACTION BUTTON ──────────────────────────────────── */
 .action-btn {
     width: 38px; height: 38px;
     background: none; border: none; cursor: pointer;
@@ -212,7 +202,7 @@
 }
 .action-btn:hover { background: var(--bg); color: var(--primary); }
 
-/* Search */
+/* ─── SEARCH ─────────────────────────────────────────── */
 .search-wrap { position: relative; width: 260px; }
 .search-wrap > i {
     position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
@@ -227,7 +217,6 @@
 }
 .search-input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
 .search-input::placeholder { color: var(--text-light); }
-
 .search-drop {
     position: absolute; top: calc(100% + 6px); left: 0; right: 0;
     background: white; border: 1px solid var(--border); border-radius: 10px;
@@ -246,45 +235,45 @@
 }
 .search-empty i { font-size: 1.75rem; }
 
-/* Notification dot (dipakai oleh partial notifications-dropdown) */
-.notif-btn { position: relative; }
-.badge-dot {
-    position: absolute; top: 7px; right: 7px;
-    width: 8px; height: 8px; background: var(--danger); border-radius: 50%;
-    border: 2px solid white;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse {
-    0%,100% { transform: scale(1); }
-    50%      { transform: scale(1.15); }
-}
-
-/* Dropdowns */
+/* ─── DROPDOWN BASE ──────────────────────────────────── */
 .nav-drop {
-    position: absolute; top: calc(100% + 8px); right: 0;
-    background: white; border: 1px solid var(--border); border-radius: 12px;
-    box-shadow: var(--shadow-lg); z-index: 1001; min-width: 280px;
-    animation: dropIn 0.15s ease;
+    position: absolute; top: calc(100% + 10px); right: 0;
+    background: white; border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.06);
+    z-index: 1001; min-width: 280px;
+    animation: dropIn 0.18s cubic-bezier(.22,.68,0,1.2);
+    overflow: hidden;
 }
 @keyframes dropIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .drop-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 0.875rem 1.125rem;
+    padding: 1rem 1.125rem;
     font-size: 0.9375rem; font-weight: 700; color: var(--text);
-    background: var(--bg); border-radius: 12px 12px 0 0;
+    background: white;
 }
 .badge-count {
     background: var(--primary); color: white;
     font-size: 0.6875rem; padding: 0.2rem 0.5rem;
     border-radius: 20px; font-weight: 700;
 }
-.drop-divider { height: 1px; background: var(--border); }
+.drop-divider { height: 1px; background: var(--border); margin: 0; }
 
-/* Shortcuts */
+/* ─── NOTIFICATION BADGE ─────────────────────────────── */
+.badge-dot {
+    position: absolute; top: 6px; right: 6px;
+    min-width: 17px; height: 17px; padding: 0 4px;
+    background: #ef4444; color: #fff;
+    border-radius: 999px; border: 2px solid white;
+    font-size: 9px; font-weight: 800; letter-spacing: -0.3px;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+}
+
+/* ─── SHORTCUTS ──────────────────────────────────────── */
 .shortcuts-drop { min-width: 300px; }
 .shortcuts-grid {
     display: grid; grid-template-columns: 1fr 1fr;
@@ -303,10 +292,7 @@
 }
 .shortcut-item span { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-align: center; }
 
-/* Notifications dropdown - min-width diatur di partial */
-.notif-drop { min-width: 340px; }
-
-/* User button */
+/* ─── USER BUTTON ────────────────────────────────────── */
 .user-btn {
     display: flex; align-items: center; gap: 0.625rem;
     background: none; border: none; cursor: pointer;
@@ -328,17 +314,16 @@
     border: 2px solid white; border-radius: 50%; z-index: 1;
 }
 .user-text { display: flex; flex-direction: column; align-items: flex-start; }
-.u-name { font-size: 0.8125rem; font-weight: 700; color: var(--text); line-height: 1.2; }
-.u-role { font-size: 0.71rem; color: var(--text-muted); }
-.chev { font-size: 1.125rem; color: var(--text-muted); }
+.u-name  { font-size: 0.8125rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+.u-role  { font-size: 0.71rem; color: var(--text-muted); }
+.chev    { font-size: 1.125rem; color: var(--text-muted); }
 
-/* User dropdown */
+/* ─── USER DROPDOWN ──────────────────────────────────── */
 .user-drop { min-width: 260px; }
 .user-drop-header {
     display: flex; align-items: center; gap: 0.875rem;
     padding: 1.125rem;
     background: linear-gradient(135deg, rgba(79,70,229,0.04), rgba(124,58,237,0.04));
-    border-radius: 12px 12px 0 0;
 }
 .user-av-lg {
     position: relative; width: 52px; height: 52px;
@@ -368,23 +353,24 @@
 .drop-item--danger { color: var(--danger) !important; }
 .drop-item--danger:hover { background: rgba(239,68,68,0.06) !important; }
 
-/* View all link (dipakai partial notif) */
 .view-all-link {
     display: block; text-align: center; padding: 0.75rem;
     font-size: 0.875rem; font-weight: 700; color: var(--primary);
     text-decoration: none; transition: background 0.15s;
-    border-radius: 0 0 12px 12px;
 }
 .view-all-link:hover { background: var(--bg); }
+
+.layout-navbar {
+    top: 0 !important;
+    margin-top: 0 !important;
+}
 </style>
 
 <script>
-// â-€â-€â-€ Generic dropdown toggle â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 function toggleDrop(id) {
-    const target    = document.getElementById(id);
+    const target = document.getElementById(id);
     if (!target) return;
     const isVisible = target.style.display === 'block';
-    // tutup semua dulu
     ['user-drop','notif-drop','shortcuts-drop','search-drop'].forEach(d => {
         const el = document.getElementById(d);
         if (el) el.style.display = 'none';
@@ -392,21 +378,16 @@ function toggleDrop(id) {
     target.style.display = isVisible ? 'none' : 'block';
 }
 
-// Tutup dropdown saat klik di luar
 document.addEventListener('click', function (e) {
     ['user-drop','notif-drop','shortcuts-drop'].forEach(id => {
         const drop = document.getElementById(id);
-        if (drop && !drop.closest('li')?.contains(e.target)) {
-            drop.style.display = 'none';
-        }
+        if (drop && !drop.closest('li')?.contains(e.target)) drop.style.display = 'none';
     });
-    // search
     const sw = document.getElementById('search-wrap');
     const sd = document.getElementById('search-drop');
     if (sd && sw && !sw.contains(e.target)) sd.style.display = 'none';
 });
 
-// â-€â-€â-€ Fullscreen â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 function toggleFullscreen() {
     const icon = document.getElementById('fullscreen-icon');
     if (!document.fullscreenElement) {
@@ -418,18 +399,15 @@ function toggleFullscreen() {
     }
 }
 
-// â-€â-€â-€ Search â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€â-€
 let navSearchTimer = null;
-
 function showSearchDrop() {
     const searchDrop = document.getElementById('search-drop');
     if (searchDrop) searchDrop.style.display = 'block';
 }
-
 function handleNavSearch(val) {
     clearTimeout(navSearchTimer);
     const inner = document.getElementById('search-results-inner');
-    const drop = document.getElementById('search-drop');
+    const drop  = document.getElementById('search-drop');
     if (!inner || !drop) return;
     if (!val.trim()) {
         inner.innerHTML = `<div class="search-empty"><i class='bx bx-search-alt'></i><span>Ketik untuk mencari...</span></div>`;
@@ -437,9 +415,7 @@ function handleNavSearch(val) {
     }
     inner.innerHTML = `<div class="search-empty"><i class='bx bx-loader-alt bx-spin'></i><span>Mencari...</span></div>`;
     drop.style.display = 'block';
-
     navSearchTimer = setTimeout(() => {
-        // TODO: ganti dengan AJAX ke endpoint pencarian tiket/user yang sesungguhnya
         inner.innerHTML = `
             <div class="search-result-item"><i class='bx bx-file'></i><span>Tiket #TKT-${val.toUpperCase()}</span></div>
             <div class="search-result-item"><i class='bx bx-user'></i><span>User: ${val}</span></div>
@@ -447,4 +423,3 @@ function handleNavSearch(val) {
     }, 500);
 }
 </script>
-

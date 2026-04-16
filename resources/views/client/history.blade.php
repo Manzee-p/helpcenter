@@ -4,8 +4,6 @@
 @section('page_title', 'Riwayat Laporan')
 @section('breadcrumb', 'Home / Riwayat')
 
-
-
 @section('content')
 <div class="history-page">
 
@@ -105,7 +103,7 @@
                     'urgent' => 'Mendesak',
                 ];
                 $desc = $ticket->description;
-                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . '-¦' : $desc;
+                $shortDesc = mb_strlen($desc) > 150 ? mb_substr($desc, 0, 150) . '-ï¿½' : $desc;
             @endphp
             <a href="{{ route('client.tickets.show', $ticket->id) }}" class="item-card">
                 <div class="item-main">
@@ -217,9 +215,7 @@
         </form>
     </div>
 </div>
-@endsection
 
-@push('scripts')
 <script>
 let searchTimeout = null;
 function debounceSubmit() {
@@ -251,13 +247,11 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
     if (e.target === this) closeFeedback();
 });
 </script>
-@endpush
 
-@push('styles')
 <style>
 .history-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* â-€â-€â-€â-€â-€ PAGE HEADER â-€â-€â-€â-€â-€ */
+/*  PAGE HEADER  */
 .page-header-card {
     display: flex;
     justify-content: space-between;
@@ -288,7 +282,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .btn-create:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(99,102,241,.35); color: white; }
 .btn-create i { font-size: 1.25rem; }
 
-/* â-€â-€â-€â-€â-€ PENDING HIGHLIGHT â-€â-€â-€â-€â-€ */
+/*  PENDING HIGHLIGHT  */
 .pending-highlight {
     background: white;
     border: 1px solid rgba(245,158,11,.2);
@@ -331,7 +325,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .highlight-item strong { color: #b7791f; font-weight: 800; }
 .highlight-item span   { color: #334155; font-size: .9rem; }
 
-/* â-€â-€â-€â-€â-€ FILTERS â-€â-€â-€â-€â-€ */
+/*  FILTERS  */
 .filter-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -387,7 +381,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 }
 .btn-reset:hover { border-color: #6366f1; color: #6366f1; }
 
-/* â-€â-€â-€â-€â-€ ITEMS LIST â-€â-€â-€â-€â-€ */
+/*  ITEMS LIST  */
 .items-list { display: flex; flex-direction: column; gap: 1rem; }
 
 .item-card {
@@ -492,7 +486,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .status-resolved         { background: rgba(34,197,94,.12);  color: #15803d; }
 .status-closed           { background: rgba(148,163,184,.14);color: #475569; }
 
-/* â-€â-€â-€â-€â-€ STATE CARDS â-€â-€â-€â-€â-€ */
+/*  STATE CARDS  */
 .state-card {
     background: white;
     border: 1px solid rgba(148,163,184,.12);
@@ -505,7 +499,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .state-title { font-size: 1.45rem; font-weight: 700; color: #2c3e50; margin-bottom: .75rem; }
 .state-text  { font-size: .95rem; color: #6c757d; margin-bottom: 1.5rem; }
 
-/* â-€â-€â-€â-€â-€ PAGINATION â-€â-€â-€â-€â-€ */
+/*  PAGINATION  */
 .pagination-wrap {
     display: flex;
     justify-content: center;
@@ -531,7 +525,7 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 .page-btn.active { background: linear-gradient(135deg,#6366f1,#7c3aed); color: white; border-color: transparent; }
 .page-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* â-€â-€â-€â-€â-€ FEEDBACK MODAL â-€â-€â-€â-€â-€ */
+/*  FEEDBACK MODAL  */
 .modal-overlay {
     display: none;
     position: fixed; inset: 0;
@@ -612,7 +606,4 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
     .item-arrow { display: none; }
 }
 </style>
-@endpush
-
-
-
+@endsection

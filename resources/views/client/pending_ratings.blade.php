@@ -4,8 +4,6 @@
 @section('page_title', 'Belum Dirating')
 @section('breadcrumb', 'Home / Belum Dirating')
 
-
-
 @section('content')
 @php
     $total       = $tickets->count();
@@ -25,7 +23,7 @@
     {{-- HERO --}}
     <div class="pr-hero">
         <div class="pr-hero-text">
-            <h1>â­ Belum Dirating</h1>
+            <h1>⭐ Belum Dirating</h1>
             <p>Tiket yang sudah selesai tetapi masih menunggu penilaian dari Anda.</p>
         </div>
         <a href="{{ route('client.pending-ratings') }}" class="btn-refresh">
@@ -220,7 +218,13 @@ document.getElementById('feedbackModal').addEventListener('click', function(e) {
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    PENDING RATINGS PAGE
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
-.pending-ratings-page { display: flex; flex-direction: column; gap: 1.25rem; }
+.pending-ratings-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 0;
+    padding-top: 0;
+}
 
 /* â-€â-€â-€â-€â-€ HERO â-€â-€â-€â-€â-€ */
 .pr-hero {

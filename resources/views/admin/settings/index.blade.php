@@ -1,12 +1,30 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Pengaturan Admin')
+@section('title', 'Pengaturan Akun')
 @section('page_title', 'Pengaturan Akun')
 @section('breadcrumb', 'Home / Pengaturan')
 
 @section('content')
 @php
     $user = auth()->user();
+    $isVendor = $user->role === 'vendor';
+    $roleKey = $isVendor ? 'vendor' : 'admin';
+    $roleLabel = $isVendor ? 'Vendor' : 'Administrator';
+    $roleProfileDesc = $isVendor ? 'Perbarui data profil vendor' : 'Perbarui data profil administrator';
+    $settingsPageRoute = route($roleKey . '.settings');
+    $quickLinks = $isVendor
+        ? [
+            ['route' => route('vendor.dashboard'), 'icon' => 'bx-home-circle', 'label' => 'Dashboard', 'style' => 'background:#dbeafe;color:#2563eb'],
+            ['route' => route('vendor.tickets.index'), 'icon' => 'bx-support', 'label' => 'Tiket Saya', 'style' => 'background:#ede9fe;color:#7c3aed'],
+            ['route' => route('vendor.history'), 'icon' => 'bx-history', 'label' => 'Riwayat Ticket', 'style' => 'background:#fef3c7;color:#d97706'],
+            ['route' => route('vendor.reports'), 'icon' => 'bx-file', 'label' => 'Laporan Vendor', 'style' => 'background:#ffe4e6;color:#e11d48'],
+        ]
+        : [
+            ['route' => route('admin.dashboard'), 'icon' => 'bx-home-circle', 'label' => 'Dashboard', 'style' => 'background:#dbeafe;color:#2563eb'],
+            ['route' => route('admin.users.index'), 'icon' => 'bx-user', 'label' => 'Kelola Users', 'style' => 'background:#ede9fe;color:#7c3aed'],
+            ['route' => route('admin.vendors.index'), 'icon' => 'bx-store', 'label' => 'Kelola Vendors', 'style' => 'background:#fef3c7;color:#d97706'],
+            ['route' => route('admin.tickets.index'), 'icon' => 'bx-support', 'label' => 'Tiket Masuk', 'style' => 'background:#ffe4e6;color:#e11d48'],
+        ];
     $initials = collect(explode(' ', $user->name))->map(fn($w) => strtoupper(substr($w,0,1)))->take(2)->join('');
     $avatarUrl = $user->avatar ? asset('storage/'.$user->avatar) : null;
     $secScore = 0;
@@ -55,7 +73,7 @@
             <div class="as-hero-name" id="heroName">{{ $user->name }}</div>
             <div class="as-hero-email">{{ $user->email }}</div>
             <div class="as-hero-badges">
-                <span class="as-badge indigo"><i class="bx bx-shield-check"></i> Administrator</span>
+                <span class="as-badge indigo"><i class="bx bx-shield-check"></i> {{ $roleLabel }}</span>
                 <span class="as-badge green"><i class="bx bx-radio-circle-marked"></i> Aktif</span>
                 @if($user->position)
                     <span class="as-badge gray"><i class="bx bx-briefcase"></i> {{ $user->position }}</span>
@@ -91,12 +109,6 @@
     <button class="as-tab" onclick="switchTab('security', this)">
         <i class="bx bx-lock-alt"></i><span>Keamanan</span>
     </button>
-    <button class="as-tab" onclick="switchTab('notifications', this)">
-        <i class="bx bx-bell"></i><span>Notifikasi</span>
-    </button>
-    <button class="as-tab" onclick="switchTab('preferences', this)">
-        <i class="bx bx-cog"></i><span>Preferensi</span>
-    </button>
 </div>
 
 {{-- â•â•â• TAB: PROFIL â•â•â• --}}
@@ -107,7 +119,7 @@
         <div class="as-card">
             <div class="as-card-head h-indigo">
                 <div class="as-card-ico"><i class="bx bx-user"></i></div>
-                <div><h6>Informasi Profil</h6><p>Perbarui data profil administrator</p></div>
+                <div><h6>Informasi Profil</h6><p>{{ $roleProfileDesc }}</p></div>
             </div>
             <div class="as-card-body">
 
@@ -245,7 +257,7 @@
                 <div class="as-info-rows">
                     <div class="as-info-row">
                         <span class="as-info-lbl">Role</span>
-                        <span class="as-badge-sm indigo">Administrator</span>
+                        <span class="as-badge-sm indigo">{{ $roleLabel }}</span>
                     </div>
                     <div class="as-info-row">
                         <span class="as-info-lbl">Status</span>
@@ -269,22 +281,12 @@
 
                 <p class="as-sec-title">Akses Cepat</p>
                 <div class="as-quick-links">
-                    <a class="as-qlink" href="{{ route('admin.dashboard') }}">
-                        <span class="as-qico" style="background:#dbeafe;color:#2563eb"><i class="bx bx-home-circle"></i></span>
-                        <span>Dashboard</span><i class="bx bx-chevron-right chevron"></i>
+                    @foreach($quickLinks as $link)
+                    <a class="as-qlink" href="{{ $link['route'] }}">
+                        <span class="as-qico" style="{{ $link['style'] }}"><i class="bx {{ $link['icon'] }}"></i></span>
+                        <span>{{ $link['label'] }}</span><i class="bx bx-chevron-right chevron"></i>
                     </a>
-                    <a class="as-qlink" href="{{ route('admin.users.index') }}">
-                        <span class="as-qico" style="background:#ede9fe;color:#7c3aed"><i class="bx bx-user"></i></span>
-                        <span>Kelola Users</span><i class="bx bx-chevron-right chevron"></i>
-                    </a>
-                    <a class="as-qlink" href="{{ route('admin.vendors.index') }}">
-                        <span class="as-qico" style="background:#fef3c7;color:#d97706"><i class="bx bx-store"></i></span>
-                        <span>Kelola Vendors</span><i class="bx bx-chevron-right chevron"></i>
-                    </a>
-                    <a class="as-qlink" href="{{ route('admin.tickets.index') }}">
-                        <span class="as-qico" style="background:#ffe4e6;color:#e11d48"><i class="bx bx-support"></i></span>
-                        <span>Tiket Masuk</span><i class="bx bx-chevron-right chevron"></i>
-                    </a>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -462,7 +464,9 @@
             </div>
             <div class="as-card-body">
                 @php
-                    $notifSettings = $user->notification_settings ? json_decode($user->notification_settings, true) : [];
+        $notifSettings = is_array($user->notification_settings ?? null)
+            ? $user->notification_settings
+            : (is_string($user->notification_settings ?? null) ? (json_decode($user->notification_settings, true) ?: []) : []);
                     $notifications = [
                         ['id'=>'new_ticket','icon'=>'bx-file','title'=>'Tiket Baru','desc'=>'Notifikasi saat ada tiket baru masuk'],
                         ['id'=>'ticket_assigned','icon'=>'bx-user-check','title'=>'Penugasan Tiket','desc'=>'Notifikasi saat tiket ditugaskan ke vendor'],
@@ -551,7 +555,9 @@
 <div class="tab-panel" id="panel-preferences">
     <div class="as-two-col">
         @php
-            $prefs = $user->preferences ? json_decode($user->preferences, true) : [];
+            $prefs = is_array($user->preferences ?? null)
+                ? $user->preferences
+                : (is_string($user->preferences ?? null) ? (json_decode($user->preferences, true) ?: []) : []);
         @endphp
         <div class="as-card">
             <div class="as-card-head h-purple">
@@ -625,7 +631,7 @@
                             <p class="as-export-desc">Semua data profil, log, dan pengaturan dalam format JSON (GDPR)</p>
                         </div>
                     </div>
-                    <a href="{{ route('admin.settings') }}?export=1" class="as-btn teal" id="btnExport" onclick="exportData(event)">
+                    <a href="{{ $settingsPageRoute }}?export=1" class="as-btn teal" id="btnExport" onclick="exportData(event)">
                         <i class="bx bx-export"></i> Download Data
                     </a>
                 </div>
@@ -670,6 +676,7 @@
 
 <script>
 const CSRF = '{{ csrf_token() }}';
+const ROLE_KEY = '{{ $roleKey }}';
 const API_BASE = '{{ auth()->user()->role === "vendor" ? "/vendor/settings" : "/admin/settings" }}';
 
 // Tab Switching
@@ -708,6 +715,32 @@ function setLoading(btnId, loading, originalHtml) {
 
 // Avatar
 let selectedAvatarFile = null;
+function applyAvatarToGlobalUi(rawUrl) {
+    if (!rawUrl) return;
+    const bust = rawUrl + (rawUrl.includes('?') ? '&' : '?') + 'v=' + Date.now();
+
+    const avatarPreview = document.getElementById('avatarPreview');
+    if (avatarPreview) avatarPreview.src = bust;
+
+    const heroAvatar = document.getElementById('heroAvatar');
+    if (heroAvatar) heroAvatar.src = bust;
+
+    const navbarWrap = document.getElementById('navbarAvatarWrap');
+    if (navbarWrap) {
+        navbarWrap.innerHTML = '<img src="' + bust + '" alt="Avatar" class="user-av-img" id="navbarAvatarImg" /><span class="online-dot"></span>';
+    }
+
+    const userDropWrap = document.getElementById('userDropAvatarWrap');
+    if (userDropWrap) {
+        userDropWrap.innerHTML = '<img src="' + bust + '" alt="Avatar" id="userDropAvatarImg" /><span class="online-dot-lg"></span>';
+    }
+
+    const sidebarWrap = document.getElementById('sidebarAvatarWrap');
+    if (sidebarWrap) {
+        sidebarWrap.innerHTML = '<img src="' + bust + '" alt="Avatar" id="sidebarAvatarImg" />';
+    }
+}
+
 function handleAvatarChange(input) {
     const file = input.files[0];
     if (!file) return;
@@ -727,6 +760,8 @@ function handleAvatarChange(input) {
         else if (heroTxt) {
             heroTxt.outerHTML = '<img src="' + e.target.result + '" class="as-avatar-img" id="heroAvatar" alt="Avatar"/>';
         }
+        // Biar user langsung lihat foto baru di navbar/sidebar juga.
+        applyAvatarToGlobalUi(e.target.result);
     };
     reader.readAsDataURL(file);
 }
@@ -760,6 +795,9 @@ function submitProfile(e) {
         if (data.success) {
             showToast('success', data.message || 'Profil berhasil disimpan');
             document.getElementById('heroName').textContent = data.data?.user?.name || '';
+            if (data.data?.user?.avatar_url) {
+                applyAvatarToGlobalUi(data.data.user.avatar_url);
+            }
             selectedAvatarFile = null;
         } else {
             if (data.errors) {
@@ -948,7 +986,7 @@ function exportData(e) {
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url;
-        a.download = 'admin-data-' + Date.now() + '.json'; a.click();
+        a.download = ROLE_KEY + '-data-' + Date.now() + '.json'; a.click();
         URL.revokeObjectURL(url);
         showToast('success', 'Data berhasil diunduh');
     }).catch(() => { setLoading('btnExport', false, '<i class="bx bx-export"></i> Download Data'); showToast('error', 'Gagal mengunduh data'); });

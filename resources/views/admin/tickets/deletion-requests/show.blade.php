@@ -1,4 +1,4 @@
-@extends('layouts.app')
+ï»¿@extends('layouts.app')
 
 @section('title', 'Detail Permintaan Hapus')
 @section('page_title', 'Detail Permintaan Hapus')
@@ -27,7 +27,7 @@
             <div class="hero-title">Permintaan #{{ $requestItem->id }}</div>
             <div class="hero-sub">
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                {{ $requestItem->ticket->ticket_number ?? '-' }} — {{ $requestItem->ticket->title ?? 'Tiket sudah terhapus' }}
+                {{ $requestItem->ticket->ticket_number ?? '-' }} ï¿½ {{ $requestItem->ticket->title ?? 'Tiket sudah terhapus' }}
             </div>
         </div>
         <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;">
@@ -169,7 +169,7 @@
                             <div class="tl-title">Permintaan diajukan</div>
                             <div class="tl-meta">
                                 <span class="tl-actor">{{ $requestItem->user->name ?? '-' }}</span>
-                                <span class="tl-sep">·</span>
+                                <span class="tl-sep">ï¿½</span>
                                 <span class="tl-time">{{ $requestItem->created_at?->format('d M Y, H:i') ?? '-' }}</span>
                             </div>
                             <div class="tl-desc">Client mengajukan permintaan penghapusan tiket {{ $requestItem->ticket->ticket_number ?? '' }}.</div>
@@ -205,7 +205,7 @@
                             </div>
                             <div class="tl-meta">
                                 <span class="tl-actor">{{ $requestItem->reviewer->name ?? 'Admin' }}</span>
-                                <span class="tl-sep">·</span>
+                                <span class="tl-sep">ï¿½</span>
                                 <span class="tl-time">{{ $requestItem->reviewed_at?->format('d M Y, H:i') ?? '-' }}</span>
                             </div>
                             @if($requestItem->admin_note)
@@ -353,7 +353,8 @@
                             $diffBase  = $requestItem->reviewed_at ?? now();
                             $diffHours = $requestItem->created_at?->diffInHours($diffBase) ?? 0;
                             if ($diffHours < 1) {
-                                $diffStr = $requestItem->created_at?->diffInMinutes($diffBase) . ' menit';
+                                    $minutes = (int) $requestItem->created_at?->diffInMinutes($diffBase);
+                                    $diffStr = $minutes . ' menit yang lalu';
                             } elseif ($diffHours < 24) {
                                 $diffStr = $diffHours . ' jam';
                             } else {

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Dashboard Admin')
 @section('page_title', 'Dasbor Admin')
@@ -62,14 +62,47 @@
                 </div>
                 <span class="big-number">{{ $stats['tickets_without_priority'] ?? 0 }}</span>
             </div>
+
             @if(($stats['tickets_without_priority'] ?? 0) > 0)
-                <form method="GET" action="{{ route('admin.tickets.index') }}">
-                    <input type="hidden" name="priority" value="unset">
-                    <input type="hidden" name="view" value="table">
-                    <button type="submit" class="btn-warning">Tetapkan Prioritas</button>
-                </form>
+                {{-- Daftar tiket tanpa prioritas --}}
+                <div class="unprio-list">
+                    @foreach($unprioritizedTickets as $t)
+                    <a href="{{ route('admin.tickets.show', $t->id) }}" class="unprio-item">
+                        <div class="unprio-left">
+                            <span class="unprio-num">{{ $t->ticket_number ?? '#' }}</span>
+                            <span class="unprio-title">{{ Str::limit($t->title, 40) }}</span>
+                        </div>
+                        <div class="unprio-right">
+                            <span class="chip chip-{{ $t->status }}">
+                                @php
+                                    $statusLabels = [
+                                        'new'         => 'Baru',
+                                        'open'        => 'Terbuka',
+                                        'pending'     => 'Menunggu',
+                                        'in_progress' => 'Diproses',
+                                        'resolved'    => 'Selesai',
+                                        'closed'      => 'Ditutup',
+                                    ];
+                                @endphp
+                                {{ $statusLabels[$t->status] ?? $t->status }}
+                            </span>
+                            <i class='bx bx-chevron-right unprio-arrow'></i>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+
+                {{-- Tombol lihat semua jika lebih dari 5 --}}
+                @if(($stats['tickets_without_priority'] ?? 0) > 5)
+                <a href="{{ route('admin.tickets.index', ['priority' => 'unset']) }}" class="btn-warning" style="display:block;text-align:center;text-decoration:none;margin-top:.5rem;">
+                    Lihat semua {{ $stats['tickets_without_priority'] }} tiket
+                </a>
+                @endif
             @else
-                <button class="btn-warning" disabled>Tidak ada tiket tanpa prioritas</button>
+                <div class="unprio-empty">
+                    <i class='bx bx-check-circle'></i>
+                    <span>Semua tiket sudah memiliki prioritas</span>
+                </div>
             @endif
         </article>
 
@@ -236,9 +269,8 @@
     </section>
 
 </div>
-@endsection
 
-@push('styles')
+
 <style>
 .dashboard-wrap { display: flex; flex-direction: column; gap: 1.5rem; }
 
@@ -504,6 +536,74 @@
     .stats-grid, .overview-grid, .metric-row, .ticket-grid, .user-grid { grid-template-columns: 1fr; }
     .hero-focus { min-width: 100%; }
 }
-</style>
-@endpush
 
+/* ----- UNPRIORITIZED LIST ----- */
+.unprio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.unprio-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    background: white;
+    border: 1px solid rgba(249,115,22,0.2);
+    border-radius: 14px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.unprio-item:hover {
+    background: #fff7ed;
+    border-color: #f59e0b;
+    transform: translateX(3px);
+}
+.unprio-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+.unprio-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #f59e0b;
+}
+.unprio-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+.unprio-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+.unprio-arrow {
+    font-size: 1.1rem;
+    color: #f59e0b;
+}
+.unprio-empty {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f0fdf4;
+    border-radius: 12px;
+    color: #15803d;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+.unprio-empty i {
+    font-size: 1.25rem;
+}
+</style>
+@endsection

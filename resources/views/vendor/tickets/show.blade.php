@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Detail Tiket')
 @section('page_title', 'Detail Tiket')
@@ -283,7 +283,7 @@
                     </div>
                     <div class="vtd-stat-block">
                         <div class="vtd-stat-icon si-start"><i class='bx bx-play-circle'></i></div>
-                        <div><div class="vtd-stat-label">Mulai Dikerjakan</div><div class="vtd-stat-val">{{ $ticket->assigned_at ? $ticket->assigned_at->format('d M Y H:i') }}</div></div>
+                        <div><div class="vtd-stat-label">Mulai Dikerjakan</div><div class="vtd-stat-val">{{ $ticket->assigned_at ? $ticket->assigned_at->format('d M Y H:i') : '-' }}div></div>
                     </div>
                     <div class="vtd-stat-block">
                         <div class="vtd-stat-icon si-response"><i class='bx bx-message-check'></i></div>
@@ -299,7 +299,7 @@
                     </div>
                     <div class="vtd-stat-block">
                         <div class="vtd-stat-icon si-category"><i class='bx bx-category'></i></div>
-                        <div><div class="vtd-stat-label">Kategori</div><div class="vtd-stat-val">{{ $ticket->category->name ?? }}</div></div>
+                        <div><div class="vtd-stat-label">Kategori</div><div class="vtd-stat-val">{{ $ticket->category->name ?? '-' }}</div></div>
                     </div>
                 </div>
                 <div class="vtd-progress-wrap">

@@ -47,9 +47,9 @@ class AdminDashboardController extends Controller
             ];
 
             // ─── Rating Data ───
-            $ratings     = Feedback::all();
-            $total       = $ratings->count();
-            $average     = $total ? round($ratings->avg('rating'), 1) : 0.0;
+            $ratings      = Feedback::all();
+            $total        = $ratings->count();
+            $average      = $total ? round($ratings->avg('rating'), 1) : 0.0;
             $distribution = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
             foreach ($ratings as $r) {
                 $val = (int) round($r->rating);
@@ -69,25 +69,31 @@ class AdminDashboardController extends Controller
                 ->take(9)
                 ->values();
 
+            // ─── Unprioritized Tickets ───
+            $unprioritizedTickets = Ticket::with(['user', 'category'])
+                ->whereNull('priority')
+                ->latest()
+                ->take(5)
+                ->get();
+
             return view('admin.dashboard', compact(
                 'stats',
                 'slaPerformance',
                 'ratingData',
-                'recentTickets'
+                'recentTickets',
+                'unprioritizedTickets'
             ));
 
         } catch (\Exception $e) {
             Log::error('Admin dashboard blade error: ' . $e->getMessage());
 
-            // Return view with empty data rather than crashing
             return view('admin.dashboard', [
-                'stats'          => [],
-                'slaPerformance' => ['total' => 0, 'met' => 0, 'missed' => 0, 'percentage' => 0],
-                'ratingData'     => ['average' => '0.0', 'total' => 0, 'distribution' => [5=>0,4=>0,3=>0,2=>0,1=>0]],
-                'recentTickets'  => collect(),
+                'stats'               => [],
+                'slaPerformance'      => ['total' => 0, 'met' => 0, 'missed' => 0, 'percentage' => 0],
+                'ratingData'          => ['average' => '0.0', 'total' => 0, 'distribution' => [5=>0,4=>0,3=>0,2=>0,1=>0]],
+                'recentTickets'       => collect(),
+                'unprioritizedTickets'=> collect(),
             ])->with('error', 'Gagal memuat data dashboard: ' . $e->getMessage());
         }
     }
 }
-
-

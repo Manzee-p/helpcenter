@@ -6,18 +6,15 @@
             <div class="brand-icon"><i class='bx bx-support'></i></div>
             <span class="brand-name">HelpCenter</span>
         </a>
-        <button class="sidebar-close-btn d-md-none" onclick="closeSidebar()">
-            <i class='bx bx-x'></i>
-        </button>
     </div>
 
     <!-- User Profile -->
     <div class="sidebar-profile">
-        <div class="profile-avatar">
+        <div class="profile-avatar" id="sidebarAvatarWrap">
             @if(Auth::user()->avatar)
-                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" />
+                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" id="sidebarAvatarImg" />
             @else
-                <span>{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                <span id="sidebarAvatarInitial">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
             @endif
         </div>
         <div class="profile-info">
@@ -37,7 +34,7 @@
     <nav class="sidebar-nav">
         <ul class="nav-list">
 
-            {{-- â•â•â• ADMIN MENU â•â•â• --}}
+            {{-- ADMIN MENU --}}
             @if(Auth::user()->role === 'admin')
 
                 <li class="nav-item {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
@@ -145,7 +142,7 @@
                     </a>
                 </li>
 
-            {{-- â•â•â• VENDOR MENU â•â•â• --}}
+            {{-- VENDOR MENU --}}
             @elseif(Auth::user()->role === 'vendor')
 
                 <li class="nav-item {{ request()->routeIs('vendor.dashboard') ? 'active' : '' }}">
@@ -187,7 +184,7 @@
                     </a>
                 </li>
 
-            {{-- â•â•â• CLIENT MENU â•â•â• --}}
+            {{-- CLIENT MENU --}}
             @else
 
                 <li class="nav-item {{ request()->routeIs('client.dashboard') ? 'active' : '' }}">

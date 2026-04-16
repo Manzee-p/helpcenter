@@ -135,7 +135,7 @@
         }
         if (role === 'admin')  return '/admin/tickets/' + relatedId;
         if (role === 'vendor') return '/vendor/tickets/' + relatedId;
-        return '/tickets/' + relatedId;
+        return '/client/tickets/' + relatedId;
     }
 
     /* â-€â-€ fetch â-€â-€ */

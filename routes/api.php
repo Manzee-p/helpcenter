@@ -96,17 +96,14 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ==================== ADMIN SETTINGS ====================
-    Route::middleware('role:admin')->prefix('admin/settings')->group(function () {
-        Route::post('/profile',          [AdminSettingsController::class, 'updateProfile']);
-        Route::delete('/avatar',         [AdminSettingsController::class, 'deleteAvatar']);
-        Route::post('/password',         [AdminSettingsController::class, 'changePassword']);
-        Route::get('/login-history',     [AdminSettingsController::class, 'getLoginHistory']);
-        Route::get('/sessions',          [AdminSettingsController::class, 'getSessions']);
-        Route::get('/activity-logs',     [AdminSettingsController::class, 'getActivityLogs']);
-        Route::post('/notifications',    [AdminSettingsController::class, 'saveNotifications']);
-        Route::post('/preferences',      [AdminSettingsController::class, 'savePreferences']);
-        Route::get('/export-data',       [AdminSettingsController::class, 'exportData']);
-    });
+Route::middleware('role:admin')->prefix('admin/settings')->group(function () {
+    Route::post('/profile',          [AdminSettingsController::class, 'updateProfile']);
+    Route::delete('/avatar',         [AdminSettingsController::class, 'deleteAvatar']);
+    Route::post('/password',         [AdminSettingsController::class, 'changePassword']);
+    Route::get('/login-history',     [AdminSettingsController::class, 'getLoginHistory']);
+    Route::get('/sessions',          [AdminSettingsController::class, 'getSessions']);
+    Route::get('/activity-logs',     [AdminSettingsController::class, 'getActivityLogs']);
+});
 
     // ==================== VENDOR ROUTES ====================
     Route::middleware('role:vendor')->prefix('vendor')->group(function () {
@@ -135,18 +132,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/tickets/{ticket}',           [ClientController::class, 'show']);
         Route::post('/tickets/{ticket}/additional-info', [ClientController::class, 'submitAdditionalInfo']);
         Route::post('/tickets/{ticket}/feedback', [ClientController::class, 'submitFeedback']);
-        Route::prefix('settings')->group(function () {
-            Route::post('/profile',        [ClientSettingsController::class, 'updateProfile']);
-            Route::delete('/avatar',       [ClientSettingsController::class, 'deleteAvatar']);
-            Route::post('/password',       [ClientSettingsController::class, 'changePassword']);
-            Route::get('/communications',  [ClientSettingsController::class, 'getCommunications']);
-            Route::get('/last-login',      [ClientSettingsController::class, 'getLastLogin']);
-            Route::post('/support',        [ClientSettingsController::class, 'sendSupportMessage']);
-            Route::post('/notifications',  [ClientSettingsController::class, 'saveNotifications']);
-            Route::post('/preferences',    [ClientSettingsController::class, 'savePreferences']);
-            Route::get('/export-data',     [ClientSettingsController::class, 'exportData']);
-        });
+    Route::prefix('settings')->group(function () {
+        Route::post('/profile',        [ClientSettingsController::class, 'updateProfile']);
+        Route::delete('/avatar',       [ClientSettingsController::class, 'deleteAvatar']);
+        Route::post('/password',       [ClientSettingsController::class, 'changePassword']);
+        Route::get('/last-login',      [ClientSettingsController::class, 'getLastLogin']);
     });
+});
 
     // Tickets (All authenticated users)
     Route::apiResource('tickets', TicketController::class);

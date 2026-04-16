@@ -8,7 +8,304 @@
     <link rel="shortcut icon" href="{{ asset('favicon.svg?v=20260413') }}">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
+    
+</head>
+<body>
+
+{{-- NAVBAR --}}
+<nav class="navbar">
+    <div class="nav-inner">
+        <a href="{{ url('/') }}" class="logo">
+            <div class="logo-icon"><i class='bx bx-support'></i></div>
+            HelpCenter
+        </a>
+        <div class="nav-links">
+            <a href="{{ url('/') }}" class="nav-link">
+                <i class='bx bx-home'></i><span>Home</span>
+            </a>
+            <a href="{{ route('status') }}" class="nav-link active">
+                <i class='bx bx-info-circle'></i><span>Status Layanan</span>
+            </a>
+            @auth
+                <a href="{{ url('/home') }}" class="btn-login">
+                    <i class='bx bxs-dashboard'></i> Dashboard
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="btn-login">
+                    <i class='bx bx-log-in'></i> Login
+                </a>
+            @endauth
+        </div>
+    </div>
+</nav>
+
+<div class="page-wrap">
+
+    {{-- HERO HEADER --}}
+    <div class="hero-section">
+        <div class="hero-main">
+            <h1 class="page-title">Papan Informasi Status Layanan</h1>
+            <p class="page-subtitle">Pantau status gangguan dan pemeliharaan sistem secara real-time</p>
+            <div class="public-badge">
+                <i class='bx bx-globe'></i>
+                Halaman publik - Tidak perlu login untuk melihat status
+            </div>
+        </div>
+
+        {{-- Overall Status Box --}}
+        <div class="status-box {{ $overallStatus['class'] }}">
+            <div class="box-label">STATUS SISTEM</div>
+            <div class="box-display">
+                <i class='bx {{ $overallStatus['icon'] }}'></i>
+                <span class="box-text">{{ $overallStatus['text'] }}</span>
+            </div>
+            @if($activeIncidents->count() > 0)
+                <div class="box-count">{{ $activeIncidents->count() }} Gangguan Aktif</div>
+            @endif
+        </div>
+    </div>
+
+    {{-- AUTH NOTICE (untuk guest) --}}
+    @guest
+    <div class="auth-notice">
+        <div class="notice-content">
+            <div class="notice-icon"><i class='bx bx-info-circle'></i></div>
+            <div class="notice-text">
+                <h3>Ingin melaporkan masalah?</h3>
+                <p>Login untuk membuat tiket dan berkomunikasi dengan tim support</p>
+            </div>
+        </div>
+        <a href="{{ route('login') }}" class="btn-notice-login">
+            <i class='bx bx-log-in'></i> Login Sekarang
+        </a>
+    </div>
+    @endguest
+
+    {{-- FILTERS --}}
+    <div class="filters-card">
+        <div class="filter-header">
+            <h3 class="filter-title">Filter Status</h3>
+            <a href="{{ route('status') }}" class="btn-reset">
+                <i class='bx bx-refresh'></i> Reset
+            </a>
+        </div>
+        <form method="GET" action="{{ route('status') }}" id="filterForm">
+            <div class="filters-row">
+                <div class="filter-group">
+                    <label class="filter-label"><i class='bx bx-filter'></i> Status</label>
+                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">Semua Status</option>
+                        <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Aktif</option>
+                        <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Selesai</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label"><i class='bx bx-category'></i> Kategori</label>
+                    <select name="category" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+                        <option value="">Semua Kategori</option>
+                        <option value="power_outage"    {{ request('category') === 'power_outage'    ? 'selected' : '' }}>Gangguan Listrik</option>
+                        <option value="technical_issue" {{ request('category') === 'technical_issue' ? 'selected' : '' }}>Masalah Teknis</option>
+                        <option value="facility_issue"  {{ request('category') === 'facility_issue'  ? 'selected' : '' }}>Masalah Fasilitas</option>
+                        <option value="network_issue"   {{ request('category') === 'network_issue'   ? 'selected' : '' }}>Gangguan Jaringan</option>
+                        <option value="other"           {{ request('category') === 'other'           ? 'selected' : '' }}>Lainnya</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label"><i class='bx bx-search'></i> Cari</label>
+                    <input type="text" name="search" class="filter-input"
+                        placeholder="Cari berdasarkan judul atau area..."
+                        value="{{ request('search') }}"
+                        onchange="document.getElementById('filterForm').submit()">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- CONTENT --}}
+    @if($statuses->isEmpty())
+        {{-- Empty State --}}
+        <div class="empty-state">
+            <div class="empty-icon"><i class='bx bx-check-circle'></i></div>
+            <h3>Semua Sistem Normal</h3>
+            <p>Tidak ada gangguan atau masalah yang dilaporkan saat ini</p>
+            <div class="empty-meta">
+                <i class='bx bx-time'></i>
+                <span>Terakhir diperbarui: {{ now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm') }}</span>
+            </div>
+        </div>
+
+    @else
+        <div class="status-content">
+
+            {{-- Pinned --}}
+            @if($pinnedStatuses->count() > 0)
+            <div class="status-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class='bx bxs-pin'></i> Status Penting
+                    </h3>
+                    <span class="count-badge">{{ $pinnedStatuses->count() }} Status</span>
+                </div>
+                <div class="status-list">
+                    @foreach($pinnedStatuses as $item)
+                    <a href="{{ route('status.detail', $item->id) }}" class="status-card pinned">
+                        @if($item->updates->count() > 0)
+                        <div class="updates-badge">
+                            <i class='bx bx-message-square-detail'></i>
+                            {{ $item->updates->count() }} Update
+                        </div>
+                        @endif
+
+                        <div class="card-badges">
+                            <span class="badge badge-pinned"><i class='bx bxs-pin'></i> Penting</span>
+                            <span class="badge badge-number">{{ $item->incident_number }}</span>
+                            <span class="badge badge-severity severity-{{ $item->severity }}">
+                                <i class='bx bx-flag'></i>
+                                @php
+                                    $sevLabels = ['critical'=>'Kritis','high'=>'Tinggi','medium'=>'Sedang','low'=>'Rendah'];
+                                @endphp
+                                {{ $sevLabels[$item->severity] ?? $item->severity }}
+                            </span>
+                        </div>
+
+                        <h4 class="card-title">{{ $item->title }}</h4>
+
+                        <div class="card-meta">
+                            @php
+                                $catLabels = ['power_outage'=>'Gangguan Listrik','technical_issue'=>'Masalah Teknis','facility_issue'=>'Masalah Fasilitas','network_issue'=>'Gangguan Jaringan','other'=>'Lainnya'];
+                            @endphp
+                            <span class="meta-item"><i class='bx bx-category'></i> {{ $catLabels[$item->category] ?? $item->category }}</span>
+                            @if($item->affected_area)
+                            <span class="meta-item"><i class='bx bx-map-pin'></i> {{ $item->affected_area }}</span>
+                            @endif
+                        </div>
+
+                        <p class="card-desc">{{ Str::limit($item->description, 100) }}</p>
+
+                        <div class="card-footer">
+                            @php
+                                $statusLabels = ['investigating'=>'Sedang Diselidiki','identified'=>'Teridentifikasi','monitoring'=>'Pemantauan','resolved'=>'Selesai'];
+                            @endphp
+                            <span class="status-badge badge-status-{{ $item->status }}">
+                                <i class='bx bx-info-circle'></i>
+                                {{ $statusLabels[$item->status] ?? $item->status }}
+                            </span>
+                            <span class="card-time">
+                                <i class='bx bx-time'></i>
+                                {{ $item->started_at ? \Carbon\Carbon::parse($item->started_at)->diffForHumans() : '-' }}
+                            </span>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Regular --}}
+            @if($regularStatuses->count() > 0)
+            <div class="status-section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class='bx bx-clipboard'></i> Semua Status
+                    </h3>
+                    <span class="count-badge">{{ $regularStatuses->count() }} Status</span>
+                </div>
+                <div class="status-list">
+                    @foreach($regularStatuses as $item)
+                    <a href="{{ route('status.detail', $item->id) }}" class="status-card">
+                        @if($item->updates->count() > 0)
+                        <div class="updates-badge">
+                            <i class='bx bx-message-square-detail'></i>
+                            {{ $item->updates->count() }} Update
+                        </div>
+                        @endif
+
+                        <div class="card-badges">
+                            <span class="badge badge-{{ $item->status }}">
+                                <i class='bx bx-error'></i>
+                                {{ $statusLabels[$item->status] ?? $item->status }}
+                            </span>
+                            <span class="badge badge-number">{{ $item->incident_number }}</span>
+                            <span class="badge badge-severity severity-{{ $item->severity }}">
+                                <i class='bx bx-flag'></i>
+                                {{ $sevLabels[$item->severity] ?? $item->severity }}
+                            </span>
+                        </div>
+
+                        <h4 class="card-title">{{ $item->title }}</h4>
+
+                        <div class="card-meta">
+                            <span class="meta-item"><i class='bx bx-category'></i> {{ $catLabels[$item->category] ?? $item->category }}</span>
+                            @if($item->affected_area)
+                            <span class="meta-item"><i class='bx bx-map-pin'></i> {{ $item->affected_area }}</span>
+                            @endif
+                        </div>
+
+                        <p class="card-desc">{{ Str::limit($item->description, 100) }}</p>
+
+                        <div class="card-footer">
+                            <span class="status-badge badge-status-{{ $item->status }}">
+                                <i class='bx bx-info-circle'></i>
+                                {{ $statusLabels[$item->status] ?? $item->status }}
+                            </span>
+                            <span class="card-time">
+                                <i class='bx bx-time'></i>
+                                {{ $item->started_at ? \Carbon\Carbon::parse($item->started_at)->diffForHumans() : '-' }}
+                            </span>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+        </div>
+
+        {{-- PAGINATION --}}
+        @if($statuses->lastPage() > 1)
+        <div class="pagination-wrap">
+            @if($statuses->onFirstPage())
+                <span class="page-btn disabled"><i class='bx bx-chevron-left'></i> Sebelumnya</span>
+            @else
+                <a href="{{ $statuses->previousPageUrl() }}" class="page-btn">
+                    <i class='bx bx-chevron-left'></i> Sebelumnya
+                </a>
+            @endif
+
+            @foreach($statuses->getUrlRange(1, $statuses->lastPage()) as $page => $url)
+                @if($page == $statuses->currentPage())
+                    <span class="page-num active">{{ $page }}</span>
+                @else
+                    <a href="{{ $url }}" class="page-num">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            @if($statuses->hasMorePages())
+                <a href="{{ $statuses->nextPageUrl() }}" class="page-btn">
+                    Selanjutnya <i class='bx bx-chevron-right'></i>
+                </a>
+            @else
+                <span class="page-btn disabled">Selanjutnya <i class='bx bx-chevron-right'></i></span>
+            @endif
+        </div>
+        @endif
+
+    @endif
+
+</div>
+
+<script>
+    // Debounce search
+    var searchTimer;
+    document.querySelector('input[name="search"]').addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            document.getElementById('filterForm').submit();
+        }, 600);
+    });
+</script>
+
+<style>
         :root {
             --primary: #4f46e5;
             --primary-light: #818cf8;
@@ -352,301 +649,6 @@
             .nav-link span { display: none; }
         }
     </style>
-</head>
-<body>
-
-{{-- â•â•â• NAVBAR â•â•â• --}}
-<nav class="navbar">
-    <div class="nav-inner">
-        <a href="{{ url('/') }}" class="logo">
-            <div class="logo-icon"><i class='bx bx-support'></i></div>
-            HelpCenter
-        </a>
-        <div class="nav-links">
-            <a href="{{ url('/') }}" class="nav-link">
-                <i class='bx bx-home'></i><span>Home</span>
-            </a>
-            <a href="{{ route('status') }}" class="nav-link active">
-                <i class='bx bx-info-circle'></i><span>Status Layanan</span>
-            </a>
-            @auth
-                <a href="{{ url('/home') }}" class="btn-login">
-                    <i class='bx bxs-dashboard'></i> Dashboard
-                </a>
-            @else
-                <a href="{{ route('login') }}" class="btn-login">
-                    <i class='bx bx-log-in'></i> Login
-                </a>
-            @endauth
-        </div>
-    </div>
-</nav>
-
-<div class="page-wrap">
-
-    {{-- â•â•â• HERO HEADER â•â•â• --}}
-    <div class="hero-section">
-        <div class="hero-main">
-            <h1 class="page-title">Papan Informasi Status Layanan</h1>
-            <p class="page-subtitle">Pantau status gangguan dan pemeliharaan sistem secara real-time</p>
-            <div class="public-badge">
-                <i class='bx bx-globe'></i>
-                Halaman publik - Tidak perlu login untuk melihat status
-            </div>
-        </div>
-
-        {{-- Overall Status Box --}}
-        <div class="status-box {{ $overallStatus['class'] }}">
-            <div class="box-label">STATUS SISTEM</div>
-            <div class="box-display">
-                <i class='bx {{ $overallStatus['icon'] }}'></i>
-                <span class="box-text">{{ $overallStatus['text'] }}</span>
-            </div>
-            @if($activeIncidents->count() > 0)
-                <div class="box-count">{{ $activeIncidents->count() }} Gangguan Aktif</div>
-            @endif
-        </div>
-    </div>
-
-    {{-- â•â•â• AUTH NOTICE (untuk guest) â•â•â• --}}
-    @guest
-    <div class="auth-notice">
-        <div class="notice-content">
-            <div class="notice-icon"><i class='bx bx-info-circle'></i></div>
-            <div class="notice-text">
-                <h3>Ingin melaporkan masalah?</h3>
-                <p>Login untuk membuat tiket dan berkomunikasi dengan tim support</p>
-            </div>
-        </div>
-        <a href="{{ route('login') }}" class="btn-notice-login">
-            <i class='bx bx-log-in'></i> Login Sekarang
-        </a>
-    </div>
-    @endguest
-
-    {{-- â•â•â• FILTERS â•â•â• --}}
-    <div class="filters-card">
-        <div class="filter-header">
-            <h3 class="filter-title">Filter Status</h3>
-            <a href="{{ route('status') }}" class="btn-reset">
-                <i class='bx bx-refresh'></i> Reset
-            </a>
-        </div>
-        <form method="GET" action="{{ route('status') }}" id="filterForm">
-            <div class="filters-row">
-                <div class="filter-group">
-                    <label class="filter-label"><i class='bx bx-filter'></i> Status</label>
-                    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-                        <option value="">Semua Status</option>
-                        <option value="active"   {{ request('status') === 'active'   ? 'selected' : '' }}>Aktif</option>
-                        <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Selesai</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label"><i class='bx bx-category'></i> Kategori</label>
-                    <select name="category" class="filter-select" onchange="document.getElementById('filterForm').submit()">
-                        <option value="">Semua Kategori</option>
-                        <option value="power_outage"    {{ request('category') === 'power_outage'    ? 'selected' : '' }}>Gangguan Listrik</option>
-                        <option value="technical_issue" {{ request('category') === 'technical_issue' ? 'selected' : '' }}>Masalah Teknis</option>
-                        <option value="facility_issue"  {{ request('category') === 'facility_issue'  ? 'selected' : '' }}>Masalah Fasilitas</option>
-                        <option value="network_issue"   {{ request('category') === 'network_issue'   ? 'selected' : '' }}>Gangguan Jaringan</option>
-                        <option value="other"           {{ request('category') === 'other'           ? 'selected' : '' }}>Lainnya</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label class="filter-label"><i class='bx bx-search'></i> Cari</label>
-                    <input type="text" name="search" class="filter-input"
-                        placeholder="Cari berdasarkan judul atau area..."
-                        value="{{ request('search') }}"
-                        onchange="document.getElementById('filterForm').submit()">
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- â•â•â• CONTENT â•â•â• --}}
-    @if($statuses->isEmpty())
-        {{-- Empty State --}}
-        <div class="empty-state">
-            <div class="empty-icon"><i class='bx bx-check-circle'></i></div>
-            <h3>Semua Sistem Normal</h3>
-            <p>Tidak ada gangguan atau masalah yang dilaporkan saat ini</p>
-            <div class="empty-meta">
-                <i class='bx bx-time'></i>
-                <span>Terakhir diperbarui: {{ now()->locale('id')->isoFormat('D MMMM YYYY, HH:mm') }}</span>
-            </div>
-        </div>
-
-    @else
-        <div class="status-content">
-
-            {{-- Pinned --}}
-            @if($pinnedStatuses->count() > 0)
-            <div class="status-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class='bx bxs-pin'></i> Status Penting
-                    </h3>
-                    <span class="count-badge">{{ $pinnedStatuses->count() }} Status</span>
-                </div>
-                <div class="status-list">
-                    @foreach($pinnedStatuses as $item)
-                    <a href="{{ route('status.detail', $item->id) }}" class="status-card pinned">
-                        @if($item->updates->count() > 0)
-                        <div class="updates-badge">
-                            <i class='bx bx-message-square-detail'></i>
-                            {{ $item->updates->count() }} Update
-                        </div>
-                        @endif
-
-                        <div class="card-badges">
-                            <span class="badge badge-pinned"><i class='bx bxs-pin'></i> Penting</span>
-                            <span class="badge badge-number">{{ $item->incident_number }}</span>
-                            <span class="badge badge-severity severity-{{ $item->severity }}">
-                                <i class='bx bx-flag'></i>
-                                @php
-                                    $sevLabels = ['critical'=>'Kritis','high'=>'Tinggi','medium'=>'Sedang','low'=>'Rendah'];
-                                @endphp
-                                {{ $sevLabels[$item->severity] ?? $item->severity }}
-                            </span>
-                        </div>
-
-                        <h4 class="card-title">{{ $item->title }}</h4>
-
-                        <div class="card-meta">
-                            @php
-                                $catLabels = ['power_outage'=>'Gangguan Listrik','technical_issue'=>'Masalah Teknis','facility_issue'=>'Masalah Fasilitas','network_issue'=>'Gangguan Jaringan','other'=>'Lainnya'];
-                            @endphp
-                            <span class="meta-item"><i class='bx bx-category'></i> {{ $catLabels[$item->category] ?? $item->category }}</span>
-                            @if($item->affected_area)
-                            <span class="meta-item"><i class='bx bx-map-pin'></i> {{ $item->affected_area }}</span>
-                            @endif
-                        </div>
-
-                        <p class="card-desc">{{ Str::limit($item->description, 100) }}</p>
-
-                        <div class="card-footer">
-                            @php
-                                $statusLabels = ['investigating'=>'Sedang Diselidiki','identified'=>'Teridentifikasi','monitoring'=>'Pemantauan','resolved'=>'Selesai'];
-                            @endphp
-                            <span class="status-badge badge-status-{{ $item->status }}">
-                                <i class='bx bx-info-circle'></i>
-                                {{ $statusLabels[$item->status] ?? $item->status }}
-                            </span>
-                            <span class="card-time">
-                                <i class='bx bx-time'></i>
-                                {{ $item->started_at ? \Carbon\Carbon::parse($item->started_at)->diffForHumans() : '-' }}
-                            </span>
-                        </div>
-                    </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            {{-- Regular --}}
-            @if($regularStatuses->count() > 0)
-            <div class="status-section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <i class='bx bx-clipboard'></i> Semua Status
-                    </h3>
-                    <span class="count-badge">{{ $regularStatuses->count() }} Status</span>
-                </div>
-                <div class="status-list">
-                    @foreach($regularStatuses as $item)
-                    <a href="{{ route('status.detail', $item->id) }}" class="status-card">
-                        @if($item->updates->count() > 0)
-                        <div class="updates-badge">
-                            <i class='bx bx-message-square-detail'></i>
-                            {{ $item->updates->count() }} Update
-                        </div>
-                        @endif
-
-                        <div class="card-badges">
-                            <span class="badge badge-{{ $item->status }}">
-                                <i class='bx bx-error'></i>
-                                {{ $statusLabels[$item->status] ?? $item->status }}
-                            </span>
-                            <span class="badge badge-number">{{ $item->incident_number }}</span>
-                            <span class="badge badge-severity severity-{{ $item->severity }}">
-                                <i class='bx bx-flag'></i>
-                                {{ $sevLabels[$item->severity] ?? $item->severity }}
-                            </span>
-                        </div>
-
-                        <h4 class="card-title">{{ $item->title }}</h4>
-
-                        <div class="card-meta">
-                            <span class="meta-item"><i class='bx bx-category'></i> {{ $catLabels[$item->category] ?? $item->category }}</span>
-                            @if($item->affected_area)
-                            <span class="meta-item"><i class='bx bx-map-pin'></i> {{ $item->affected_area }}</span>
-                            @endif
-                        </div>
-
-                        <p class="card-desc">{{ Str::limit($item->description, 100) }}</p>
-
-                        <div class="card-footer">
-                            <span class="status-badge badge-status-{{ $item->status }}">
-                                <i class='bx bx-info-circle'></i>
-                                {{ $statusLabels[$item->status] ?? $item->status }}
-                            </span>
-                            <span class="card-time">
-                                <i class='bx bx-time'></i>
-                                {{ $item->started_at ? \Carbon\Carbon::parse($item->started_at)->diffForHumans() : '-' }}
-                            </span>
-                        </div>
-                    </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-        </div>
-
-        {{-- â•â•â• PAGINATION â•â•â• --}}
-        @if($statuses->lastPage() > 1)
-        <div class="pagination-wrap">
-            @if($statuses->onFirstPage())
-                <span class="page-btn disabled"><i class='bx bx-chevron-left'></i> Sebelumnya</span>
-            @else
-                <a href="{{ $statuses->previousPageUrl() }}" class="page-btn">
-                    <i class='bx bx-chevron-left'></i> Sebelumnya
-                </a>
-            @endif
-
-            @foreach($statuses->getUrlRange(1, $statuses->lastPage()) as $page => $url)
-                @if($page == $statuses->currentPage())
-                    <span class="page-num active">{{ $page }}</span>
-                @else
-                    <a href="{{ $url }}" class="page-num">{{ $page }}</a>
-                @endif
-            @endforeach
-
-            @if($statuses->hasMorePages())
-                <a href="{{ $statuses->nextPageUrl() }}" class="page-btn">
-                    Selanjutnya <i class='bx bx-chevron-right'></i>
-                </a>
-            @else
-                <span class="page-btn disabled">Selanjutnya <i class='bx bx-chevron-right'></i></span>
-            @endif
-        </div>
-        @endif
-
-    @endif
-
-</div>
-
-<script>
-    // Debounce search
-    var searchTimer;
-    document.querySelector('input[name="search"]').addEventListener('input', function() {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            document.getElementById('filterForm').submit();
-        }, 600);
-    });
-</script>
 
 </body>
 </html>

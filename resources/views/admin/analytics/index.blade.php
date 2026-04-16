@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Analitik Tiket')
 @section('page_title', 'Analitik')
@@ -187,12 +187,6 @@
     </div>
 
     {{--EXPORT--}}
-    <div class="export-center">
-        <button class="btn-outline-sm" onclick="exportReport()">
-            <i class='bx bx-download'></i> Ekspor Ringkasan
-        </button>
-    </div>
-
     @else
 
     <div class="empty-state">

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -49,14 +49,14 @@
         $_insightSecondary = $_latest ? 'Terbaru: ' . $_latest : 'Pantau progres dari sini.';
     } else {
         $_insightPrimary   = $_total > 0 ? 'Semua tiket terkendali' : 'Siap membuat tiket baru';
-        $_insightSecondary = $_total > 0 ? $_total . ' tiket sudah tercatat' : 'Gunakan Create Ticket saat butuh bantuan.';
+        $_insightSecondary = $_total > 0 ? $_total . ' tiket sudah tercatat' : 'Gunakan "buat laporan" saat butuh bantuan.';
     }
 @endphp
 
 <header class="client-topbar">
 
     <a href="{{ route('client.dashboard') }}" class="topbar-logo">
-        <i class='bx bx-help-circle'></i>
+        <div class="logo-icon"><i class='bx bx-support'></i></div>
         <span>HelpCenter</span>
     </a>
 
@@ -92,7 +92,7 @@
 
     <div class="topbar-right">
         <a href="{{ route('client.tickets.create') }}" class="btn-create-ticket">
-            <i class='bx bx-plus-circle'></i><span>Create Ticket</span>
+            <i class='bx bx-plus-circle'></i><span>Buat Laporan</span>
         </a>
 
         <a href="{{ route('notifications.index') }}" class="topbar-bell">
@@ -151,7 +151,7 @@
     <a href="{{ route('client.tickets.index') }}"   class="mobile-nav-link {{ request()->routeIs('client.tickets.*') ? 'active' : '' }}"><i class='bx bx-list-ul'></i><span>Laporan Saya</span></a>
     <a href="{{ route('client.history') }}"         class="mobile-nav-link {{ request()->routeIs('client.history') ? 'active' : '' }}"><i class='bx bx-history'></i><span>Riwayat</span></a>
     <a href="{{ route('client.pending-ratings') }}" class="mobile-nav-link {{ request()->routeIs('client.pending-ratings') ? 'active' : '' }}"><i class='bx bx-star'></i><span>Belum Dirating</span></a>
-    <a href="{{ route('client.tickets.create') }}"  class="mobile-nav-link primary"><i class='bx bx-plus-circle'></i><span>Create Ticket</span></a>
+    <a href="{{ route('client.tickets.create') }}"  class="mobile-nav-link primary"><i class='bx bx-plus-circle'></i><span>Buat Laporan</span></a>
     <a href="{{ route('client.settings') }}"        class="mobile-nav-link"><i class='bx bx-cog'></i><span>Pengaturan</span></a>
     <form method="POST" action="{{ route('logout') }}" style="margin:0">
         @csrf
@@ -249,7 +249,7 @@
             min-height: 100vh;
         }
 
-        /*â-€â-€ TOP BARâ-€â-€ */
+        /* TOP BAR */
         .client-topbar {
             position: sticky; top: 0; z-index: 1000;
             height: var(--topbar-height);
@@ -260,6 +260,11 @@
             display: flex; align-items: center;
             justify-content: space-between;
             padding: 0 1.5rem; gap: 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
         }
 
         .topbar-logo {
@@ -428,7 +433,7 @@
         .mobile-nav-link.primary { background: var(--gradient); color: #fff; border-color: transparent; }
         .mobile-nav-link.primary i { color: #fff; }
 
-        .client-main { min-height: calc(100vh - var(--topbar-height)); padding: 1.75rem; }
+        .client-main {padding: calc(var(--topbar-height) + 1.75rem) 1.75rem 1.75rem;}
         .client-container { max-width: 1400px; margin: 0 auto; }
 
         .topbar-overlay { display: none; position: fixed; inset: 0; background: transparent; z-index: 999; }

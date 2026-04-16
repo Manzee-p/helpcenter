@@ -87,7 +87,22 @@ class ClientController extends Controller
             'area'          => 'nullable|string|max:255',
             'attachments'   => 'nullable|array|max:5',
             'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
+        ],[
+            'title.required' => 'Judul wajib diisi',
+            'category_id.required' => 'Kategori wajib dipilih',
+            'description.required' => 'Deskripsi wajib diisi',
+            'attachments.*.max' => 'Setiap file lampiran maksimal 5MB',
         ]);
+
+        if (
+            !$request->filled('event_name') ||
+            !$request->filled('venue') ||
+            !$request->filled('area')
+        ) {
+            return back()
+                ->withErrors(['event_detail' => 'Detail lokasi wajib diisi'])
+                ->withInput();
+        }
 
         // Cegah double submit tiket identik dalam waktu dekat.
         $duplicateExists = Ticket::where('user_id', Auth::id())
